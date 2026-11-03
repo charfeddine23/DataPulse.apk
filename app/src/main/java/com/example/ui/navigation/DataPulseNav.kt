@@ -50,10 +50,10 @@ import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextTertiary
 
 enum class NavDestination(val label: String, val icon: ImageVector, val tag: String) {
-    DASHBOARD("Pulse", Icons.Default.GraphicEq, "nav_dashboard"),
-    ANALYTICS("Analytics", Icons.Default.Equalizer, "nav_analytics"),
-    SPEED("Speed Meter", Icons.Default.Speed, "nav_speed"),
-    SETTINGS("Settings", Icons.Default.Settings, "nav_settings")
+    DASHBOARD("النبض", Icons.Default.GraphicEq, "nav_dashboard"),
+    ANALYTICS("الاستهلاك", Icons.Default.Equalizer, "nav_analytics"),
+    SPEED("عداد السرعة", Icons.Default.Speed, "nav_speed"),
+    SETTINGS("الإعدادات", Icons.Default.Settings, "nav_settings")
 }
 
 @Composable
@@ -141,7 +141,7 @@ fun LiquidGlassBottomNav(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (isSelected) CyanPulse.copy(alpha = 0.15f) else Color.Transparent)
+                        .background(if (isSelected) glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f) else Color.Transparent)
                         .clickable { onSelectDestination(destination) }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                         .testTag(destination.tag),
@@ -154,13 +154,13 @@ fun LiquidGlassBottomNav(
                         Icon(
                             imageVector = destination.icon,
                             contentDescription = destination.label,
-                            tint = if (isSelected) CyanPulse else TextTertiary,
+                            tint = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = destination.label,
-                            color = if (isSelected) TextPrimary else TextTertiary,
+                            color = if (isSelected) glassStyle.textPrimary else glassStyle.textTertiary,
                             fontSize = 10.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )

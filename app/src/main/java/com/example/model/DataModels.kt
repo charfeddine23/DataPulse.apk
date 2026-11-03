@@ -21,21 +21,21 @@ enum class QuotaStatus {
 }
 
 enum class ThemeMode(val title: String) {
-    SYSTEM("Follow System"),
-    LIGHT("Light Mode"),
-    DARK("Dark Mode")
+    SYSTEM("اتبع الهاتف"),
+    LIGHT("الوضع النهاري"),
+    DARK("الوضع الليلي")
 }
 
 enum class TimeRange(val displayName: String) {
-    TODAY("Today"),
-    WEEK("This Week"),
-    MONTH("This Month")
+    TODAY("اليوم"),
+    WEEK("هذا الأسبوع"),
+    MONTH("هذا الشهر")
 }
 
 enum class InterfaceFilter(val displayName: String) {
-    ALL("All Traffic"),
-    MOBILE("Mobile Data"),
-    WIFI("Wi-Fi")
+    ALL("جميع الشبكات"),
+    MOBILE("بيانات الجوال"),
+    WIFI("واي فاي")
 }
 
 data class NetworkUsageSummary(

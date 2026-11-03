@@ -32,7 +32,7 @@ class DataPlanPreferences(context: Context) {
         set(value) = prefs.edit().putInt(KEY_LAST_NOTIFIED_THRESHOLD, value).apply()
 
     var themeMode: String
-        get() = prefs.getString(KEY_THEME_MODE, "SYSTEM") ?: "SYSTEM"
+        get() = prefs.getString(KEY_THEME_MODE, "DARK") ?: "DARK"
         set(value) = prefs.edit().putString(KEY_THEME_MODE, value).apply()
 
     var powerSavingMode: Boolean

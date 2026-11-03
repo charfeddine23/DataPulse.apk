@@ -76,6 +76,7 @@ fun AnalyticsScreen(
     val interfaceFilter by viewModel.selectedInterface.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val hasUsagePerm by viewModel.hasUsagePermission.collectAsStateWithLifecycle()
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
 
     Column(
         modifier = modifier
@@ -85,14 +86,14 @@ fun AnalyticsScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "App-by-App Analytics",
-            color = TextPrimary,
+            text = "استهلاك التطبيقات",
+            color = glassStyle.textPrimary,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Breakdown of cellular and Wi-Fi data per application",
-            color = TextSecondary,
+            text = "تفاصيل استهلاك بيانات الجوال وشبكات واي فاي لكل تطبيق",
+            color = glassStyle.textSecondary,
             fontSize = 12.sp
         )
 
@@ -118,12 +119,12 @@ fun AnalyticsScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { viewModel.setSearchQuery(it) },
-            placeholder = { Text("Search installed applications...", color = TextTertiary, fontSize = 13.sp) },
+            placeholder = { Text("البحث في التطبيقات المثبتة...", color = glassStyle.textTertiary, fontSize = 13.sp) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
-                    tint = TextTertiary,
+                    contentDescription = "بحث",
+                    tint = glassStyle.textTertiary,
                     modifier = Modifier.size(18.dp)
                 )
             },
@@ -132,8 +133,8 @@ fun AnalyticsScreen(
                     IconButton(onClick = { viewModel.setSearchQuery("") }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
-                            contentDescription = "Clear",
-                            tint = TextTertiary,
+                            contentDescription = "مسح",
+                            tint = glassStyle.textTertiary,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -142,12 +143,12 @@ fun AnalyticsScreen(
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = CyanPulse,
-                unfocusedBorderColor = Color(0x33FFFFFF),
-                focusedContainerColor = Color(0xFF0F1728),
-                unfocusedContainerColor = Color(0xFF0F1728),
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary
+                focusedBorderColor = glassStyle.accentPrimary,
+                unfocusedBorderColor = glassStyle.borderColor,
+                focusedContainerColor = glassStyle.cardBackground,
+                unfocusedContainerColor = glassStyle.cardBackground,
+                focusedTextColor = glassStyle.textPrimary,
+                unfocusedTextColor = glassStyle.textPrimary
             ),
             modifier = Modifier
                 .fillMaxWidth()
@@ -173,11 +174,11 @@ fun AnalyticsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator(color = CyanPulse)
+                    CircularProgressIndicator(color = glassStyle.accentPrimary)
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Analyzing network statistics...",
-                        color = TextSecondary,
+                        text = "جاري تحليل إحصائيات الشبكة...",
+                        color = glassStyle.textSecondary,
                         fontSize = 13.sp
                     )
                 }
@@ -192,14 +193,14 @@ fun AnalyticsScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         imageVector = Icons.Default.Apps,
-                        contentDescription = "No apps",
-                        tint = TextTertiary,
+                        contentDescription = "لا توجد تطبيقات",
+                        tint = glassStyle.textTertiary,
                         modifier = Modifier.size(48.dp)
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = if (searchQuery.isNotEmpty()) "No matching apps found" else "No app network traffic recorded for this period",
-                        color = TextSecondary,
+                        text = if (searchQuery.isNotEmpty()) "لم يتم العثور على تطبيقات مطابقة" else "لا يوجد استهلاك شبكة مسجل لهذه الفترة",
+                        color = glassStyle.textSecondary,
                         fontSize = 13.sp
                     )
                 }
@@ -226,12 +227,14 @@ fun TimeRangeSelector(
     onSelect: (TimeRange) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF0F1728))
-            .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(14.dp))
+            .background(glassStyle.cardBackground)
+            .border(1.dp, glassStyle.borderColor, RoundedCornerShape(14.dp))
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -241,14 +244,14 @@ fun TimeRangeSelector(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(if (isSelected) CyanPulse else Color.Transparent)
+                    .background(if (isSelected) glassStyle.accentPrimary else Color.Transparent)
                     .clickable { onSelect(range) }
                     .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = range.displayName,
-                    color = if (isSelected) Color.Black else TextSecondary,
+                    color = if (isSelected) (if (glassStyle.isDark) Color.Black else Color.White) else glassStyle.textSecondary,
                     fontSize = 12.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                 )
@@ -263,6 +266,8 @@ fun InterfaceSelector(
     onSelect: (InterfaceFilter) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -272,10 +277,13 @@ fun InterfaceSelector(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(if (isSelected) NeonPurple.copy(alpha = 0.2f) else Color(0xFF0F1728))
+                    .background(
+                        if (isSelected) glassStyle.accentSecondary.copy(alpha = if (glassStyle.isDark) 0.2f else 0.12f)
+                        else glassStyle.cardBackground
+                    )
                     .border(
                         1.dp,
-                        if (isSelected) NeonPurple else Color(0x22FFFFFF),
+                        if (isSelected) glassStyle.accentSecondary else glassStyle.borderColor,
                         RoundedCornerShape(20.dp)
                     )
                     .clickable { onSelect(filter) }
@@ -283,7 +291,7 @@ fun InterfaceSelector(
             ) {
                 Text(
                     text = filter.displayName,
-                    color = if (isSelected) TextPrimary else TextSecondary,
+                    color = if (isSelected) (if (glassStyle.isDark) glassStyle.textPrimary else glassStyle.accentSecondary) else glassStyle.textSecondary,
                     fontSize = 12.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                 )
@@ -298,10 +306,12 @@ fun AppUsageCard(
     filter: InterfaceFilter,
     modifier: Modifier = Modifier
 ) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+
     GlassContainer(
         modifier = modifier.fillMaxWidth(),
-        backgroundColor = Color(0x99111B2E),
-        borderColor = Color(0x22FFFFFF)
+        backgroundColor = glassStyle.cardBackground,
+        borderColor = glassStyle.borderColor
     ) {
         Column {
             Row(
@@ -316,14 +326,14 @@ fun AppUsageCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = item.appName,
-                        color = TextPrimary,
+                        color = glassStyle.textPrimary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1
                     )
                     Text(
                         text = item.packageName,
-                        color = TextTertiary,
+                        color = glassStyle.textTertiary,
                         fontSize = 10.sp,
                         maxLines = 1
                     )
@@ -339,14 +349,14 @@ fun AppUsageCard(
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = FormatUtils.formatBytes(primaryBytes),
-                        color = CyanPulse,
+                        color = glassStyle.accentPrimary,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.ExtraBold
                     )
                     if (item.percentageOfTotal > 0f) {
                         Text(
-                            text = "%.1f%% of total".format(item.percentageOfTotal * 100f),
-                            color = TextTertiary,
+                            text = "%.1f%% من الإجمالي".format(item.percentageOfTotal * 100f),
+                            color = glassStyle.textTertiary,
                             fontSize = 10.sp
                         )
                     }
@@ -364,14 +374,14 @@ fun AppUsageCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.SignalCellularAlt,
-                        contentDescription = "Cellular",
-                        tint = NeonPurple,
+                        contentDescription = "بيانات الجوال",
+                        tint = glassStyle.accentSecondary,
                         modifier = Modifier.size(13.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Cellular: ${FormatUtils.formatBytes(item.mobileBytes)}",
-                        color = TextSecondary,
+                        text = "بيانات الجوال: ${FormatUtils.formatBytes(item.mobileBytes)}",
+                        color = glassStyle.textSecondary,
                         fontSize = 11.sp
                     )
                 }
@@ -379,14 +389,14 @@ fun AppUsageCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Wifi,
-                        contentDescription = "Wi-Fi",
+                        contentDescription = "واي فاي",
                         tint = ElectricBlue,
                         modifier = Modifier.size(13.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Wi-Fi: ${FormatUtils.formatBytes(item.wifiBytes)}",
-                        color = TextSecondary,
+                        text = "واي فاي: ${FormatUtils.formatBytes(item.wifiBytes)}",
+                        color = glassStyle.textSecondary,
                         fontSize = 11.sp
                     )
                 }
@@ -399,18 +409,18 @@ fun AppUsageCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(Color(0xFF0B111E))
+                    .height(5.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(if (glassStyle.isDark) Color(0xFF0B111E) else Color(0xFFE2E8F0))
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(barFraction)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
+                        .height(5.dp)
+                        .clip(RoundedCornerShape(3.dp))
                         .background(
                             Brush.horizontalGradient(
-                                colors = listOf(NeonPurple, CyanPulse)
+                                colors = listOf(glassStyle.accentSecondary, glassStyle.accentPrimary)
                             )
                         )
                 )
@@ -421,6 +431,7 @@ fun AppUsageCard(
 
 @Composable
 fun AppIconImage(drawable: Drawable?, appName: String) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
     val bitmap = remember(drawable) {
         drawableToBitmap(drawable)
     }
@@ -438,13 +449,13 @@ fun AppIconImage(drawable: Drawable?, appName: String) {
             modifier = Modifier
                 .size(38.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(Color(0xFF1E293B)),
+                .background(glassStyle.cardSubtleBg),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Apps,
                 contentDescription = appName,
-                tint = CyanPulse,
+                tint = glassStyle.accentPrimary,
                 modifier = Modifier.size(20.dp)
             )
         }

@@ -120,17 +120,18 @@ fun DashboardScreen(
 
         // Data Breakdown Grid (Today's & Monthly Usage)
         item {
+            val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "DATA USAGE BREAKDOWN",
-                    color = TextSecondary,
+                    text = "تفاصيل استهلاك البيانات",
+                    color = glassStyle.textSecondary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
+                    letterSpacing = 0.5.sp
                 )
                 IconButton(
                     onClick = { viewModel.refreshAll() },
@@ -138,8 +139,8 @@ fun DashboardScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = "Refresh",
-                        tint = CyanPulse,
+                        contentDescription = "تحديث",
+                        tint = glassStyle.accentPrimary,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -165,19 +166,21 @@ fun DualSimSelector(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF0F1728))
-            .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(16.dp))
+            .background(glassStyle.cardBackground)
+            .border(1.dp, glassStyle.borderColor, RoundedCornerShape(16.dp))
             .padding(6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         simCards.forEachIndexed { index, sim ->
             val isSelected = (index == selectedIndex)
-            val bgColor = if (isSelected) CyanPulse.copy(alpha = 0.15f) else Color.Transparent
-            val borderColor = if (isSelected) CyanPulse.copy(alpha = 0.5f) else Color.Transparent
+            val bgColor = if (isSelected) glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f) else Color.Transparent
+            val borderColor = if (isSelected) glassStyle.accentPrimary.copy(alpha = 0.5f) else Color.Transparent
 
             Row(
                 modifier = Modifier
@@ -192,20 +195,20 @@ fun DualSimSelector(
                 Icon(
                     imageVector = Icons.Default.SimCard,
                     contentDescription = sim.displayName,
-                    tint = if (isSelected) CyanPulse else TextTertiary,
+                    tint = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Column {
                     Text(
                         text = sim.displayName,
-                        color = if (isSelected) TextPrimary else TextSecondary,
+                        color = if (isSelected) glassStyle.textPrimary else glassStyle.textSecondary,
                         fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
                     Text(
                         text = sim.carrierName,
-                        color = if (isSelected) CyanPulse else TextTertiary,
+                        color = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
                         fontSize = 10.sp
                     )
                 }
@@ -220,20 +223,22 @@ fun DataBreakdownGrid(
     onViewFullAnalytics: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             BreakdownMetricCard(
-                title = "Today Cellular",
+                title = "بيانات الجوال اليوم",
                 value = FormatUtils.formatBytes(usageSummary.mobileTodayBytes),
                 icon = Icons.Default.SignalCellularAlt,
-                tint = CyanPulse,
+                tint = glassStyle.accentPrimary,
                 modifier = Modifier.weight(1f)
             )
             BreakdownMetricCard(
-                title = "Today Wi-Fi",
+                title = "واي فاي اليوم",
                 value = FormatUtils.formatBytes(usageSummary.wifiTodayBytes),
                 icon = Icons.Default.Wifi,
                 tint = ElectricBlue,
@@ -246,17 +251,17 @@ fun DataBreakdownGrid(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             BreakdownMetricCard(
-                title = "Monthly Cellular",
+                title = "بيانات الجوال شهرياً",
                 value = FormatUtils.formatBytes(usageSummary.mobileMonthBytes),
                 icon = Icons.Default.CellTower,
-                tint = NeonPurple,
+                tint = glassStyle.accentSecondary,
                 modifier = Modifier.weight(1f)
             )
             BreakdownMetricCard(
-                title = "Monthly Wi-Fi",
+                title = "واي فاي شهرياً",
                 value = FormatUtils.formatBytes(usageSummary.wifiMonthBytes),
                 icon = Icons.Default.TrendingUp,
-                tint = CyanPulse,
+                tint = glassStyle.accentPrimary,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -266,7 +271,7 @@ fun DataBreakdownGrid(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { onViewFullAnalytics() },
-            borderColor = CyanPulse.copy(alpha = 0.3f)
+            borderColor = glassStyle.accentPrimary.copy(alpha = 0.35f)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -278,34 +283,34 @@ fun DataBreakdownGrid(
                         modifier = Modifier
                             .size(34.dp)
                             .clip(CircleShape)
-                            .background(CyanPulse.copy(alpha = 0.15f)),
+                            .background(glassStyle.accentPrimary.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.GraphicEq,
-                            contentDescription = "Analytics",
-                            tint = CyanPulse,
+                            contentDescription = "استهلاك التطبيقات",
+                            tint = glassStyle.accentPrimary,
                             modifier = Modifier.size(18.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "View App-by-App Analytics",
-                            color = TextPrimary,
+                            text = "استهلاك التطبيقات بالتفصيل",
+                            color = glassStyle.textPrimary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "See which apps consume your data",
-                            color = TextSecondary,
+                            text = "تعرّف على التطبيقات الأكثر استهلاكاً لبياناتك",
+                            color = glassStyle.textSecondary,
                             fontSize = 11.sp
                         )
                     }
                 }
                 Text(
-                    text = "Explore →",
-                    color = CyanPulse,
+                    text = "عرض التفاصيل ←",
+                    color = glassStyle.accentPrimary,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -322,11 +327,13 @@ fun BreakdownMetricCard(
     tint: Color,
     modifier: Modifier = Modifier
 ) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF0F1728))
-            .border(1.dp, tint.copy(alpha = 0.25f), RoundedCornerShape(16.dp))
+            .background(glassStyle.cardBackground)
+            .border(1.dp, if (glassStyle.isDark) tint.copy(alpha = 0.25f) else glassStyle.borderColor, RoundedCornerShape(16.dp))
             .padding(12.dp)
     ) {
         Column {
@@ -340,7 +347,7 @@ fun BreakdownMetricCard(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = title,
-                    color = TextSecondary,
+                    color = glassStyle.textSecondary,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -348,7 +355,7 @@ fun BreakdownMetricCard(
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = value,
-                color = TextPrimary,
+                color = glassStyle.textPrimary,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold
             )

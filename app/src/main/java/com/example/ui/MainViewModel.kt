@@ -66,7 +66,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         try {
             com.example.model.ThemeMode.valueOf(preferences.themeMode)
         } catch (_: Exception) {
-            com.example.model.ThemeMode.SYSTEM
+            com.example.model.ThemeMode.DARK
         }
     )
     val themeMode: StateFlow<com.example.model.ThemeMode> = _themeMode.asStateFlow()

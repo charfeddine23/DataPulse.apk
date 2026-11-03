@@ -65,6 +65,7 @@ fun SpeedMeterScreen(
     val speedSample by viewModel.speedSample.collectAsStateWithLifecycle()
     val speedHistory by viewModel.speedHistory.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
 
     Column(
         modifier = modifier
@@ -76,15 +77,15 @@ fun SpeedMeterScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Live Speed Telemetry",
-            color = TextPrimary,
+            text = "مقياس سرعة الاتصال المباشر",
+            color = glassStyle.textPrimary,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.fillMaxWidth()
         )
         Text(
-            text = "Real-time bandwidth throughput and network diagnostics",
-            color = TextSecondary,
+            text = "مراقبة فورية لمعدل نقل البيانات وتشخيص الشبكة",
+            color = glassStyle.textSecondary,
             fontSize = 12.sp,
             modifier = Modifier.fillMaxWidth()
         )
@@ -106,20 +107,20 @@ fun SpeedMeterScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SpeedTelemetryCard(
-                title = "CURRENT DOWNLOAD",
+                title = "سرعة التنزيل الحالية",
                 speed = speedSample.downloadFormatted,
-                peak = "Peak: ${FormatUtils.formatSpeed(speedSample.peakDownloadBps)}",
+                peak = "الذروة: ${FormatUtils.formatSpeed(speedSample.peakDownloadBps)}",
                 icon = Icons.Default.ArrowDownward,
-                accentColor = CyanPulse,
+                accentColor = glassStyle.accentPrimary,
                 modifier = Modifier.weight(1f)
             )
 
             SpeedTelemetryCard(
-                title = "CURRENT UPLOAD",
+                title = "سرعة الرفع الحالية",
                 speed = speedSample.uploadFormatted,
-                peak = "Peak: ${FormatUtils.formatSpeed(speedSample.peakUploadBps)}",
+                peak = "الذروة: ${FormatUtils.formatSpeed(speedSample.peakUploadBps)}",
                 icon = Icons.Default.ArrowUpward,
-                accentColor = NeonPurple,
+                accentColor = glassStyle.accentSecondary,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -130,11 +131,11 @@ fun SpeedMeterScreen(
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Text(
-                    text = "CONTINUOUS THROUGHPUT GRAPH",
-                    color = TextSecondary,
+                    text = "مخطط تدفق البيانات المستمر",
+                    color = glassStyle.textSecondary,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
+                    letterSpacing = 0.5.sp
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 SpeedSparkline(
@@ -149,19 +150,29 @@ fun SpeedMeterScreen(
         Spacer(modifier = Modifier.height(14.dp))
 
         // Network Diagnostics Glass Card
+        val connectionNameArabic = when (speedSample.connectionType) {
+            com.example.model.NetworkType.WIFI -> "واي فاي"
+            com.example.model.NetworkType.CELLULAR_5G -> "شبكة الجيل الخامس 5G"
+            com.example.model.NetworkType.CELLULAR_4G -> "شبكة الجيل الرابع 4G"
+            com.example.model.NetworkType.CELLULAR_3G -> "شبكة الجيل الثالث 3G"
+            com.example.model.NetworkType.CELLULAR_GENERIC -> "بيانات الجوال"
+            com.example.model.NetworkType.ETHERNET -> "إيثرنت"
+            com.example.model.NetworkType.OFFLINE -> "غير متصل"
+        }
+
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.NetworkCheck,
-                        contentDescription = "Diagnostics",
-                        tint = CyanPulse,
+                        contentDescription = "تشخيص الشبكة",
+                        tint = glassStyle.accentPrimary,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "NETWORK DIAGNOSTICS",
-                        color = TextPrimary,
+                        text = "تشخيص الشبكة والاتصال",
+                        color = glassStyle.textPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp
@@ -170,10 +181,10 @@ fun SpeedMeterScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                DiagnosticRow(label = "Active Interface", value = speedSample.connectionName)
-                DiagnosticRow(label = "Local IP Address", value = speedSample.ipAddress)
-                DiagnosticRow(label = "Estimated Latency", value = "${speedSample.pingMs} ms")
-                DiagnosticRow(label = "Connection State", value = speedSample.connectionType.name)
+                DiagnosticRow(label = "الواجهة النشطة", value = if (speedSample.connectionName == "Disconnected") "غير متصل" else speedSample.connectionName)
+                DiagnosticRow(label = "عنوان IP المحلي", value = if (speedSample.ipAddress == "Unknown") "غير متوفر" else speedSample.ipAddress)
+                DiagnosticRow(label = "زمن الاستجابة التقديري", value = "${speedSample.pingMs} مللي ثانية")
+                DiagnosticRow(label = "حالة الاتصال", value = connectionNameArabic)
             }
         }
 
@@ -187,6 +198,7 @@ fun SpeedometerDial(
     formattedSpeed: String,
     modifier: Modifier = Modifier
 ) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
     // 0 to 100 Mbps mapping
     val currentMbps = (currentSpeedBps / 1_000_000.0).toFloat().coerceIn(0f, 100f)
     val sweepFraction = (currentMbps / 100f).coerceIn(0.02f, 1f)
@@ -205,7 +217,7 @@ fun SpeedometerDial(
 
             // Background Track Arc (240 degrees, from 150 to 390)
             drawArc(
-                color = Color(0xFF131D30),
+                color = if (glassStyle.isDark) Color(0xFF131D30) else Color(0xFFE2E8F0),
                 startAngle = 150f,
                 sweepAngle = 240f,
                 useCenter = false,
@@ -218,9 +230,9 @@ fun SpeedometerDial(
             val activeSweep = 240f * animatedSweep
             drawArc(
                 brush = Brush.sweepGradient(
-                    0.4f to CyanPulse,
-                    0.8f to NeonPurple,
-                    1.0f to CyanPulse
+                    0.4f to glassStyle.accentPrimary,
+                    0.8f to glassStyle.accentSecondary,
+                    1.0f to glassStyle.accentPrimary
                 ),
                 startAngle = 150f,
                 sweepAngle = activeSweep,
@@ -237,7 +249,7 @@ fun SpeedometerDial(
             val cy = size.height / 2f + radius * sin(angleRad).toFloat()
 
             drawCircle(
-                color = Color.White,
+                color = if (glassStyle.isDark) Color.White else glassStyle.textPrimary,
                 radius = 6.dp.toPx(),
                 center = Offset(cx, cy)
             )
@@ -248,19 +260,19 @@ fun SpeedometerDial(
             Icon(
                 imageVector = Icons.Default.Speed,
                 contentDescription = null,
-                tint = CyanPulse,
+                tint = glassStyle.accentPrimary,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = formattedSpeed,
-                color = TextPrimary,
+                color = glassStyle.textPrimary,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.ExtraBold
             )
             Text(
-                text = "Live Bandwidth",
-                color = TextTertiary,
+                text = "معدل النقل اللحظي",
+                color = glassStyle.textTertiary,
                 fontSize = 11.sp
             )
         }
@@ -276,11 +288,17 @@ fun SpeedTelemetryCard(
     accentColor: Color,
     modifier: Modifier = Modifier
 ) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(18.dp))
-            .background(Color(0xFF0F1728))
-            .border(1.dp, accentColor.copy(alpha = 0.35f), RoundedCornerShape(18.dp))
+            .background(glassStyle.cardBackground)
+            .border(
+                1.dp,
+                if (glassStyle.isDark) accentColor.copy(alpha = 0.35f) else glassStyle.borderColor,
+                RoundedCornerShape(18.dp)
+            )
             .padding(14.dp)
     ) {
         Column {
@@ -302,7 +320,7 @@ fun SpeedTelemetryCard(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = title,
-                    color = TextSecondary,
+                    color = glassStyle.textSecondary,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -310,14 +328,14 @@ fun SpeedTelemetryCard(
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = speed,
-                color = TextPrimary,
+                color = glassStyle.textPrimary,
                 fontSize = 19.sp,
                 fontWeight = FontWeight.ExtraBold
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = peak,
-                color = TextTertiary,
+                color = glassStyle.textTertiary,
                 fontSize = 11.sp
             )
         }
@@ -326,6 +344,8 @@ fun SpeedTelemetryCard(
 
 @Composable
 fun DiagnosticRow(label: String, value: String) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -333,7 +353,7 @@ fun DiagnosticRow(label: String, value: String) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, color = TextSecondary, fontSize = 12.sp)
-        Text(text = value, color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        Text(text = label, color = glassStyle.textSecondary, fontSize = 12.sp)
+        Text(text = value, color = glassStyle.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
     }
 }
