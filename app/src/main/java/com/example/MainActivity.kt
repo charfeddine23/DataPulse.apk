@@ -45,7 +45,8 @@ class MainActivity : ComponentActivity() {
 
                 DataPulseApp(
                     viewModel = viewModel,
-                    onRequestUsagePermission = { openUsageAccessSettings() }
+                    onRequestUsagePermission = { openUsageAccessSettings() },
+                    onOpenAppInfo = { openAppInfoSettings() }
                 )
             }
         }
@@ -67,11 +68,22 @@ class MainActivity : ComponentActivity() {
             try {
                 startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
             } catch (_: Exception) {
-                // Fallback to application details settings
-                val appSettingsIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.parse("package:$packageName")
-                }
-                startActivity(appSettingsIntent)
+                openAppInfoSettings()
+            }
+        }
+    }
+
+    private fun openAppInfoSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", packageName, null)
+            }
+            startActivity(intent)
+        } catch (_: Exception) {
+            try {
+                startActivity(Intent(Settings.ACTION_SETTINGS))
+            } catch (_: Exception) {
+                // Ignore fallback
             }
         }
     }

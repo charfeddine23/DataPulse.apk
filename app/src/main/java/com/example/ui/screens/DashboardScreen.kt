@@ -60,6 +60,7 @@ import com.example.ui.theme.TextTertiary
 fun DashboardScreen(
     viewModel: MainViewModel,
     onRequestUsagePermission: () -> Unit,
+    onOpenAppInfo: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToAnalytics: () -> Unit,
     modifier: Modifier = Modifier
@@ -86,7 +87,10 @@ fun DashboardScreen(
         // Usage Permission Warning if not granted
         if (!hasUsagePerm) {
             item {
-                UsagePermissionCard(onRequestPermission = onRequestUsagePermission)
+                UsagePermissionCard(
+                    onRequestPermission = onRequestUsagePermission,
+                    onOpenAppInfo = onOpenAppInfo
+                )
             }
         }
 

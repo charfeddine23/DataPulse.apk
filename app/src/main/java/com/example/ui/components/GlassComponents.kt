@@ -1,5 +1,6 @@
 package com.example.ui.components
 
+import android.os.Build
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -25,19 +26,35 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SignalCellularAlt
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -48,54 +65,84 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.model.LiveSpeedSample
 import com.example.model.NetworkType
 import com.example.model.QuotaStatus
 import com.example.ui.theme.AmberAlert
 import com.example.ui.theme.CyanPulse
+import com.example.ui.theme.DeepObsidian
 import com.example.ui.theme.ElectricBlue
 import com.example.ui.theme.EmeraldSafe
+import com.example.ui.theme.GlassBorderSubtle
+import com.example.ui.theme.GlassRimHighlight
+import com.example.ui.theme.GlassSurfaceDark
+import com.example.ui.theme.LiquidGradients
 import com.example.ui.theme.NeonPurple
 import com.example.ui.theme.RedAlert
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.TextTertiary
 
+/**
+ * Liquid Glass Container with multi-layered blur, frosted backdrops,
+ * semi-transparent scrims, and shimmering gradient rim highlights.
+ */
 @Composable
 fun GlassContainer(
     modifier: Modifier = Modifier,
     shape: RoundedCornerShape = RoundedCornerShape(22.dp),
-    backgroundColor: Color = Color(0xCC111B2E),
+    backgroundColor: Color = GlassSurfaceDark,
     borderColor: Color = Color(0x334FD1C5),
+    enableBlur: Boolean = true,
     content: @Composable () -> Unit
 ) {
     Box(
         modifier = modifier
             .clip(shape)
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        backgroundColor,
-                        backgroundColor.copy(alpha = 0.85f)
+    ) {
+        // Frosted Blur Layer (Simulated / Hardware Accelerated on Android 12+)
+        if (enableBlur && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .blur(16.dp)
+                    .background(Color(0x550B1222))
+            )
+        }
+
+        // Semi-transparent Backdrop Gradient & Rim Highlight
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            backgroundColor,
+                            backgroundColor.copy(alpha = 0.82f)
+                        )
                     )
                 )
-            )
-            .border(
-                width = 1.dp,
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        borderColor,
-                        borderColor.copy(alpha = 0.1f),
-                        borderColor.copy(alpha = 0.35f)
-                    )
-                ),
-                shape = shape
-            )
-            .padding(16.dp)
-    ) {
-        content()
+                .border(
+                    width = 1.dp,
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            borderColor,
+                            GlassRimHighlight.copy(alpha = 0.15f),
+                            borderColor.copy(alpha = 0.35f)
+                        )
+                    ),
+                    shape = shape
+                )
+        )
+
+        // Card Content
+        Box(modifier = Modifier.padding(16.dp)) {
+            content()
+        }
     }
 }
 
@@ -245,7 +292,7 @@ fun LiveSpeedCard(
 ) {
     GlassContainer(
         modifier = modifier.fillMaxWidth(),
-        borderColor = CyanPulse.copy(alpha = 0.4f)
+        borderColor = CyanPulse.copy(alpha = 0.45f)
     ) {
         Column {
             Row(
@@ -479,7 +526,7 @@ fun QuotaProgressGauge(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     )
-                    if (status == QuotaStatus.WARNING || status == QuotaStatus.CRITICAL || status == QuotaStatus.EXCEEDED) {
+                    if (status != QuotaStatus.SAFE) {
                         Spacer(modifier = Modifier.width(6.dp))
                         Icon(
                             imageVector = Icons.Default.WarningAmber,
@@ -584,11 +631,17 @@ fun QuotaProgressGauge(
     }
 }
 
+/**
+ * Usage Permission Card with Privacy Transparency and Android 13+ Restricted Settings Guide.
+ */
 @Composable
 fun UsagePermissionCard(
     onRequestPermission: () -> Unit,
+    onOpenAppInfo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showRestrictedDialog by remember { mutableStateOf(false) }
+
     GlassContainer(
         modifier = modifier.fillMaxWidth(),
         borderColor = AmberAlert.copy(alpha = 0.6f)
@@ -596,14 +649,14 @@ fun UsagePermissionCard(
         Column(horizontalAlignment = Alignment.Start) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Default.WarningAmber,
+                    imageVector = Icons.Default.Security,
                     contentDescription = "Usage Permission Needed",
                     tint = AmberAlert,
                     modifier = Modifier.size(22.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Usage Access Required",
+                    text = "Usage Access Required (Local Only)",
                     color = TextPrimary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
@@ -612,28 +665,279 @@ fun UsagePermissionCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
+            // Privacy guarantee
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.VerifiedUser,
+                    contentDescription = "Privacy Verified",
+                    tint = EmeraldSafe,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "100% On-Device & Private. Zero data collected or shared.",
+                    color = EmeraldSafe,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
             Text(
-                text = "To track per-app data usage and historical monthly statistics accurately via Android NetworkStats, please grant Usage Access permission in system settings.",
+                text = "Data Pulse requires Usage Access to read historical Wi-Fi and Cellular statistics via Android's NetworkStatsManager. No personal information or network payloads are ever accessed or transmitted.",
                 color = TextSecondary,
                 fontSize = 12.sp,
                 lineHeight = 17.sp
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            Button(
-                onClick = onRequestPermission,
-                colors = ButtonDefaults.buttonColors(containerColor = AmberAlert),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.testTag("grant_usage_permission_button")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = "Grant Usage Access in Settings",
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp
-                )
+                Button(
+                    onClick = onRequestPermission,
+                    colors = ButtonDefaults.buttonColors(containerColor = AmberAlert),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("grant_usage_permission_button")
+                ) {
+                    Text(
+                        text = "Grant Usage Access",
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
+
+                // Android 13+ Restricted Settings Helper
+                OutlinedButton(
+                    onClick = { showRestrictedDialog = true },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = CyanPulse
+                    ),
+                    border = ButtonDefaults.outlinedButtonBorder.copy(
+                        brush = Brush.horizontalGradient(listOf(CyanPulse, NeonPurple))
+                    ),
+                    modifier = Modifier.testTag("restricted_settings_help_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.HelpOutline,
+                        contentDescription = "Help",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Restricted?",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
+        }
+    }
+
+    if (showRestrictedDialog) {
+        RestrictedSettingsGuideDialog(
+            onDismiss = { showRestrictedDialog = false },
+            onOpenAppInfo = onOpenAppInfo,
+            onOpenUsageSettings = onRequestPermission
+        )
+    }
+}
+
+/**
+ * Interactive Dialog explaining Android 13+ "Restricted Settings" (Sideload Protection).
+ */
+@Composable
+fun RestrictedSettingsGuideDialog(
+    onDismiss: () -> Unit,
+    onOpenAppInfo: () -> Unit,
+    onOpenUsageSettings: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color(0xFF0F1728))
+                .border(
+                    1.dp,
+                    Brush.linearGradient(listOf(CyanPulse, NeonPurple)),
+                    RoundedCornerShape(24.dp)
+                )
+                .padding(20.dp)
+        ) {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(AmberAlert.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LockOpen,
+                                contentDescription = null,
+                                tint = AmberAlert,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "Restricted Setting Guide",
+                            color = TextPrimary,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
+                        Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = TextTertiary)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "If Android 13+ displays 'Restricted setting - For your security, this setting is currently unavailable', follow these 3 quick steps:",
+                    color = TextSecondary,
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Step 1
+                GuideStepItem(
+                    stepNumber = "1",
+                    title = "Open App Info",
+                    description = "Tap 'Open App Info' below to navigate to Data Pulse's system page."
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Step 2
+                GuideStepItem(
+                    stepNumber = "2",
+                    title = "Allow Restricted Settings",
+                    description = "Tap the 3-dots menu (⋮) in the top-right corner, select 'Allow restricted settings', and authenticate."
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Step 3
+                GuideStepItem(
+                    stepNumber = "3",
+                    title = "Enable Usage Access",
+                    description = "Return here and tap 'Open Usage Access' to switch Data Pulse ON."
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Action Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            onOpenAppInfo()
+                            onDismiss()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = CyanPulse),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.OpenInNew,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "1. App Info",
+                            color = Color.Black,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            onOpenUsageSettings()
+                            onDismiss()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E293B)),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = "2. Usage Access",
+                            color = CyanPulse,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun GuideStepItem(
+    stepNumber: String,
+    title: String,
+    description: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF131D30))
+            .padding(10.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .clip(CircleShape)
+                .background(CyanPulse),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stepNumber,
+                color = Color.Black,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Column {
+            Text(
+                text = title,
+                color = TextPrimary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = description,
+                color = TextTertiary,
+                fontSize = 11.sp,
+                lineHeight = 15.sp
+            )
         }
     }
 }

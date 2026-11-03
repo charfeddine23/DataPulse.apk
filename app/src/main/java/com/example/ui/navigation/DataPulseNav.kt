@@ -60,6 +60,7 @@ enum class NavDestination(val label: String, val icon: ImageVector, val tag: Str
 fun DataPulseApp(
     viewModel: MainViewModel,
     onRequestUsagePermission: () -> Unit,
+    onOpenAppInfo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var currentDestination by remember { mutableStateOf(NavDestination.DASHBOARD) }
@@ -84,19 +85,22 @@ fun DataPulseApp(
                     NavDestination.DASHBOARD -> DashboardScreen(
                         viewModel = viewModel,
                         onRequestUsagePermission = onRequestUsagePermission,
+                        onOpenAppInfo = onOpenAppInfo,
                         onNavigateToSettings = { currentDestination = NavDestination.SETTINGS },
                         onNavigateToAnalytics = { currentDestination = NavDestination.ANALYTICS }
                     )
                     NavDestination.ANALYTICS -> AnalyticsScreen(
                         viewModel = viewModel,
-                        onRequestUsagePermission = onRequestUsagePermission
+                        onRequestUsagePermission = onRequestUsagePermission,
+                        onOpenAppInfo = onOpenAppInfo
                     )
                     NavDestination.SPEED -> SpeedMeterScreen(
                         viewModel = viewModel
                     )
                     NavDestination.SETTINGS -> SettingsScreen(
                         viewModel = viewModel,
-                        onRequestUsagePermission = onRequestUsagePermission
+                        onRequestUsagePermission = onRequestUsagePermission,
+                        onOpenAppInfo = onOpenAppInfo
                     )
                 }
             }

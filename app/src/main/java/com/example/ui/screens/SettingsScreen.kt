@@ -43,6 +43,9 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,6 +71,7 @@ import com.example.ui.theme.TextTertiary
 fun SettingsScreen(
     viewModel: MainViewModel,
     onRequestUsagePermission: () -> Unit,
+    onOpenAppInfo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val quota by viewModel.dataPlanQuota.collectAsStateWithLifecycle()
@@ -377,13 +381,15 @@ fun SettingsScreen(
                     }
 
                     if (!hasUsagePerm) {
-                        Button(
-                            onClick = onRequestUsagePermission,
-                            colors = ButtonDefaults.buttonColors(containerColor = AmberAlert),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.testTag("settings_grant_permission_button")
-                        ) {
-                            Text("Grant", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Button(
+                                onClick = onRequestUsagePermission,
+                                colors = ButtonDefaults.buttonColors(containerColor = AmberAlert),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.testTag("settings_grant_permission_button")
+                            ) {
+                                Text("Grant", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            }
                         }
                     } else {
                         Icon(
@@ -391,6 +397,43 @@ fun SettingsScreen(
                             contentDescription = "Granted",
                             tint = CyanPulse,
                             modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+
+                if (!hasUsagePerm) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    var showGuide by remember { mutableStateOf(false) }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xFF131D30))
+                            .clickable { showGuide = true }
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Setting disabled or restricted on Android 13+?",
+                            color = CyanPulse,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "View Guide →",
+                            color = CyanPulse,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    if (showGuide) {
+                        com.example.ui.components.RestrictedSettingsGuideDialog(
+                            onDismiss = { showGuide = false },
+                            onOpenAppInfo = onOpenAppInfo,
+                            onOpenUsageSettings = onRequestUsagePermission
                         )
                     }
                 }

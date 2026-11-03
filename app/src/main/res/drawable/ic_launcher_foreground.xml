@@ -4,51 +4,51 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Center pulse waveform: Cyan Neon (#00F5D4) -->
+    <!--
+      Data Pulse Minimalist & Professional Adaptive Launcher Icon
+      Transparent background, high contrast, speed-pulse motif
+    -->
+
+    <!-- Speed Stream & Data Waveform (Cyan Neon #00F5D4 & Electric Blue #00B4D8) -->
     <path
-        android:pathData="M24,56 L38,56 L44,40 L50,68 L56,32 L63,62 L70,52 L84,52"
+        android:pathData="M26,54 L38,54 L44,38 L50,68 L56,28 L62,62 L68,46 L76,54 L82,54"
         android:strokeWidth="5"
         android:strokeColor="#00F5D4"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 
-    <!-- Pulse Peak Data Node -->
+    <!-- Pulse Peak Data Node (Cyan Pulse) -->
     <path
         android:fillColor="#00F5D4"
-        android:pathData="M56,32m-4,0a4,4 0,1,1 8,0a4,4 0,1,1 -8,0" />
+        android:pathData="M56,28m-4,0a4,4 0,1,1 8,0a4,4 0,1,1 -8,0" />
 
-    <!-- Data Signal / Cellular Bars (Electric Violet #A855F7 and #00F5D4) -->
+    <!-- Forward Velocity / Speed Chevron (Neon Purple #A855F7) -->
     <path
-        android:pathData="M40,78 L40,74"
+        android:pathData="M70,38 L80,48 L70,58"
         android:strokeWidth="4"
-        android:strokeColor="#475569"
-        android:strokeLineCap="round" />
-    <path
-        android:pathData="M48,78 L48,70"
-        android:strokeWidth="4"
-        android:strokeColor="#8B5CF6"
-        android:strokeLineCap="round" />
-    <path
-        android:pathData="M56,78 L56,66"
-        android:strokeWidth="4"
-        android:strokeColor="#A855F7"
-        android:strokeLineCap="round" />
-    <path
-        android:pathData="M64,78 L64,62"
-        android:strokeWidth="4"
-        android:strokeColor="#00F5D4"
-        android:strokeLineCap="round" />
-
-    <!-- Speed Flow Arrows / Pulse Accents at top -->
-    <path
-        android:pathData="M74,38 L80,38 L80,44"
-        android:strokeWidth="3.5"
         android:strokeColor="#A855F7"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
+
+    <!-- Minimalist Cellular Bandwidth Tiers (Base Signal) -->
     <path
-        android:pathData="M80,38 L72,46"
+        android:pathData="M42,76 L42,72"
+        android:strokeWidth="3.5"
+        android:strokeColor="#64748B"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M50,76 L50,68"
+        android:strokeWidth="3.5"
+        android:strokeColor="#00B4D8"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M58,76 L58,64"
         android:strokeWidth="3.5"
         android:strokeColor="#A855F7"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M66,76 L66,60"
+        android:strokeWidth="3.5"
+        android:strokeColor="#00F5D4"
         android:strokeLineCap="round" />
 </vector>

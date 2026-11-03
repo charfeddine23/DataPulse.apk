@@ -1,14 +1,17 @@
 package com.example.ui.theme
 
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
-// Liquid Glass Dark Mode Color Palette
-val VoidBlack = Color(0xFF070B12)
-val DeepObsidian = Color(0xFF0B111E)
-val GlassSurfaceDark = Color(0xCC111B2E)
-val GlassSurfaceLight = Color(0x8018263E)
-val GlassCardBorder = Color(0x3364B5F6)
-val GlassBorderSubtle = Color(0x22FFFFFF)
+// Liquid Glass Palette
+val VoidBlack = Color(0xFF06090F)
+val DeepObsidian = Color(0xFF0A0F1D)
+val GlassSurfaceDark = Color(0xD90E1628)      // ~85% opacity
+val GlassSurfaceTranslucent = Color(0x99131F37) // ~60% opacity
+val GlassSurfaceUltraLight = Color(0x33FFFFFF)  // Frosted sheen
+val GlassCardBorder = Color(0x334FD1C5)
+val GlassBorderSubtle = Color(0x1FFFFFFF)
+val GlassRimHighlight = Color(0x55FFFFFF)
 
 // Accents & Neons
 val CyanPulse = Color(0xFF00F5D4)
@@ -35,6 +38,36 @@ val BackgroundDark = DeepObsidian
 val OnBackgroundDark = TextPrimary
 val SurfaceDark = GlassSurfaceDark
 val OnSurfaceDark = TextPrimary
-val SurfaceVariantDark = Color(0xFF1A263B)
+val SurfaceVariantDark = Color(0xFF131D31)
 val OnSurfaceVariantDark = TextSecondary
 val OutlineDark = Color(0x4094A3B8)
+
+// Liquid Glass Gradients
+object LiquidGradients {
+    val glassCardBackdrop = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xEE121C30),
+            Color(0xCC0C1424)
+        )
+    )
+
+    val glassRimLight = Brush.linearGradient(
+        colors = listOf(
+            Color(0x4D00F5D4),
+            Color(0x1AFFFFFF),
+            Color(0x4DA855F7)
+        )
+    )
+
+    val subtleBorder = Brush.linearGradient(
+        colors = listOf(
+            Color(0x33FFFFFF),
+            Color(0x0DFFFFFF),
+            Color(0x264FD1C5)
+        )
+    )
+
+    val cyanToViolet = Brush.horizontalGradient(
+        colors = listOf(CyanPulse, ElectricBlue, NeonPurple)
+    )
+}

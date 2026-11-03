@@ -67,6 +67,7 @@ import com.example.ui.theme.TextTertiary
 fun AnalyticsScreen(
     viewModel: MainViewModel,
     onRequestUsagePermission: () -> Unit,
+    onOpenAppInfo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val apps by viewModel.filteredAppUsage.collectAsStateWithLifecycle()
@@ -156,7 +157,10 @@ fun AnalyticsScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         if (!hasUsagePerm) {
-            UsagePermissionCard(onRequestPermission = onRequestUsagePermission)
+            UsagePermissionCard(
+                onRequestPermission = onRequestUsagePermission,
+                onOpenAppInfo = onOpenAppInfo
+            )
             Spacer(modifier = Modifier.height(12.dp))
         }
 
