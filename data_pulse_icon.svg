@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108" fill="none">
+    <!-- Data Pulse Minimalist & Professional Vector Icon with Transparent Background -->
+    
+    <!-- Speed Stream & Data Pulse Waveform (Cyan Neon #00F5D4) -->
+    <path d="M26 54 L38 54 L44 38 L50 68 L56 28 L62 62 L68 46 L76 54 L82 54" 
+          stroke="#00F5D4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          
+    <!-- Pulse Peak Data Node -->
+    <circle cx="56" cy="28" r="4" fill="#00F5D4"/>
+    
+    <!-- Forward Velocity / Speed Chevron (Neon Purple #A855F7) -->
+    <path d="M70 38 L80 48 L70 58" 
+          stroke="#A855F7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          
+    <!-- Minimalist Cellular Bandwidth Tiers -->
+    <line x1="42" y1="76" x2="42" y2="72" stroke="#64748B" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="50" y1="76" x2="50" y2="68" stroke="#00B4D8" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="58" y1="76" x2="58" y2="64" stroke="#A855F7" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="66" y1="76" x2="66" y2="60" stroke="#00F5D4" stroke-width="3.5" stroke-linecap="round"/>
+</svg>

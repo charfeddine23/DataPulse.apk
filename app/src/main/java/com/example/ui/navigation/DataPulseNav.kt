@@ -67,7 +67,7 @@ fun DataPulseApp(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Color(0xFF090D16),
+        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
         bottomBar = {
             LiquidGlassBottomNav(
                 currentDestination = currentDestination,
@@ -114,29 +114,18 @@ fun LiquidGlassBottomNav(
     onSelectDestination: (NavDestination) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xEE111A2C),
-                        Color(0xF50D1422)
-                    )
-                )
-            )
+            .background(brush = glassStyle.backdropBrush)
             .border(
                 1.dp,
-                Brush.linearGradient(
-                    colors = listOf(
-                        CyanPulse.copy(alpha = 0.35f),
-                        Color(0x15FFFFFF),
-                        CyanPulse.copy(alpha = 0.2f)
-                    )
-                ),
+                glassStyle.rimLightBrush,
                 RoundedCornerShape(24.dp)
             )
             .padding(horizontal = 10.dp, vertical = 6.dp)

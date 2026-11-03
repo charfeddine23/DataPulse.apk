@@ -13,6 +13,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.MainViewModel
 import com.example.ui.navigation.DataPulseApp
 import com.example.ui.theme.MyApplicationTheme
@@ -26,7 +28,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            MyApplicationTheme {
+            val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+            MyApplicationTheme(themeMode = themeMode) {
                 // Request Phone State (for Dual SIM carrier resolution) & Notification permissions
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestMultiplePermissions()

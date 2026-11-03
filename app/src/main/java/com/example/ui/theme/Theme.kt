@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import com.example.model.ThemeMode
 
 @Immutable
 data class LiquidGlassStyle(
@@ -53,9 +54,9 @@ private val DarkColorScheme = darkColorScheme(
     tertiary = TertiaryDark,
     onTertiary = OnTertiaryDark,
     background = BackgroundDark,
-    onBackground = OnBackgroundDark,
+    onBackground = TextPrimary,
     surface = SurfaceDark,
-    onSurface = OnSurfaceDark,
+    onSurface = TextPrimary,
     surfaceVariant = SurfaceVariantDark,
     onSurfaceVariant = OnSurfaceVariantDark,
     outline = OutlineDark,
@@ -64,49 +65,76 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF00897B),
+    primary = Color(0xFF0D9488),
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFB2DFDB),
-    onPrimaryContainer = Color(0xFF004D40),
-    secondary = Color(0xFF7E57C2),
+    primaryContainer = Color(0xFFCCFBF1),
+    onPrimaryContainer = Color(0xFF115E59),
+    secondary = Color(0xFF7C3AED),
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFEDE7F6),
-    onSecondaryContainer = Color(0xFF311B92),
-    tertiary = Color(0xFF0288D1),
+    secondaryContainer = Color(0xFFEDE9FE),
+    onSecondaryContainer = Color(0xFF4C1D95),
+    tertiary = Color(0xFF0284C7),
     onTertiary = Color.White,
-    background = Color(0xFF0B111E), // Preserved dark glass backdrop for futuristic pulse
-    onBackground = TextPrimary,
-    surface = GlassSurfaceDark,
-    onSurface = TextPrimary,
-    outline = OutlineDark
+    background = Color(0xFFF1F5F9),
+    onBackground = Color(0xFF0F172A),
+    surface = Color(0xFFFFFFFF),
+    onSurface = Color(0xFF0F172A),
+    surfaceVariant = Color(0xFFE2E8F0),
+    onSurfaceVariant = Color(0xFF475569),
+    outline = Color(0xFFCBD5E1),
+    error = RedAlert,
+    onError = Color.White
 )
 
 @Composable
 fun MyApplicationTheme(
-    darkTheme: Boolean = true, // Default to futuristic dark mode with liquid glass aesthetic
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val systemInDark = isSystemInDarkTheme()
+    val isDark = when (themeMode) {
+        ThemeMode.SYSTEM -> systemInDark
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
 
-    val liquidGlassStyle = LiquidGlassStyle(
-        surfaceColor = if (darkTheme) GlassSurfaceDark else Color(0xE6141F36),
-        surfaceTranslucent = GlassSurfaceTranslucent,
-        borderColor = if (darkTheme) GlassCardBorder else Color(0x3300F5D4),
-        rimLightBrush = LiquidGradients.glassRimLight,
-        backdropBrush = LiquidGradients.glassCardBackdrop,
-        blurRadius = 16.dp,
-        glowColor = CyanPulse
-    )
+    val colorScheme = if (isDark) DarkColorScheme else LightColorScheme
+
+    val liquidGlassStyle = if (isDark) {
+        LiquidGlassStyle(
+            surfaceColor = GlassSurfaceDark,
+            surfaceTranslucent = GlassSurfaceTranslucent,
+            borderColor = GlassCardBorder,
+            rimLightBrush = LiquidGradients.glassRimLight,
+            backdropBrush = LiquidGradients.glassCardBackdrop,
+            blurRadius = 16.dp,
+            glowColor = CyanPulse
+        )
+    } else {
+        LiquidGlassStyle(
+            surfaceColor = Color(0xF0FFFFFF),
+            surfaceTranslucent = Color(0xD0F8FAFC),
+            borderColor = Color(0x330D9488),
+            rimLightBrush = Brush.linearGradient(
+                listOf(Color(0x660D9488), Color(0x33FFFFFF), Color(0x667C3AED))
+            ),
+            backdropBrush = Brush.verticalGradient(
+                listOf(Color(0xFFFFFFFF), Color(0xF2F1F5F9))
+            ),
+            blurRadius = 16.dp,
+            glowColor = Color(0xFF0D9488)
+        )
+    }
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window
             if (window != null) {
-                window.statusBarColor = DeepObsidian.toArgb()
-                window.navigationBarColor = VoidBlack.toArgb()
-                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
-                WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
+                window.statusBarColor = if (isDark) DeepObsidian.toArgb() else Color(0xFFF1F5F9).toArgb()
+                window.navigationBarColor = if (isDark) VoidBlack.toArgb() else Color(0xFFE2E8F0).toArgb()
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
+                WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !isDark
             }
         }
     }

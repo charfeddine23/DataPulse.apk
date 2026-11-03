@@ -62,6 +62,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _hasUsagePermission = MutableStateFlow(repository.hasUsageStatsPermission())
     val hasUsagePermission: StateFlow<Boolean> = _hasUsagePermission.asStateFlow()
 
+    private val _themeMode = MutableStateFlow(
+        try {
+            com.example.model.ThemeMode.valueOf(preferences.themeMode)
+        } catch (_: Exception) {
+            com.example.model.ThemeMode.SYSTEM
+        }
+    )
+    val themeMode: StateFlow<com.example.model.ThemeMode> = _themeMode.asStateFlow()
+
+    private val _powerSavingMode = MutableStateFlow(preferences.powerSavingMode)
+    val powerSavingMode: StateFlow<Boolean> = _powerSavingMode.asStateFlow()
+
     // Filtered app usage list based on interface & search
     val filteredAppUsage: StateFlow<List<AppUsageItem>> = combine(
         _rawAppUsageList,
@@ -89,6 +101,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
+        speedMonitor.setPowerSaving(preferences.powerSavingMode)
         loadSimCards()
         refreshAll()
     }
@@ -182,8 +195,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updatePlanLimit(limitGB: Float) {
-        preferences.planLimitGB = limitGB.coerceAtLeast(0.5f)
+        preferences.planLimitGB = limitGB.coerceIn(0.1f, 10000f)
         computeQuota(_usageSummary.value.mobileMonthBytes)
+    }
+
+    fun setThemeMode(mode: com.example.model.ThemeMode) {
+        preferences.themeMode = mode.name
+        _themeMode.value = mode
     }
 
     fun updateBillingCycleDay(day: Int) {
@@ -199,5 +217,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleAlert95(enabled: Boolean) {
         preferences.alert95Enabled = enabled
         _dataPlanQuota.value = _dataPlanQuota.value.copy(alertThreshold95 = enabled)
+    }
+
+    fun togglePowerSavingMode(enabled: Boolean) {
+        preferences.powerSavingMode = enabled
+        _powerSavingMode.value = enabled
+        speedMonitor.setPowerSaving(enabled)
     }
 }

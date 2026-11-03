@@ -20,6 +20,12 @@ enum class QuotaStatus {
     EXCEEDED    // >= 100%
 }
 
+enum class ThemeMode(val title: String) {
+    SYSTEM("Follow System"),
+    LIGHT("Light Mode"),
+    DARK("Dark Mode")
+}
+
 enum class TimeRange(val displayName: String) {
     TODAY("Today"),
     WEEK("This Week"),

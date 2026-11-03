@@ -115,6 +115,20 @@ class LiveSpeedMonitor(private val context: Context, private val scope: Coroutin
         }
     }
 
+    var isPowerSavingMode: Boolean = false
+        private set
+
+    val currentPollingIntervalMs: Long
+        get() = if (isPowerSavingMode) 3000L else 1000L
+
+    fun setPowerSaving(enabled: Boolean) {
+        if (isPowerSavingMode != enabled) {
+            isPowerSavingMode = enabled
+            stopMonitoring()
+            startMonitoring()
+        }
+    }
+
     fun startMonitoring() {
         if (monitoringJob != null) return
         lastRxBytes = TrafficStats.getTotalRxBytes()
@@ -123,7 +137,7 @@ class LiveSpeedMonitor(private val context: Context, private val scope: Coroutin
 
         monitoringJob = scope.launch(Dispatchers.Default) {
             while (isActive) {
-                delay(1000L)
+                delay(currentPollingIntervalMs)
                 measureSpeed()
             }
         }

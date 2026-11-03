@@ -105,14 +105,6 @@ fun DashboardScreen(
             }
         }
 
-        // Live Speed Meter (Real-time download/upload with animated wave)
-        item {
-            LiveSpeedCard(
-                speedSample = speedSample,
-                speedHistory = speedHistory
-            )
-        }
-
         // Monthly Quota & Smart Alerts Card
         item {
             val limitBytes = (quota.planLimitGB * 1024L * 1024L * 1024L).toLong()
