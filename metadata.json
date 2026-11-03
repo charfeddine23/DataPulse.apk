@@ -1,0 +1,6 @@
+{
+  "name": "Data Pulse",
+  "description": "Modern network data tracking & live speed meter with liquid glass aesthetics, per-app analytics, dual SIM support, and smart quota alerts. Developed by Charfeddine Ka.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

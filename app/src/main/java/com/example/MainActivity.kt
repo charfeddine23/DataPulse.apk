@@ -1,0 +1,78 @@
+package com.example
+
+import android.Manifest
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.provider.Settings
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
+import com.example.ui.MainViewModel
+import com.example.ui.navigation.DataPulseApp
+import com.example.ui.theme.MyApplicationTheme
+
+class MainActivity : ComponentActivity() {
+
+    private val viewModel: MainViewModel by viewModels()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        setContent {
+            MyApplicationTheme {
+                // Request Phone State (for Dual SIM carrier resolution) & Notification permissions
+                val permissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestMultiplePermissions()
+                ) {
+                    viewModel.loadSimCards()
+                }
+
+                LaunchedEffect(Unit) {
+                    val permissionsToRequest = mutableListOf<String>()
+                    permissionsToRequest.add(Manifest.permission.READ_PHONE_STATE)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                    permissionLauncher.launch(permissionsToRequest.toTypedArray())
+                }
+
+                DataPulseApp(
+                    viewModel = viewModel,
+                    onRequestUsagePermission = { openUsageAccessSettings() }
+                )
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh stats automatically when returning from Settings or background
+        viewModel.refreshAll()
+    }
+
+    private fun openUsageAccessSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                data = Uri.parse("package:$packageName")
+            }
+            startActivity(intent)
+        } catch (_: Exception) {
+            try {
+                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+            } catch (_: Exception) {
+                // Fallback to application details settings
+                val appSettingsIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:$packageName")
+                }
+                startActivity(appSettingsIntent)
+            }
+        }
+    }
+}
