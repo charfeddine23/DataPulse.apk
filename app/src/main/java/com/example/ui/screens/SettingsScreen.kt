@@ -88,7 +88,7 @@ fun SettingsScreen(
 ) {
     val quota by viewModel.dataPlanQuota.collectAsStateWithLifecycle()
     val hasUsagePerm by viewModel.hasUsagePermission.collectAsStateWithLifecycle()
-    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val appThemeMode by viewModel.appThemeMode.collectAsStateWithLifecycle()
     val powerSavingMode by viewModel.powerSavingMode.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
@@ -170,7 +170,7 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 2. Theme Selection Card (Light Mode, Dark Mode, Follow System)
+        // 2. Comprehensive Liquid Glass Theme Engine (3 Themes)
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -182,7 +182,7 @@ fun SettingsScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = AppStrings.themeSection(appLanguage),
+                        text = if (appLanguage == AppLanguage.ARABIC) "محرك المظهر والألوان (Liquid Glass)" else "Theme Engine (Liquid Glass)",
                         color = glassStyle.textPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -196,30 +196,33 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    // 1. LIQUID_GLASS_DEFAULT
                     ThemeOptionButton(
-                        title = AppStrings.themeSystem(appLanguage),
-                        subtitle = AppStrings.themeSystemSub(appLanguage),
-                        icon = Icons.Default.BrightnessAuto,
-                        isSelected = themeMode == ThemeMode.SYSTEM,
-                        onClick = { viewModel.setThemeMode(ThemeMode.SYSTEM) },
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    ThemeOptionButton(
-                        title = AppStrings.themeLight(appLanguage),
-                        subtitle = AppStrings.themeLightSub(appLanguage),
-                        icon = Icons.Default.LightMode,
-                        isSelected = themeMode == ThemeMode.LIGHT,
-                        onClick = { viewModel.setThemeMode(ThemeMode.LIGHT) },
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    ThemeOptionButton(
-                        title = AppStrings.themeDark(appLanguage),
-                        subtitle = AppStrings.themeDarkSub(appLanguage),
+                        title = com.example.model.AppThemeMode.LIQUID_GLASS_DEFAULT.getDisplayName(appLanguage),
+                        subtitle = if (appLanguage == AppLanguage.ARABIC) "أزرق وبنفسجي" else "Blue & Violet",
                         icon = Icons.Default.DarkMode,
-                        isSelected = themeMode == ThemeMode.DARK,
-                        onClick = { viewModel.setThemeMode(ThemeMode.DARK) },
+                        isSelected = appThemeMode == com.example.model.AppThemeMode.LIQUID_GLASS_DEFAULT,
+                        onClick = { viewModel.setAppThemeMode(com.example.model.AppThemeMode.LIQUID_GLASS_DEFAULT) },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // 2. LIQUID_NEON_CYAN
+                    ThemeOptionButton(
+                        title = com.example.model.AppThemeMode.LIQUID_NEON_CYAN.getDisplayName(appLanguage),
+                        subtitle = if (appLanguage == AppLanguage.ARABIC) "سيان وزمردي" else "Cyan & Teal",
+                        icon = Icons.Default.BrightnessAuto,
+                        isSelected = appThemeMode == com.example.model.AppThemeMode.LIQUID_NEON_CYAN,
+                        onClick = { viewModel.setAppThemeMode(com.example.model.AppThemeMode.LIQUID_NEON_CYAN) },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // 3. AMOLED_PITCH_BLACK
+                    ThemeOptionButton(
+                        title = com.example.model.AppThemeMode.AMOLED_PITCH_BLACK.getDisplayName(appLanguage),
+                        subtitle = if (appLanguage == AppLanguage.ARABIC) "توفير بطارية" else "#000000 OLED",
+                        icon = Icons.Default.Eco,
+                        isSelected = appThemeMode == com.example.model.AppThemeMode.AMOLED_PITCH_BLACK,
+                        onClick = { viewModel.setAppThemeMode(com.example.model.AppThemeMode.AMOLED_PITCH_BLACK) },
                         modifier = Modifier.weight(1f)
                     )
                 }

@@ -28,6 +28,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = NetworkStatsRepository(application)
     private val preferences = DataPlanPreferences(application)
+    private val themePreferences = com.example.data.ThemePreferences(application)
     private val speedMonitor = LiveSpeedMonitor(application, viewModelScope)
     private val alertNotifier = SmartAlertNotifier(application)
 
@@ -61,6 +62,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _hasUsagePermission = MutableStateFlow(repository.hasUsageStatsPermission())
     val hasUsagePermission: StateFlow<Boolean> = _hasUsagePermission.asStateFlow()
+
+    // Observable AppThemeMode backed by Jetpack DataStore
+    val appThemeMode: StateFlow<com.example.model.AppThemeMode> = themePreferences.themeModeFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = com.example.model.AppThemeMode.LIQUID_GLASS_DEFAULT
+        )
 
     private val _themeMode = MutableStateFlow(
         try {
@@ -240,6 +249,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setThemeMode(mode: com.example.model.ThemeMode) {
         preferences.themeMode = mode.name
         _themeMode.value = mode
+    }
+
+    fun setAppThemeMode(themeMode: com.example.model.AppThemeMode) {
+        viewModelScope.launch {
+            themePreferences.setThemeMode(themeMode)
+        }
     }
 
     fun updateBillingCycleDay(day: Int) {

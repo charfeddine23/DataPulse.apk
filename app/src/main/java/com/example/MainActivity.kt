@@ -28,9 +28,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+            val appThemeMode by viewModel.appThemeMode.collectAsStateWithLifecycle()
             val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
-            MyApplicationTheme(themeMode = themeMode, appLanguage = appLanguage) {
+            com.example.ui.theme.DataPulseTheme(appThemeMode = appThemeMode) {
                 // Request Phone State (for Dual SIM carrier resolution) & Notification permissions
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestMultiplePermissions()
