@@ -14,6 +14,13 @@
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
+    <!--
+        QUERY_ALL_PACKAGES is required on Android 11+ (API 30+) so the app can enumerate
+        all installed applications and query their network usage statistics.
+    -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
 
     <application
         android:allowBackup="true"

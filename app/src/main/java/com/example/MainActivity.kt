@@ -63,14 +63,19 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openUsageAccessSettings() {
+        // Many Android versions and custom ROMs (MIUI, HyperOS, ColorOS, Samsung) crash or ignore package: URI on ACTION_USAGE_ACCESS_SETTINGS
         try {
-            val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
-                data = Uri.parse("package:$packageName")
+            val generalIntent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            startActivity(intent)
+            startActivity(generalIntent)
         } catch (_: Exception) {
             try {
-                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                val packageIntent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                    data = Uri.parse("package:$packageName")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(packageIntent)
             } catch (_: Exception) {
                 openAppInfoSettings()
             }
