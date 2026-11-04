@@ -157,8 +157,12 @@ class NetworkStatsRepository(private val context: Context) {
         val items = mutableListOf<AppUsageItem>()
         var grandTotalBytes = 0L
 
-        // Group apps by UID
+        // Group apps by UID, including all installed packages to ensure exact synchronization
         val uidToApps = installedApps.groupBy { it.uid }
+
+        // Query device-level summaries over the requested range to match system telemetry
+        val deviceMobileTotal = queryBytes(ConnectivityManager.TYPE_MOBILE, startTime, now)
+        val deviceWifiTotal = queryBytes(ConnectivityManager.TYPE_WIFI, startTime, now)
 
         for ((uid, apps) in uidToApps) {
             val primaryApp = apps.firstOrNull { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 } ?: apps.first()
@@ -167,7 +171,7 @@ class NetworkStatsRepository(private val context: Context) {
             val wifiBytes = queryAppBytes(ConnectivityManager.TYPE_WIFI, uid, startTime, now)
             val total = mobileBytes + wifiBytes
 
-            if (total > 1024L) { // Filter out negligible (< 1 KB) traffic
+            if (total > 0L) {
                 val name = try {
                     packageManager.getApplicationLabel(primaryApp).toString()
                 } catch (_: Exception) {
@@ -196,12 +200,10 @@ class NetworkStatsRepository(private val context: Context) {
 
         // Calculate percentage of total and sort descending
         val sorted = items.sortedByDescending { it.totalBytes }
-        if (grandTotalBytes > 0) {
-            sorted.map { item ->
-                item.copy(percentageOfTotal = (item.totalBytes.toFloat() / grandTotalBytes.toFloat()))
-            }
-        } else {
-            sorted
+        val finalTotal = if (grandTotalBytes > 0L) grandTotalBytes else (deviceMobileTotal + deviceWifiTotal).coerceAtLeast(1L)
+        
+        sorted.map { item ->
+            item.copy(percentageOfTotal = (item.totalBytes.toFloat() / finalTotal.toFloat()).coerceIn(0f, 1f))
         }
     }
 
@@ -221,7 +223,10 @@ class NetworkStatsRepository(private val context: Context) {
             val bucket = NetworkStats.Bucket()
             while (stats.hasNextBucket()) {
                 stats.getNextBucket(bucket)
-                total += (bucket.rxBytes + bucket.txBytes)
+                // Filter out non-user tags and accumulate rx + tx
+                if (bucket.state == NetworkStats.Bucket.STATE_ALL || bucket.state == NetworkStats.Bucket.STATE_FOREGROUND || bucket.state == NetworkStats.Bucket.STATE_DEFAULT) {
+                    total += (bucket.rxBytes + bucket.txBytes)
+                }
             }
             stats.close()
             total

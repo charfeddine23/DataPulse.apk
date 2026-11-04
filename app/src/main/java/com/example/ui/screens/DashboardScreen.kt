@@ -111,6 +111,7 @@ fun DashboardScreen(
         // Monthly Quota Circular Progress Gauge with Heartbeat & Dynamic Live Colors
         item {
             val limitBytes = (quota.planLimitGB * 1024L * 1024L * 1024L).toLong()
+            val isInternetConnected = (speedSample.connectionType != com.example.model.NetworkType.OFFLINE)
             CircularQuotaProgressGauge(
                 usedBytes = quota.usedBytes,
                 limitBytes = limitBytes,
@@ -118,6 +119,7 @@ fun DashboardScreen(
                 status = quota.status,
                 daysRemaining = quota.daysRemaining,
                 appLanguage = appLanguage,
+                isInternetConnected = isInternetConnected,
                 onConfigureClick = onNavigateToSettings
             )
         }

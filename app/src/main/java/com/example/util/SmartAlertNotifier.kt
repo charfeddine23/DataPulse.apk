@@ -80,8 +80,65 @@ class SmartAlertNotifier(private val context: Context) {
         }
     }
 
+    fun notifyAppDailyQuotaExceeded(
+        appName: String,
+        usedBytes: Long,
+        thresholdBytes: Long = 3L * 1024L * 1024L * 1024L,
+        isArabic: Boolean = true
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val granted = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!granted) return
+        }
+
+        val formattedUsed = FormatUtils.formatBytes(usedBytes)
+        val formattedLimit = FormatUtils.formatBytes(thresholdBytes)
+
+        val title = if (isArabic) {
+            "تحذير استهلاك: $appName تجاوز 3 جيجابايت اليوم!"
+        } else {
+            "Usage Alert: $appName exceeded 3 GB today!"
+        }
+
+        val message = if (isArabic) {
+            "استهلك تطبيق $appName ما يقارب $formattedUsed اليوم متجاوزاً حد $formattedLimit. اضغط لمراجعة التفاصيل."
+        } else {
+            "App $appName has consumed $formattedUsed today, exceeding $formattedLimit. Tap to review details."
+        }
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            appName.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+
+        try {
+            val notificationId = APP_ALERT_BASE_ID + (appName.hashCode() and 0xFFFF)
+            NotificationManagerCompat.from(context).notify(notificationId, builder.build())
+        } catch (_: SecurityException) {
+            // Permission denied or revoked
+        }
+    }
+
     companion object {
         const val CHANNEL_ID = "data_pulse_quota_alerts"
         const val NOTIFICATION_ID = 1001
+        const val APP_ALERT_BASE_ID = 2000
     }
 }

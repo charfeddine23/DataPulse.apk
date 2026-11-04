@@ -147,12 +147,45 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _selectedSimIndex.value = index
     }
 
+    private val notifiedAppsToday = mutableSetOf<String>()
+
     private fun loadAppUsage() {
         viewModelScope.launch {
             _isRefreshingApps.value = true
             val apps = repository.fetchAppUsage(_selectedTimeRange.value, preferences.billingCycleStartDay)
             _rawAppUsageList.value = apps
             _isRefreshingApps.value = false
+
+            // Check if any app exceeded 3 GB today
+            checkAndAlertDailyAppQuota(apps)
+        }
+    }
+
+    private fun checkAndAlertDailyAppQuota(apps: List<AppUsageItem>) {
+        val threeGbBytes = 3L * 1024L * 1024L * 1024L // 3 GB threshold
+        val isArabic = _appLanguage.value == com.example.model.AppLanguage.ARABIC
+
+        viewModelScope.launch(Dispatchers.IO) {
+            // If currently viewing TODAY or query today's usage specifically
+            val todayApps = if (_selectedTimeRange.value == TimeRange.TODAY) {
+                apps
+            } else {
+                repository.fetchAppUsage(TimeRange.TODAY, preferences.billingCycleStartDay)
+            }
+
+            for (app in todayApps) {
+                if (app.totalBytes >= threeGbBytes) {
+                    if (!notifiedAppsToday.contains(app.packageName)) {
+                        notifiedAppsToday.add(app.packageName)
+                        alertNotifier.notifyAppDailyQuotaExceeded(
+                            appName = app.appName,
+                            usedBytes = app.totalBytes,
+                            thresholdBytes = threeGbBytes,
+                            isArabic = isArabic
+                        )
+                    }
+                }
+            }
         }
     }
 

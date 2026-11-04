@@ -460,6 +460,7 @@ fun CircularQuotaProgressGauge(
     daysRemaining: Int,
     appLanguage: AppLanguage,
     onConfigureClick: () -> Unit,
+    isInternetConnected: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = LocalLiquidGlass.current
@@ -473,7 +474,7 @@ fun CircularQuotaProgressGauge(
     val infiniteTransition = rememberInfiniteTransition(label = "realistic_heartbeat")
     
     // Scale animation simulating ventricular contraction: Atrial systole -> Ventricular systole (lub-dub) -> Diastolic relaxation
-    val heartbeatScale by infiniteTransition.animateFloat(
+    val animatedHeartbeatScale by infiniteTransition.animateFloat(
         initialValue = 1.0f,
         targetValue = 1.0f,
         animationSpec = infiniteRepeatable(
@@ -493,7 +494,7 @@ fun CircularQuotaProgressGauge(
     )
 
     // Pulsing glow aura opacity that spikes with each contraction
-    val heartbeatGlowAlpha by infiniteTransition.animateFloat(
+    val animatedHeartbeatGlowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.25f,
         targetValue = 0.25f,
         animationSpec = infiniteRepeatable(
@@ -510,6 +511,10 @@ fun CircularQuotaProgressGauge(
         ),
         label = "heartbeat_glow"
     )
+
+    // When internet is disconnected/stopped, the heart stops beating (flatline resting state: scale = 1.0f, subtle static glow)
+    val heartbeatScale = if (isInternetConnected) animatedHeartbeatScale else 1.0f
+    val heartbeatGlowAlpha = if (isInternetConnected) animatedHeartbeatGlowAlpha else 0.12f
 
     // Dynamic Live Color Shifting in Background (Cycles continuously through Neon Cyan, Electric Blue, Violet, Rose Magenta, and Emerald)
     val colorShiftAngle by infiniteTransition.animateFloat(
