@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -62,7 +63,16 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.keyframes
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.window.Dialog
+import com.example.R
+import com.example.model.AppLanguage
+import com.example.model.AppStrings
+import com.example.model.FormatUtils
 import com.example.model.LiveSpeedSample
 import com.example.model.NetworkType
 import com.example.model.QuotaStatus
@@ -139,24 +149,15 @@ fun GlassContainer(
 @Composable
 fun DashboardHeader(
     speedSample: LiveSpeedSample,
+    appLanguage: AppLanguage,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = LocalLiquidGlass.current
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse_glow")
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse_alpha"
-    )
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 8.dp)
+            .padding(horizontal = 4.dp, vertical = 6.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -164,87 +165,53 @@ fun DashboardHeader(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Glowing Pulse Icon
+                // Outer App Icon converted and displayed inside the app
                 Box(
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(44.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    glassStyle.accentPrimary.copy(alpha = 0.25f * glowAlpha),
-                                    glassStyle.accentSecondary.copy(alpha = 0.2f)
-                                )
-                            )
-                        )
-                        .border(1.dp, glassStyle.accentPrimary.copy(alpha = 0.6f * glowAlpha), RoundedCornerShape(14.dp)),
+                        .background(glassStyle.cardSubtleBg)
+                        .border(1.dp, glassStyle.accentPrimary.copy(alpha = 0.45f), RoundedCornerShape(14.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Canvas(modifier = Modifier.size(24.dp)) {
-                        val path = Path().apply {
-                            moveTo(size.width * 0.1f, size.height * 0.5f)
-                            lineTo(size.width * 0.3f, size.height * 0.5f)
-                            lineTo(size.width * 0.42f, size.height * 0.2f)
-                            lineTo(size.width * 0.58f, size.height * 0.8f)
-                            lineTo(size.width * 0.7f, size.height * 0.5f)
-                            lineTo(size.width * 0.9f, size.height * 0.5f)
-                        }
-                        drawPath(
-                            path = path,
-                            color = glassStyle.accentPrimary,
-                            style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
-                        )
-                    }
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        contentDescription = "Data Pulse",
+                        modifier = Modifier.size(38.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                Column {
-                    Text(
-                        text = "Data Pulse",
-                        color = glassStyle.textPrimary,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
-                    )
-                    Text(
-                        text = "تطوير: Charfeddine Ka",
-                        color = glassStyle.accentPrimary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                Text(
+                    text = "Data Pulse",
+                    color = glassStyle.textPrimary,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
+                )
             }
 
             // Connection Status Badge
-            ConnectionStatusPill(speedSample = speedSample)
+            ConnectionStatusPill(speedSample = speedSample, appLanguage = appLanguage)
         }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // Version & Last Updated info
-        Text(
-            text = "الإصدار 1.0.0 | تحديث نوفمبر 2026",
-            color = glassStyle.textTertiary,
-            fontSize = 11.sp,
-            modifier = Modifier.padding(start = 54.dp)
-        )
     }
 }
 
 @Composable
 fun ConnectionStatusPill(
     speedSample: LiveSpeedSample,
+    appLanguage: AppLanguage,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = LocalLiquidGlass.current
     val (icon, tint, label) = when (speedSample.connectionType) {
-        NetworkType.WIFI -> Triple(Icons.Default.Wifi, glassStyle.accentPrimary, "واي فاي نشط")
-        NetworkType.CELLULAR_5G -> Triple(Icons.Default.SignalCellularAlt, glassStyle.accentSecondary, "شبكة 5G")
+        NetworkType.WIFI -> Triple(Icons.Default.Wifi, glassStyle.accentPrimary, AppStrings.wifiActive(appLanguage))
+        NetworkType.CELLULAR_5G -> Triple(Icons.Default.SignalCellularAlt, glassStyle.accentSecondary, AppStrings.cellular5g(appLanguage))
         NetworkType.CELLULAR_4G, NetworkType.CELLULAR_3G, NetworkType.CELLULAR_GENERIC ->
-            Triple(Icons.Default.SignalCellularAlt, ElectricBlue, "بيانات الجوال")
-        NetworkType.ETHERNET -> Triple(Icons.Default.Wifi, EmeraldSafe, "إيثرنت")
-        NetworkType.OFFLINE -> Triple(Icons.Default.WifiOff, RedAlert, "غير متصل")
+            Triple(Icons.Default.SignalCellularAlt, ElectricBlue, AppStrings.cellularGeneric(appLanguage))
+        NetworkType.ETHERNET -> Triple(Icons.Default.Wifi, EmeraldSafe, AppStrings.ethernet(appLanguage))
+        NetworkType.OFFLINE -> Triple(Icons.Default.WifiOff, RedAlert, AppStrings.disconnected(appLanguage))
     }
 
     Box(
@@ -283,6 +250,7 @@ fun ConnectionStatusPill(
 fun LiveSpeedCard(
     speedSample: LiveSpeedSample,
     speedHistory: List<Float>,
+    appLanguage: AppLanguage,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = LocalLiquidGlass.current
@@ -298,14 +266,14 @@ fun LiveSpeedCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "مقياس السرعة اللحظي",
+                    text = AppStrings.liveSpeedTitle(appLanguage),
                     color = glassStyle.textSecondary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.5.sp
                 )
                 Text(
-                    text = "${speedSample.pingMs} مللي ثانية",
+                    text = "${speedSample.pingMs} ${AppStrings.ms(appLanguage)}",
                     color = glassStyle.accentPrimary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
@@ -320,9 +288,9 @@ fun LiveSpeedCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 SpeedMetricItem(
-                    title = "تنزيل (Download)",
+                    title = AppStrings.download(appLanguage),
                     speedFormatted = speedSample.downloadFormatted,
-                    peakSpeed = "الذروة: ${(speedSample.peakDownloadBps / 1_000_000.0).let { "%.1f ميغابت/ث".format(it) }}",
+                    peakSpeed = "${AppStrings.peak(appLanguage)}: ${FormatUtils.formatSpeed(speedSample.peakDownloadBps)}",
                     icon = Icons.Default.ArrowDownward,
                     color = glassStyle.accentPrimary,
                     modifier = Modifier.weight(1f)
@@ -331,30 +299,23 @@ fun LiveSpeedCard(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 SpeedMetricItem(
-                    title = "رفع (Upload)",
+                    title = AppStrings.upload(appLanguage),
                     speedFormatted = speedSample.uploadFormatted,
-                    peakSpeed = "الذروة: ${(speedSample.peakUploadBps / 1_000_000.0).let { "%.1f ميغابت/ث".format(it) }}",
+                    peakSpeed = "${AppStrings.peak(appLanguage)}: ${FormatUtils.formatSpeed(speedSample.peakUploadBps)}",
                     icon = Icons.Default.ArrowUpward,
                     color = glassStyle.accentSecondary,
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Live Waveform Sparkline
-            Text(
-                text = "مخطط تدفق البيانات المباشر",
-                color = glassStyle.textTertiary,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(modifier = Modifier.height(6.dp))
             SpeedSparkline(
                 dataPoints = speedHistory,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(60.dp)
             )
         }
     }
@@ -491,12 +452,13 @@ fun SpeedSparkline(
 }
 
 @Composable
-fun QuotaProgressGauge(
+fun CircularQuotaProgressGauge(
     usedBytes: Long,
     limitBytes: Long,
     percentage: Float,
     status: QuotaStatus,
     daysRemaining: Int,
+    appLanguage: AppLanguage,
     onConfigureClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -507,11 +469,101 @@ fun QuotaProgressGauge(
         QuotaStatus.CRITICAL, QuotaStatus.EXCEEDED -> RedAlert
     }
 
+    // High-fidelity Realistic Dual-Systole Cardiac Heartbeat Animation
+    val infiniteTransition = rememberInfiniteTransition(label = "realistic_heartbeat")
+    
+    // Scale animation simulating ventricular contraction: Atrial systole -> Ventricular systole (lub-dub) -> Diastolic relaxation
+    val heartbeatScale by infiniteTransition.animateFloat(
+        initialValue = 1.0f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 1150
+                1.00f at 0
+                1.16f at 130 using FastOutSlowInEasing // "Lub" first contraction
+                1.03f at 240 using FastOutSlowInEasing
+                1.25f at 370 using FastOutSlowInEasing // "Dub" second contraction (stronger ventricular ejection)
+                1.10f at 480 using FastOutSlowInEasing // Elastic recoil
+                1.00f at 650 using FastOutSlowInEasing // Diastolic filling
+                1.00f at 1150 // Resting pause before next beat
+            },
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "heartbeat_scale"
+    )
+
+    // Pulsing glow aura opacity that spikes with each contraction
+    val heartbeatGlowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 0.25f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 1150
+                0.20f at 0
+                0.60f at 130 using FastOutSlowInEasing
+                0.35f at 240 using FastOutSlowInEasing
+                0.85f at 370 using FastOutSlowInEasing // Peak luminous burst
+                0.30f at 600 using FastOutSlowInEasing
+                0.15f at 1150
+            },
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "heartbeat_glow"
+    )
+
+    // Dynamic Live Color Shifting in Background (Cycles continuously through Neon Cyan, Electric Blue, Violet, Rose Magenta, and Emerald)
+    val colorShiftAngle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 6500, easing = androidx.compose.animation.core.LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "live_color_shift"
+    )
+
+    val animatedSweep by animateFloatAsState(
+        targetValue = (percentage / 100f).coerceIn(0.01f, 1f),
+        animationSpec = tween(durationMillis = 800),
+        label = "circular_quota_sweep"
+    )
+
+    // Computed dynamic live colors based on rotation phase
+    val dynamicLiveColors = remember(colorShiftAngle) {
+        val rad = Math.toRadians(colorShiftAngle.toDouble())
+        val cosVal = ((kotlin.math.cos(rad) + 1.0) / 2.0).toFloat()
+        val sinVal = ((kotlin.math.sin(rad) + 1.0) / 2.0).toFloat()
+        
+        val liveColorA = Color(
+            red = 0.05f + 0.50f * cosVal,
+            green = 0.70f + 0.25f * (1f - cosVal),
+            blue = 0.90f + 0.10f * sinVal,
+            alpha = 0.45f
+        )
+        val liveColorB = Color(
+            red = 0.65f + 0.30f * sinVal,
+            green = 0.15f + 0.20f * cosVal,
+            blue = 0.95f,
+            alpha = 0.40f
+        )
+        val liveColorC = Color(
+            red = 0.00f,
+            green = 0.85f + 0.15f * sinVal,
+            blue = 0.75f + 0.25f * cosVal,
+            alpha = 0.35f
+        )
+        listOf(liveColorA, liveColorB, liveColorC)
+    }
+
     GlassContainer(
         modifier = modifier.fillMaxWidth(),
         borderColor = statusColor.copy(alpha = 0.4f)
     ) {
-        Column {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Header Row: Title & Edit Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -519,7 +571,7 @@ fun QuotaProgressGauge(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "باقة البيانات الشهرية",
+                        text = AppStrings.monthlyPlanTitle(appLanguage),
                         color = glassStyle.textSecondary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
@@ -529,7 +581,7 @@ fun QuotaProgressGauge(
                         Spacer(modifier = Modifier.width(6.dp))
                         Icon(
                             imageVector = Icons.Default.WarningAmber,
-                            contentDescription = "تنبيه",
+                            contentDescription = "Warning",
                             tint = statusColor,
                             modifier = Modifier.size(16.dp)
                         )
@@ -544,7 +596,7 @@ fun QuotaProgressGauge(
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "تعديل الحد",
+                        text = AppStrings.editCap(appLanguage),
                         color = glassStyle.accentPrimary,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold
@@ -552,58 +604,192 @@ fun QuotaProgressGauge(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            // Progress Bar with Dual Glow
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "%.1f%% مستهلك".format(percentage),
-                        color = statusColor,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+            // Central Circular Progress Gauge with Realistic Heartbeat & Dynamic Live Colors
+            Box(
+                modifier = Modifier.size(220.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                // Dynamic Live Colors Background Aura Canvas
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val strokeWidth = 14.dp.toPx()
+                    val arcSize = size.width - strokeWidth * 2
+                    val topLeft = Offset(strokeWidth, strokeWidth)
+                    val centerOffset = Offset(size.width / 2f, size.height / 2f)
+
+                    // 1. Dynamic Live Gradient Inner Glow Aura behind the Heart
+                    val auraRadius = (size.width / 2.7f) * heartbeatScale
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                dynamicLiveColors[0].copy(alpha = heartbeatGlowAlpha * 0.7f),
+                                dynamicLiveColors[1].copy(alpha = heartbeatGlowAlpha * 0.45f),
+                                dynamicLiveColors[2].copy(alpha = heartbeatGlowAlpha * 0.15f),
+                                Color.Transparent
+                            ),
+                            center = centerOffset,
+                            radius = auraRadius
+                        ),
+                        radius = auraRadius,
+                        center = centerOffset
                     )
-                    Text(
-                        text = "$daysRemaining أيام متبقية في الدورة",
-                        color = glassStyle.textTertiary,
-                        fontSize = 12.sp
+
+                    // 2. Track Background Circle
+                    drawArc(
+                        color = if (glassStyle.isDark) Color(0xFF131D30) else Color(0xFFE2E8F0),
+                        startAngle = -90f,
+                        sweepAngle = 360f,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = Size(arcSize, arcSize),
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                    )
+
+                    // 3. Active Arc with Live Color Infusion
+                    val sweepAngle = 360f * animatedSweep
+                    drawArc(
+                        brush = Brush.sweepGradient(
+                            0.0f to dynamicLiveColors[0],
+                            0.35f to dynamicLiveColors[1],
+                            0.70f to dynamicLiveColors[2],
+                            1.0f to statusColor
+                        ),
+                        startAngle = -90f,
+                        sweepAngle = sweepAngle,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = Size(arcSize, arcSize),
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Custom Liquid Progress Track
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(14.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (glassStyle.isDark) Color(0xFF0F172A) else Color(0xFFE2E8F0))
+                // Heartbeat Center Content
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
+                    // Realistic Beating Heart Container
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth((percentage / 100f).coerceIn(0.01f, 1f))
-                            .height(14.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(
-                                Brush.horizontalGradient(
-                                    colors = listOf(
-                                        statusColor.copy(alpha = 0.6f),
-                                        statusColor
+                            .graphicsLayer {
+                                scaleX = heartbeatScale
+                                scaleY = heartbeatScale
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Ambient luminous backplate
+                        Box(
+                            modifier = Modifier
+                                .size(76.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.radialGradient(
+                                        colors = listOf(
+                                            dynamicLiveColors[0].copy(alpha = heartbeatGlowAlpha * 0.5f),
+                                            dynamicLiveColors[1].copy(alpha = heartbeatGlowAlpha * 0.25f),
+                                            Color.Transparent
+                                        )
                                     )
                                 )
+                        )
+
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            // Pulsing Heart Drawn with Smooth Bezier Curves
+                            Canvas(modifier = Modifier.size(26.dp)) {
+                                val heartColor = Color(
+                                    red = 0.98f,
+                                    green = (0.15f + 0.20f * (heartbeatScale - 1f)).coerceIn(0f, 1f),
+                                    blue = (0.35f + 0.30f * (heartbeatScale - 1f)).coerceIn(0f, 1f)
+                                )
+                                val path = Path().apply {
+                                    val width = size.width
+                                    val height = size.height
+                                    moveTo(width / 2f, height * 0.85f)
+                                    // Left lobe
+                                    cubicTo(
+                                        width * 0.12f, height * 0.55f,
+                                        width * -0.05f, height * 0.22f,
+                                        width * 0.25f, height * 0.08f
+                                    )
+                                    cubicTo(
+                                        width * 0.42f, height * 0.02f,
+                                        width * 0.50f, height * 0.25f,
+                                        width * 0.50f, height * 0.28f
+                                    )
+                                    // Right lobe
+                                    cubicTo(
+                                        width * 0.50f, height * 0.25f,
+                                        width * 0.58f, height * 0.02f,
+                                        width * 0.75f, height * 0.08f
+                                    )
+                                    cubicTo(
+                                        width * 1.05f, height * 0.22f,
+                                        width * 0.88f, height * 0.55f,
+                                        width / 2f, height * 0.85f
+                                    )
+                                    close()
+                                }
+                                drawPath(
+                                    path = path,
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            heartColor,
+                                            heartColor.copy(alpha = 0.85f)
+                                        )
+                                    )
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.height(2.dp))
+
+                            Text(
+                                text = "Pulse",
+                                color = glassStyle.textPrimary,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.sp
                             )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "%.1f%%".format(percentage),
+                        color = glassStyle.textPrimary,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = "${FormatUtils.formatBytes(usedBytes)} / ${FormatUtils.formatBytes(limitBytes)}",
+                        color = glassStyle.textTertiary,
+                        fontSize = 11.sp
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Warning Banner if >= 80%
+            // Days remaining pill
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(glassStyle.cardSubtleBg)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = AppStrings.daysRemaining(daysRemaining, appLanguage),
+                    color = glassStyle.textSecondary,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            // Warning Banner if >= 80% or >= 95%
             if (status != QuotaStatus.SAFE) {
+                Spacer(modifier = Modifier.height(10.dp))
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -613,9 +799,9 @@ fun QuotaProgressGauge(
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     val alertText = when (status) {
-                        QuotaStatus.WARNING -> "تنبيه: تم استهلاك 80% من باقة البيانات. يرجى مراقبة الاستهلاك."
-                        QuotaStatus.CRITICAL -> "تحذير حرج: تم استهلاك 95% من الباقة! اقتربت من النفاد."
-                        QuotaStatus.EXCEEDED -> "تم تجاوز سعة باقة البيانات المحددة!"
+                        QuotaStatus.WARNING -> AppStrings.alert80Warning(appLanguage)
+                        QuotaStatus.CRITICAL -> AppStrings.alert95Critical(appLanguage)
+                        QuotaStatus.EXCEEDED -> AppStrings.quotaExceeded(appLanguage)
                         else -> ""
                     }
                     Text(
@@ -630,6 +816,28 @@ fun QuotaProgressGauge(
     }
 }
 
+@Composable
+fun QuotaProgressGauge(
+    usedBytes: Long,
+    limitBytes: Long,
+    percentage: Float,
+    status: QuotaStatus,
+    daysRemaining: Int,
+    onConfigureClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    CircularQuotaProgressGauge(
+        usedBytes = usedBytes,
+        limitBytes = limitBytes,
+        percentage = percentage,
+        status = status,
+        daysRemaining = daysRemaining,
+        appLanguage = AppLanguage.ARABIC,
+        onConfigureClick = onConfigureClick,
+        modifier = modifier
+    )
+}
+
 /**
  * Usage Permission Card with Privacy Transparency and Android 13+ Restricted Settings Guide.
  */
@@ -637,6 +845,7 @@ fun QuotaProgressGauge(
 fun UsagePermissionCard(
     onRequestPermission: () -> Unit,
     onOpenAppInfo: () -> Unit,
+    appLanguage: AppLanguage = AppLanguage.ARABIC,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = LocalLiquidGlass.current
@@ -650,13 +859,13 @@ fun UsagePermissionCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.Security,
-                    contentDescription = "إذن الوصول للاستخدام",
+                    contentDescription = AppStrings.usageAccess(appLanguage),
                     tint = AmberAlert,
                     modifier = Modifier.size(22.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "مطلوب إذن الوصول للاستخدام (محلياً فقط)",
+                    text = AppStrings.permCardTitle(appLanguage),
                     color = glassStyle.textPrimary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
@@ -669,13 +878,13 @@ fun UsagePermissionCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.VerifiedUser,
-                    contentDescription = "خصوصية مؤكدة",
+                    contentDescription = AppStrings.privacySafe(appLanguage),
                     tint = EmeraldSafe,
                     modifier = Modifier.size(14.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "آمن وخصوصية 100% - لا يتم جمع أو مشاركة أي بيانات إطلاقاً.",
+                    text = AppStrings.privacySafe(appLanguage),
                     color = EmeraldSafe,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold
@@ -685,7 +894,7 @@ fun UsagePermissionCard(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "يحتاج تطبيق Data Pulse إلى إذن الوصول للاستخدام لحساب استهلاك التطبيقات وبيانات الجوال والواي فاي بدقة عبر نظام أندرويد. لا يتم رفع أو حفظ أي بيانات خاصة خارج جهازك.",
+                text = AppStrings.permCardDesc(appLanguage),
                 color = glassStyle.textSecondary,
                 fontSize = 12.sp,
                 lineHeight = 17.sp
@@ -706,7 +915,7 @@ fun UsagePermissionCard(
                         .testTag("grant_usage_permission_button")
                 ) {
                     Text(
-                        text = "منح إذن الوصول",
+                        text = AppStrings.grantPerm(appLanguage),
                         color = Color.Black,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp
@@ -727,12 +936,12 @@ fun UsagePermissionCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.HelpOutline,
-                        contentDescription = "مساعدة",
+                        contentDescription = "Help",
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "إعداد مقيّد؟",
+                        text = AppStrings.restrictedSettingsHelp(appLanguage),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -745,7 +954,8 @@ fun UsagePermissionCard(
         RestrictedSettingsGuideDialog(
             onDismiss = { showRestrictedDialog = false },
             onOpenAppInfo = onOpenAppInfo,
-            onOpenUsageSettings = onRequestPermission
+            onOpenUsageSettings = onRequestPermission,
+            appLanguage = appLanguage
         )
     }
 }
@@ -757,7 +967,8 @@ fun UsagePermissionCard(
 fun RestrictedSettingsGuideDialog(
     onDismiss: () -> Unit,
     onOpenAppInfo: () -> Unit,
-    onOpenUsageSettings: () -> Unit
+    onOpenUsageSettings: () -> Unit,
+    appLanguage: AppLanguage = AppLanguage.ARABIC
 ) {
     val glassStyle = LocalLiquidGlass.current
 
@@ -797,21 +1008,21 @@ fun RestrictedSettingsGuideDialog(
                         }
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "حل مشكلة الإعدادات المقيدة",
+                            text = AppStrings.restrictedDialogTitle(appLanguage),
                             color = glassStyle.textPrimary,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
                     IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "إغلاق", tint = glassStyle.textTertiary)
+                        Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = glassStyle.textTertiary)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "إذا ظهرت لك رسالة أندرويد 13+: 'إعداد مقيّد - حفاظاً على أمانك، هذا الإعداد غير متاح حالياً'، اتبع الخطوات السهلة التالية:",
+                    text = AppStrings.restrictedDialogDesc(appLanguage),
                     color = glassStyle.textSecondary,
                     fontSize = 12.sp,
                     lineHeight = 17.sp
@@ -822,8 +1033,8 @@ fun RestrictedSettingsGuideDialog(
                 // Step 1
                 GuideStepItem(
                     stepNumber = "1",
-                    title = "فتح معلومات التطبيق",
-                    description = "اضغط على زر 'معلومات التطبيق' بالأسفل للانتقال لصفحة Data Pulse بالنظام."
+                    title = AppStrings.step1Title(appLanguage),
+                    description = AppStrings.step1Desc(appLanguage)
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -831,8 +1042,8 @@ fun RestrictedSettingsGuideDialog(
                 // Step 2
                 GuideStepItem(
                     stepNumber = "2",
-                    title = "السماح بالإعدادات المقيدة",
-                    description = "اضغط على القائمة (⋮) أعلى اليمين، واختر 'السماح بالإعدادات المقيدة' ثم قم بتأكيد بصمتك أو رمز القفل."
+                    title = AppStrings.step2Title(appLanguage),
+                    description = AppStrings.step2Desc(appLanguage)
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -840,8 +1051,8 @@ fun RestrictedSettingsGuideDialog(
                 // Step 3
                 GuideStepItem(
                     stepNumber = "3",
-                    title = "تفعيل إذن الوصول للاستخدام",
-                    description = "عد للتطبيق واضغط على 'إذن الاستخدام' لتفعيل مفتاح Data Pulse بنجاح."
+                    title = AppStrings.step3Title(appLanguage),
+                    description = AppStrings.step3Desc(appLanguage)
                 )
 
                 Spacer(modifier = Modifier.height(18.dp))
@@ -868,7 +1079,7 @@ fun RestrictedSettingsGuideDialog(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "1. معلومات التطبيق",
+                            text = AppStrings.btnAppInfo(appLanguage),
                             color = Color.Black,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
@@ -885,7 +1096,7 @@ fun RestrictedSettingsGuideDialog(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = "2. إذن الاستخدام",
+                            text = AppStrings.btnUsagePerm(appLanguage),
                             color = glassStyle.accentPrimary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold

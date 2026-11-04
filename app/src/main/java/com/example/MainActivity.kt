@@ -29,7 +29,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
-            MyApplicationTheme(themeMode = themeMode) {
+            val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+            MyApplicationTheme(themeMode = themeMode, appLanguage = appLanguage) {
                 // Request Phone State (for Dual SIM carrier resolution) & Notification permissions
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestMultiplePermissions()

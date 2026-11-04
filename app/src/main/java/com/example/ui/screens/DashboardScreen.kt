@@ -44,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.model.FormatUtils
 import com.example.model.SimCardInfo
 import com.example.ui.MainViewModel
+import com.example.ui.components.CircularQuotaProgressGauge
 import com.example.ui.components.DashboardHeader
 import com.example.ui.components.GlassContainer
 import com.example.ui.components.LiveSpeedCard
@@ -72,6 +73,7 @@ fun DashboardScreen(
     val simCards by viewModel.simCards.collectAsStateWithLifecycle()
     val selectedSimIndex by viewModel.selectedSimIndex.collectAsStateWithLifecycle()
     val hasUsagePerm by viewModel.hasUsagePermission.collectAsStateWithLifecycle()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = modifier
@@ -79,9 +81,9 @@ fun DashboardScreen(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // App Branding Header
+        // App Branding Header with external app icon and clean title
         item {
-            DashboardHeader(speedSample = speedSample)
+            DashboardHeader(speedSample = speedSample, appLanguage = appLanguage)
         }
 
         // Usage Permission Warning if not granted
@@ -89,7 +91,8 @@ fun DashboardScreen(
             item {
                 UsagePermissionCard(
                     onRequestPermission = onRequestUsagePermission,
-                    onOpenAppInfo = onOpenAppInfo
+                    onOpenAppInfo = onOpenAppInfo,
+                    appLanguage = appLanguage
                 )
             }
         }
@@ -105,20 +108,21 @@ fun DashboardScreen(
             }
         }
 
-        // Monthly Quota & Smart Alerts Card
+        // Monthly Quota Circular Progress Gauge with Heartbeat & Dynamic Live Colors
         item {
             val limitBytes = (quota.planLimitGB * 1024L * 1024L * 1024L).toLong()
-            QuotaProgressGauge(
+            CircularQuotaProgressGauge(
                 usedBytes = quota.usedBytes,
                 limitBytes = limitBytes,
                 percentage = quota.usagePercent,
                 status = quota.status,
                 daysRemaining = quota.daysRemaining,
+                appLanguage = appLanguage,
                 onConfigureClick = onNavigateToSettings
             )
         }
 
-        // Data Breakdown Grid (Today's & Monthly Usage)
+        // 3. Quick Summaries for Data Usage (Breakdown Grid)
         item {
             val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
             Row(
@@ -127,7 +131,7 @@ fun DashboardScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "تفاصيل استهلاك البيانات",
+                    text = com.example.model.AppStrings.dataBreakdownTitle(appLanguage),
                     color = glassStyle.textSecondary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -139,7 +143,7 @@ fun DashboardScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = "تحديث",
+                        contentDescription = com.example.model.AppStrings.refresh(appLanguage),
                         tint = glassStyle.accentPrimary,
                         modifier = Modifier.size(18.dp)
                     )
@@ -148,6 +152,7 @@ fun DashboardScreen(
             Spacer(modifier = Modifier.height(8.dp))
             DataBreakdownGrid(
                 usageSummary = usageSummary,
+                appLanguage = appLanguage,
                 onViewFullAnalytics = onNavigateToAnalytics
             )
         }
@@ -220,6 +225,7 @@ fun DualSimSelector(
 @Composable
 fun DataBreakdownGrid(
     usageSummary: com.example.model.NetworkUsageSummary,
+    appLanguage: com.example.model.AppLanguage,
     onViewFullAnalytics: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -231,14 +237,14 @@ fun DataBreakdownGrid(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             BreakdownMetricCard(
-                title = "بيانات الجوال اليوم",
+                title = com.example.model.AppStrings.todayCellular(appLanguage),
                 value = FormatUtils.formatBytes(usageSummary.mobileTodayBytes),
                 icon = Icons.Default.SignalCellularAlt,
                 tint = glassStyle.accentPrimary,
                 modifier = Modifier.weight(1f)
             )
             BreakdownMetricCard(
-                title = "واي فاي اليوم",
+                title = com.example.model.AppStrings.todayWifi(appLanguage),
                 value = FormatUtils.formatBytes(usageSummary.wifiTodayBytes),
                 icon = Icons.Default.Wifi,
                 tint = ElectricBlue,
@@ -251,14 +257,14 @@ fun DataBreakdownGrid(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             BreakdownMetricCard(
-                title = "بيانات الجوال شهرياً",
+                title = com.example.model.AppStrings.monthlyCellular(appLanguage),
                 value = FormatUtils.formatBytes(usageSummary.mobileMonthBytes),
                 icon = Icons.Default.CellTower,
                 tint = glassStyle.accentSecondary,
                 modifier = Modifier.weight(1f)
             )
             BreakdownMetricCard(
-                title = "واي فاي شهرياً",
+                title = com.example.model.AppStrings.monthlyWifi(appLanguage),
                 value = FormatUtils.formatBytes(usageSummary.wifiMonthBytes),
                 icon = Icons.Default.TrendingUp,
                 tint = glassStyle.accentPrimary,
@@ -288,7 +294,7 @@ fun DataBreakdownGrid(
                     ) {
                         Icon(
                             imageVector = Icons.Default.GraphicEq,
-                            contentDescription = "استهلاك التطبيقات",
+                            contentDescription = com.example.model.AppStrings.viewAppAnalytics(appLanguage),
                             tint = glassStyle.accentPrimary,
                             modifier = Modifier.size(18.dp)
                         )
@@ -296,20 +302,20 @@ fun DataBreakdownGrid(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "استهلاك التطبيقات بالتفصيل",
+                            text = com.example.model.AppStrings.viewAppAnalytics(appLanguage),
                             color = glassStyle.textPrimary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "تعرّف على التطبيقات الأكثر استهلاكاً لبياناتك",
+                            text = com.example.model.AppStrings.viewAppAnalyticsSub(appLanguage),
                             color = glassStyle.textSecondary,
                             fontSize = 11.sp
                         )
                     }
                 }
                 Text(
-                    text = "عرض التفاصيل ←",
+                    text = com.example.model.AppStrings.explore(appLanguage),
                     color = glassStyle.accentPrimary,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold

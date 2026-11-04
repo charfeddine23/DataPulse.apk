@@ -74,6 +74,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _powerSavingMode = MutableStateFlow(preferences.powerSavingMode)
     val powerSavingMode: StateFlow<Boolean> = _powerSavingMode.asStateFlow()
 
+    private val _appLanguage = MutableStateFlow(
+        if (preferences.appLanguage == "EN") com.example.model.AppLanguage.ENGLISH else com.example.model.AppLanguage.ARABIC
+    )
+    val appLanguage: StateFlow<com.example.model.AppLanguage> = _appLanguage.asStateFlow()
+
     // Filtered app usage list based on interface & search
     val filteredAppUsage: StateFlow<List<AppUsageItem>> = combine(
         _rawAppUsageList,
@@ -223,5 +228,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         preferences.powerSavingMode = enabled
         _powerSavingMode.value = enabled
         speedMonitor.setPowerSaving(enabled)
+    }
+
+    fun setAppLanguage(lang: com.example.model.AppLanguage) {
+        preferences.appLanguage = lang.code
+        _appLanguage.value = lang
     }
 }

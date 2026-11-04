@@ -47,13 +47,23 @@ import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.SpeedMeterScreen
 import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.TextPrimary
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.model.AppLanguage
+import com.example.model.AppStrings
 import com.example.ui.theme.TextTertiary
 
-enum class NavDestination(val label: String, val icon: ImageVector, val tag: String) {
-    DASHBOARD("النبض", Icons.Default.GraphicEq, "nav_dashboard"),
-    ANALYTICS("الاستهلاك", Icons.Default.Equalizer, "nav_analytics"),
-    SPEED("عداد السرعة", Icons.Default.Speed, "nav_speed"),
-    SETTINGS("الإعدادات", Icons.Default.Settings, "nav_settings")
+enum class NavDestination(val icon: ImageVector, val tag: String) {
+    DASHBOARD(Icons.Default.GraphicEq, "nav_dashboard"),
+    ANALYTICS(Icons.Default.Equalizer, "nav_analytics"),
+    SPEED(Icons.Default.Speed, "nav_speed"),
+    SETTINGS(Icons.Default.Settings, "nav_settings")
+}
+
+fun NavDestination.getLabel(lang: AppLanguage): String = when (this) {
+    NavDestination.DASHBOARD -> AppStrings.navPulse(lang)
+    NavDestination.ANALYTICS -> AppStrings.navUsage(lang)
+    NavDestination.SPEED -> AppStrings.navSpeed(lang)
+    NavDestination.SETTINGS -> AppStrings.navSettings(lang)
 }
 
 @Composable
@@ -64,6 +74,7 @@ fun DataPulseApp(
     modifier: Modifier = Modifier
 ) {
     var currentDestination by remember { mutableStateOf(NavDestination.DASHBOARD) }
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -71,6 +82,7 @@ fun DataPulseApp(
         bottomBar = {
             LiquidGlassBottomNav(
                 currentDestination = currentDestination,
+                appLanguage = appLanguage,
                 onSelectDestination = { currentDestination = it }
             )
         }
@@ -111,6 +123,7 @@ fun DataPulseApp(
 @Composable
 fun LiquidGlassBottomNav(
     currentDestination: NavDestination,
+    appLanguage: AppLanguage,
     onSelectDestination: (NavDestination) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -137,6 +150,7 @@ fun LiquidGlassBottomNav(
         ) {
             NavDestination.values().forEach { destination ->
                 val isSelected = (destination == currentDestination)
+                val destLabel = destination.getLabel(appLanguage)
 
                 Box(
                     modifier = Modifier
@@ -153,13 +167,13 @@ fun LiquidGlassBottomNav(
                     ) {
                         Icon(
                             imageVector = destination.icon,
-                            contentDescription = destination.label,
+                            contentDescription = destLabel,
                             tint = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = destination.label,
+                            text = destLabel,
                             color = if (isSelected) glassStyle.textPrimary else glassStyle.textTertiary,
                             fontSize = 10.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium

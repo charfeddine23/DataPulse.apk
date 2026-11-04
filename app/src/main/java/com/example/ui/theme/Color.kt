@@ -4,8 +4,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 // Liquid Glass Palette
-val VoidBlack = Color(0xFF06090F)
-val DeepObsidian = Color(0xFF0A0F1D)
+val VoidBlack = Color(0xFF050811)
+val DeepObsidian = Color(0xFF0B0F19) // Deep dark background tone (#0B0F19)
 val GlassSurfaceDark = Color(0xD90E1628)      // ~85% opacity
 val GlassSurfaceTranslucent = Color(0x99131F37) // ~60% opacity
 val GlassSurfaceUltraLight = Color(0x33FFFFFF)  // Frosted sheen

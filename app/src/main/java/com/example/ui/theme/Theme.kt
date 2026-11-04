@@ -105,6 +105,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun MyApplicationTheme(
     themeMode: ThemeMode = ThemeMode.DARK, // Explicit Dark by default; only follows phone if user sets SYSTEM
+    appLanguage: com.example.model.AppLanguage = com.example.model.AppLanguage.ARABIC,
     content: @Composable () -> Unit
 ) {
     val systemInDark = isSystemInDarkTheme()

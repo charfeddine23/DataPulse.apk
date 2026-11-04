@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,15 +32,14 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Eco
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.WarningAmber
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -59,16 +59,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
+import com.example.model.AppLanguage
+import com.example.model.AppStrings
 import com.example.model.ThemeMode
 import com.example.ui.MainViewModel
 import com.example.ui.components.GlassContainer
@@ -76,9 +78,6 @@ import com.example.ui.theme.AmberAlert
 import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.NeonPurple
 import com.example.ui.theme.RedAlert
-import com.example.ui.theme.TextPrimary
-import com.example.ui.theme.TextSecondary
-import com.example.ui.theme.TextTertiary
 
 @Composable
 fun SettingsScreen(
@@ -91,6 +90,7 @@ fun SettingsScreen(
     val hasUsagePerm by viewModel.hasUsagePermission.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val powerSavingMode by viewModel.powerSavingMode.collectAsStateWithLifecycle()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
@@ -108,32 +108,81 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "الإعدادات والحصص",
+            text = AppStrings.settingsTitle(appLanguage),
             color = glassStyle.textPrimary,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "تخصيص المظهر، وحدود باقة البيانات حتى 1000 غيغابايت، والتنبيهات الذكية",
+            text = AppStrings.settingsSubtitle(appLanguage),
             color = glassStyle.textSecondary,
             fontSize = 12.sp
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 1. Theme Selection Card (Light Mode, Dark Mode, Follow System)
+        // 1. Language Selection Card (العربية / English)
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Palette,
-                        contentDescription = "المظهر",
+                        imageVector = Icons.Default.Language,
+                        contentDescription = "Language",
                         tint = glassStyle.accentPrimary,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "المظهر والسمة",
+                        text = AppStrings.appLanguageSection(appLanguage),
+                        color = glassStyle.textPrimary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    ThemeOptionButton(
+                        title = "العربية",
+                        subtitle = "Arabic",
+                        icon = Icons.Default.Translate,
+                        isSelected = appLanguage == AppLanguage.ARABIC,
+                        onClick = { viewModel.setAppLanguage(AppLanguage.ARABIC) },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    ThemeOptionButton(
+                        title = "English",
+                        subtitle = "الإنجليزية",
+                        icon = Icons.Default.Language,
+                        isSelected = appLanguage == AppLanguage.ENGLISH,
+                        onClick = { viewModel.setAppLanguage(AppLanguage.ENGLISH) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // 2. Theme Selection Card (Light Mode, Dark Mode, Follow System)
+        GlassContainer(modifier = Modifier.fillMaxWidth()) {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Palette,
+                        contentDescription = "Theme",
+                        tint = glassStyle.accentPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = AppStrings.themeSection(appLanguage),
                         color = glassStyle.textPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -148,8 +197,8 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     ThemeOptionButton(
-                        title = "اتبع الهاتف",
-                        subtitle = "تلقائي",
+                        title = AppStrings.themeSystem(appLanguage),
+                        subtitle = AppStrings.themeSystemSub(appLanguage),
                         icon = Icons.Default.BrightnessAuto,
                         isSelected = themeMode == ThemeMode.SYSTEM,
                         onClick = { viewModel.setThemeMode(ThemeMode.SYSTEM) },
@@ -157,8 +206,8 @@ fun SettingsScreen(
                     )
 
                     ThemeOptionButton(
-                        title = "الوضع النهاري",
-                        subtitle = "مريح للعين",
+                        title = AppStrings.themeLight(appLanguage),
+                        subtitle = AppStrings.themeLightSub(appLanguage),
                         icon = Icons.Default.LightMode,
                         isSelected = themeMode == ThemeMode.LIGHT,
                         onClick = { viewModel.setThemeMode(ThemeMode.LIGHT) },
@@ -166,8 +215,8 @@ fun SettingsScreen(
                     )
 
                     ThemeOptionButton(
-                        title = "الوضع الليلي",
-                        subtitle = "داكن زجاجي",
+                        title = AppStrings.themeDark(appLanguage),
+                        subtitle = AppStrings.themeDarkSub(appLanguage),
                         icon = Icons.Default.DarkMode,
                         isSelected = themeMode == ThemeMode.DARK,
                         onClick = { viewModel.setThemeMode(ThemeMode.DARK) },
@@ -179,19 +228,19 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 2. Monthly Data Plan Limit Card (Freeform up to 1000GB)
+        // 3. Monthly Data Plan Limit Card (Freeform up to 1000GB)
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.PieChart,
-                        contentDescription = "حد الباقة",
+                        contentDescription = "Plan Quota",
                         tint = glassStyle.accentPrimary,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "حد باقة البيانات الشهرية",
+                        text = AppStrings.planLimitSection(appLanguage),
                         color = glassStyle.textPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -207,7 +256,7 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "سعة الباقة المحددة (حتى 1000 غيغابايت):",
+                        text = AppStrings.planCapLabel(appLanguage),
                         color = glassStyle.textSecondary,
                         fontSize = 13.sp
                     )
@@ -229,7 +278,6 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = customLimitInput,
                         onValueChange = { newVal ->
-                            // Allow numbers and decimal point
                             if (newVal.all { it.isDigit() || it == '.' }) {
                                 customLimitInput = newVal
                                 val parsed = newVal.toFloatOrNull()
@@ -238,7 +286,7 @@ fun SettingsScreen(
                                 }
                             }
                         },
-                        label = { Text("الحد المخصص (غيغابايت)", color = glassStyle.textTertiary, fontSize = 11.sp) },
+                        label = { Text(AppStrings.customLimitLabel(appLanguage), color = glassStyle.textTertiary, fontSize = 11.sp) },
                         trailingIcon = {
                             Text(
                                 text = "GB",
@@ -278,7 +326,7 @@ fun SettingsScreen(
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.height(52.dp)
                     ) {
-                        Text("تعيين", color = if (glassStyle.isDark) Color.Black else Color.White, fontWeight = FontWeight.Bold)
+                        Text(AppStrings.set(appLanguage), color = if (glassStyle.isDark) Color.Black else Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -340,7 +388,7 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 3. Billing Cycle Reset Day
+        // 4. Billing Cycle Reset Day
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(
@@ -350,13 +398,13 @@ fun SettingsScreen(
                 ) {
                     Column {
                         Text(
-                            text = "يوم تجديد باقة البيانات",
+                            text = AppStrings.billingCycleSection(appLanguage),
                             color = glassStyle.textPrimary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "اليوم ${quota.billingCycleStartDay} من كل شهر",
+                            text = AppStrings.billingCycleDay(quota.billingCycleStartDay, appLanguage),
                             color = glassStyle.textSecondary,
                             fontSize = 12.sp
                         )
@@ -370,7 +418,7 @@ fun SettingsScreen(
                                 .clip(CircleShape)
                                 .background(glassStyle.cardSubtleBg)
                         ) {
-                            Icon(imageVector = Icons.Default.Remove, contentDescription = "تقليل", tint = glassStyle.accentPrimary)
+                            Icon(imageVector = Icons.Default.Remove, contentDescription = "Decrease", tint = glassStyle.accentPrimary)
                         }
 
                         Spacer(modifier = Modifier.width(12.dp))
@@ -391,7 +439,7 @@ fun SettingsScreen(
                                 .clip(CircleShape)
                                 .background(glassStyle.cardSubtleBg)
                         ) {
-                            Icon(imageVector = Icons.Default.Add, contentDescription = "زيادة", tint = glassStyle.accentPrimary)
+                            Icon(imageVector = Icons.Default.Add, contentDescription = "Increase", tint = glassStyle.accentPrimary)
                         }
                     }
                 }
@@ -400,19 +448,19 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 4. Smart Alert Thresholds Card
+        // 5. Smart Alert Thresholds Card
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.NotificationsActive,
-                        contentDescription = "التنبيهات",
+                        contentDescription = "Alerts",
                         tint = AmberAlert,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "تنبيهات الباقة الذكية",
+                        text = AppStrings.smartAlertsSection(appLanguage),
                         color = glassStyle.textPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -430,13 +478,13 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "تنبيه تحذيري عند 80%",
+                            text = AppStrings.alert80Title(appLanguage),
                             color = glassStyle.textPrimary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = "إشعار عند استهلاك 80% من سعة باقة البيانات",
+                            text = AppStrings.alert80Desc(appLanguage),
                             color = glassStyle.textTertiary,
                             fontSize = 11.sp
                         )
@@ -463,13 +511,13 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "تنبيه حرج عند 95%",
+                            text = AppStrings.alert95Title(appLanguage),
                             color = glassStyle.textPrimary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = "تحذير عاجل قبل نفاد باقة البيانات تماماً",
+                            text = AppStrings.alert95Desc(appLanguage),
                             color = glassStyle.textTertiary,
                             fontSize = 11.sp
                         )
@@ -490,19 +538,19 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 5. Power Saving & Battery Card
+        // 6. Power Saving & Battery Card
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Eco,
-                        contentDescription = "توفير الطاقة",
+                        contentDescription = "Power Saving",
                         tint = glassStyle.accentPrimary,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "وضع توفير الطاقة والبطارية",
+                        text = AppStrings.powerSavingSection(appLanguage),
                         color = glassStyle.textPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -519,16 +567,16 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "وضع توفير الطاقة",
+                            text = AppStrings.powerSavingTitle(appLanguage),
                             color = glassStyle.textPrimary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
                             text = if (powerSavingMode)
-                                "الوضع الاقتصادي نشط: تم تقليل فحص الشبكة إلى 3 ثوانٍ لتوفير شحن البطارية"
+                                AppStrings.powerSavingActive(appLanguage)
                             else
-                                "دقة عالية: فحص استهلاك الشبكة في الوقت الفعلي كل ثانية واحدة",
+                                AppStrings.powerSavingInactive(appLanguage),
                             color = if (powerSavingMode) glassStyle.accentPrimary else glassStyle.textTertiary,
                             fontSize = 11.sp
                         )
@@ -551,19 +599,19 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 6. Permissions Status Card (Cleaned - without PACKAGE_USAGE_STATS)
+        // 7. Permissions Status Card (Cleaned - without PACKAGE_USAGE_STATS)
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Security,
-                        contentDescription = "الأذونات",
+                        contentDescription = "Permissions",
                         tint = glassStyle.accentPrimary,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "أذونات النظام",
+                        text = AppStrings.permissionsSection(appLanguage),
                         color = glassStyle.textPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -580,13 +628,13 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "إذن الوصول للاستخدام",
+                            text = AppStrings.usageAccess(appLanguage),
                             color = glassStyle.textPrimary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = if (hasUsagePerm) "ممنوح - التحليلات التاريخية الدقيقة مفعلة" else "غير ممنوح - يقتصر على جلسة الاستخدام الحالية",
+                            text = if (hasUsagePerm) AppStrings.permGranted(appLanguage) else AppStrings.permNotGranted(appLanguage),
                             color = if (hasUsagePerm) glassStyle.accentPrimary else AmberAlert,
                             fontSize = 11.sp
                         )
@@ -599,12 +647,12 @@ fun SettingsScreen(
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.testTag("settings_grant_permission_button")
                         ) {
-                            Text("منح الإذن", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            Text(AppStrings.grantPerm(appLanguage), color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                         }
                     } else {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "ممنوح",
+                            contentDescription = "Granted",
                             tint = glassStyle.accentPrimary,
                             modifier = Modifier.size(22.dp)
                         )
@@ -626,13 +674,13 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "هل الإعداد مقيّد أو غير متاح في أندرويد 13+؟",
+                            text = AppStrings.restrictedGuideQ(appLanguage),
                             color = glassStyle.accentPrimary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = "عرض الدليل ←",
+                            text = AppStrings.viewGuide(appLanguage),
                             color = glassStyle.accentPrimary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
@@ -643,7 +691,8 @@ fun SettingsScreen(
                         com.example.ui.components.RestrictedSettingsGuideDialog(
                             onDismiss = { showGuide = false },
                             onOpenAppInfo = onOpenAppInfo,
-                            onOpenUsageSettings = onRequestUsagePermission
+                            onOpenUsageSettings = onRequestUsagePermission,
+                            appLanguage = appLanguage
                         )
                     }
                 }
@@ -652,7 +701,7 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 7. Developer Branding & App Version Card
+        // 8. Developer Branding & App Version Card
         GlassContainer(
             modifier = Modifier.fillMaxWidth(),
             borderColor = glassStyle.accentSecondary.copy(alpha = 0.4f)
@@ -661,16 +710,16 @@ fun SettingsScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(glassStyle.accentSecondary.copy(alpha = 0.2f)),
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(glassStyle.cardSubtleBg)
+                            .border(1.dp, glassStyle.accentSecondary.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Code,
-                            contentDescription = "المطور",
-                            tint = glassStyle.accentSecondary,
-                            modifier = Modifier.size(20.dp)
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            contentDescription = "Data Pulse",
+                            modifier = Modifier.size(34.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
@@ -682,7 +731,7 @@ fun SettingsScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "تطوير: Charfeddine Ka",
+                            text = AppStrings.developedBy(appLanguage),
                             color = glassStyle.accentPrimary,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold
@@ -693,7 +742,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "الإصدار 1.0.0 (v1.0.0) | آخر تحديث نوفمبر 2026",
+                    text = AppStrings.appVersionInfo(appLanguage),
                     color = glassStyle.textSecondary,
                     fontSize = 12.sp
                 )
@@ -701,7 +750,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "مصمم بنمط الزجاج السائل المتطور (Liquid Glass) للوضعين النهاري والليلي، مع واجهات Jetpack Compose الحديثة، وتتبع NetworkStatsManager، ودعم الشريحة المزدوجة Dual SIM. متوافق كلياً مع التثبيت فوق الإصدارات السابقة.",
+                    text = AppStrings.appDescription(appLanguage),
                     color = glassStyle.textTertiary,
                     fontSize = 11.sp,
                     lineHeight = 16.sp

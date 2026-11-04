@@ -64,6 +64,7 @@ fun SpeedMeterScreen(
 ) {
     val speedSample by viewModel.speedSample.collectAsStateWithLifecycle()
     val speedHistory by viewModel.speedHistory.collectAsStateWithLifecycle()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
 
@@ -77,14 +78,14 @@ fun SpeedMeterScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "مقياس سرعة الاتصال المباشر",
+            text = com.example.model.AppStrings.speedMeterTitle(appLanguage),
             color = glassStyle.textPrimary,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.fillMaxWidth()
         )
         Text(
-            text = "مراقبة فورية لمعدل نقل البيانات وتشخيص الشبكة",
+            text = com.example.model.AppStrings.speedMeterSubtitle(appLanguage),
             color = glassStyle.textSecondary,
             fontSize = 12.sp,
             modifier = Modifier.fillMaxWidth()
@@ -96,6 +97,7 @@ fun SpeedMeterScreen(
         SpeedometerDial(
             currentSpeedBps = speedSample.downloadBps,
             formattedSpeed = speedSample.downloadFormatted,
+            appLanguage = appLanguage,
             modifier = Modifier.size(240.dp)
         )
 
@@ -106,19 +108,20 @@ fun SpeedMeterScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            val peakPrefix = if (appLanguage == com.example.model.AppLanguage.ARABIC) "الذروة: " else "Peak: "
             SpeedTelemetryCard(
-                title = "سرعة التنزيل الحالية",
+                title = com.example.model.AppStrings.currentDownload(appLanguage),
                 speed = speedSample.downloadFormatted,
-                peak = "الذروة: ${FormatUtils.formatSpeed(speedSample.peakDownloadBps)}",
+                peak = "$peakPrefix${FormatUtils.formatSpeed(speedSample.peakDownloadBps)}",
                 icon = Icons.Default.ArrowDownward,
                 accentColor = glassStyle.accentPrimary,
                 modifier = Modifier.weight(1f)
             )
 
             SpeedTelemetryCard(
-                title = "سرعة الرفع الحالية",
+                title = com.example.model.AppStrings.currentUpload(appLanguage),
                 speed = speedSample.uploadFormatted,
-                peak = "الذروة: ${FormatUtils.formatSpeed(speedSample.peakUploadBps)}",
+                peak = "$peakPrefix${FormatUtils.formatSpeed(speedSample.peakUploadBps)}",
                 icon = Icons.Default.ArrowUpward,
                 accentColor = glassStyle.accentSecondary,
                 modifier = Modifier.weight(1f)
@@ -131,7 +134,7 @@ fun SpeedMeterScreen(
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Text(
-                    text = "مخطط تدفق البيانات المستمر",
+                    text = com.example.model.AppStrings.continuousThroughput(appLanguage),
                     color = glassStyle.textSecondary,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -150,28 +153,44 @@ fun SpeedMeterScreen(
         Spacer(modifier = Modifier.height(14.dp))
 
         // Network Diagnostics Glass Card
-        val connectionNameArabic = when (speedSample.connectionType) {
-            com.example.model.NetworkType.WIFI -> "واي فاي"
-            com.example.model.NetworkType.CELLULAR_5G -> "شبكة الجيل الخامس 5G"
-            com.example.model.NetworkType.CELLULAR_4G -> "شبكة الجيل الرابع 4G"
-            com.example.model.NetworkType.CELLULAR_3G -> "شبكة الجيل الثالث 3G"
-            com.example.model.NetworkType.CELLULAR_GENERIC -> "بيانات الجوال"
-            com.example.model.NetworkType.ETHERNET -> "إيثرنت"
-            com.example.model.NetworkType.OFFLINE -> "غير متصل"
+        val connectionNameTranslated = if (appLanguage == com.example.model.AppLanguage.ARABIC) {
+            when (speedSample.connectionType) {
+                com.example.model.NetworkType.WIFI -> "واي فاي"
+                com.example.model.NetworkType.CELLULAR_5G -> "شبكة الجيل الخامس 5G"
+                com.example.model.NetworkType.CELLULAR_4G -> "شبكة الجيل الرابع 4G"
+                com.example.model.NetworkType.CELLULAR_3G -> "شبكة الجيل الثالث 3G"
+                com.example.model.NetworkType.CELLULAR_GENERIC -> "بيانات الجوال"
+                com.example.model.NetworkType.ETHERNET -> "إيثرنت"
+                com.example.model.NetworkType.OFFLINE -> "غير متصل"
+            }
+        } else {
+            when (speedSample.connectionType) {
+                com.example.model.NetworkType.WIFI -> "Wi-Fi"
+                com.example.model.NetworkType.CELLULAR_5G -> "5G Cellular"
+                com.example.model.NetworkType.CELLULAR_4G -> "4G LTE"
+                com.example.model.NetworkType.CELLULAR_3G -> "3G Mobile"
+                com.example.model.NetworkType.CELLULAR_GENERIC -> "Cellular Data"
+                com.example.model.NetworkType.ETHERNET -> "Ethernet"
+                com.example.model.NetworkType.OFFLINE -> "Disconnected"
+            }
         }
+
+        val disconnectedLabel = if (appLanguage == com.example.model.AppLanguage.ARABIC) "غير متصل" else "Disconnected"
+        val unknownLabel = if (appLanguage == com.example.model.AppLanguage.ARABIC) "غير متوفر" else "Unavailable"
+        val latencyUnit = if (appLanguage == com.example.model.AppLanguage.ARABIC) "مللي ثانية" else "ms"
 
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.NetworkCheck,
-                        contentDescription = "تشخيص الشبكة",
+                        contentDescription = com.example.model.AppStrings.networkDiagnostics(appLanguage),
                         tint = glassStyle.accentPrimary,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "تشخيص الشبكة والاتصال",
+                        text = com.example.model.AppStrings.networkDiagnostics(appLanguage),
                         color = glassStyle.textPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -181,10 +200,22 @@ fun SpeedMeterScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                DiagnosticRow(label = "الواجهة النشطة", value = if (speedSample.connectionName == "Disconnected") "غير متصل" else speedSample.connectionName)
-                DiagnosticRow(label = "عنوان IP المحلي", value = if (speedSample.ipAddress == "Unknown") "غير متوفر" else speedSample.ipAddress)
-                DiagnosticRow(label = "زمن الاستجابة التقديري", value = "${speedSample.pingMs} مللي ثانية")
-                DiagnosticRow(label = "حالة الاتصال", value = connectionNameArabic)
+                DiagnosticRow(
+                    label = com.example.model.AppStrings.activeInterface(appLanguage),
+                    value = if (speedSample.connectionName == "Disconnected") disconnectedLabel else speedSample.connectionName
+                )
+                DiagnosticRow(
+                    label = com.example.model.AppStrings.localIp(appLanguage),
+                    value = if (speedSample.ipAddress == "Unknown") unknownLabel else speedSample.ipAddress
+                )
+                DiagnosticRow(
+                    label = com.example.model.AppStrings.estimatedLatency(appLanguage),
+                    value = "${speedSample.pingMs} $latencyUnit"
+                )
+                DiagnosticRow(
+                    label = com.example.model.AppStrings.connectionState(appLanguage),
+                    value = connectionNameTranslated
+                )
             }
         }
 
@@ -196,6 +227,7 @@ fun SpeedMeterScreen(
 fun SpeedometerDial(
     currentSpeedBps: Double,
     formattedSpeed: String,
+    appLanguage: com.example.model.AppLanguage,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
@@ -271,7 +303,7 @@ fun SpeedometerDial(
                 fontWeight = FontWeight.ExtraBold
             )
             Text(
-                text = "معدل النقل اللحظي",
+                text = com.example.model.AppStrings.liveBandwidth(appLanguage),
                 color = glassStyle.textTertiary,
                 fontSize = 11.sp
             )

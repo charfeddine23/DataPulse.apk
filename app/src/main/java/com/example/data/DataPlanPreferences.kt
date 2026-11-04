@@ -39,6 +39,10 @@ class DataPlanPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_POWER_SAVING, false)
         set(value) = prefs.edit().putBoolean(KEY_POWER_SAVING, value).apply()
 
+    var appLanguage: String
+        get() = prefs.getString(KEY_APP_LANGUAGE, "AR") ?: "AR"
+        set(value) = prefs.edit().putString(KEY_APP_LANGUAGE, value).apply()
+
     companion object {
         private const val KEY_PLAN_LIMIT_GB = "plan_limit_gb"
         private const val KEY_BILLING_CYCLE_DAY = "billing_cycle_day"
@@ -48,5 +52,6 @@ class DataPlanPreferences(context: Context) {
         private const val KEY_LAST_NOTIFIED_THRESHOLD = "last_notified_threshold"
         private const val KEY_THEME_MODE = "theme_mode_preference"
         private const val KEY_POWER_SAVING = "power_saving_mode"
+        private const val KEY_APP_LANGUAGE = "app_language_preference"
     }
 }

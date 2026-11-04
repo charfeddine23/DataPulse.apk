@@ -76,6 +76,7 @@ fun AnalyticsScreen(
     val interfaceFilter by viewModel.selectedInterface.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val hasUsagePerm by viewModel.hasUsagePermission.collectAsStateWithLifecycle()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
 
     Column(
@@ -86,13 +87,13 @@ fun AnalyticsScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "استهلاك التطبيقات",
+            text = com.example.model.AppStrings.analyticsTitle(appLanguage),
             color = glassStyle.textPrimary,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "تفاصيل استهلاك بيانات الجوال وشبكات واي فاي لكل تطبيق",
+            text = com.example.model.AppStrings.analyticsSubtitle(appLanguage),
             color = glassStyle.textSecondary,
             fontSize = 12.sp
         )
@@ -102,6 +103,7 @@ fun AnalyticsScreen(
         // Time Range Selector Tabs
         TimeRangeSelector(
             currentRange = timeRange,
+            appLanguage = appLanguage,
             onSelect = { viewModel.setTimeRange(it) }
         )
 
@@ -110,6 +112,7 @@ fun AnalyticsScreen(
         // Interface filter chips (All, Cellular, Wi-Fi)
         InterfaceSelector(
             currentFilter = interfaceFilter,
+            appLanguage = appLanguage,
             onSelect = { viewModel.setInterfaceFilter(it) }
         )
 
@@ -119,11 +122,11 @@ fun AnalyticsScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { viewModel.setSearchQuery(it) },
-            placeholder = { Text("البحث في التطبيقات المثبتة...", color = glassStyle.textTertiary, fontSize = 13.sp) },
+            placeholder = { Text(com.example.model.AppStrings.searchApps(appLanguage), color = glassStyle.textTertiary, fontSize = 13.sp) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
-                    contentDescription = "بحث",
+                    contentDescription = "Search",
                     tint = glassStyle.textTertiary,
                     modifier = Modifier.size(18.dp)
                 )
@@ -133,7 +136,7 @@ fun AnalyticsScreen(
                     IconButton(onClick = { viewModel.setSearchQuery("") }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
-                            contentDescription = "مسح",
+                            contentDescription = "Clear",
                             tint = glassStyle.textTertiary,
                             modifier = Modifier.size(18.dp)
                         )
@@ -160,7 +163,8 @@ fun AnalyticsScreen(
         if (!hasUsagePerm) {
             UsagePermissionCard(
                 onRequestPermission = onRequestUsagePermission,
-                onOpenAppInfo = onOpenAppInfo
+                onOpenAppInfo = onOpenAppInfo,
+                appLanguage = appLanguage
             )
             Spacer(modifier = Modifier.height(12.dp))
         }
@@ -177,7 +181,7 @@ fun AnalyticsScreen(
                     CircularProgressIndicator(color = glassStyle.accentPrimary)
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "جاري تحليل إحصائيات الشبكة...",
+                        text = com.example.model.AppStrings.analyzingNetwork(appLanguage),
                         color = glassStyle.textSecondary,
                         fontSize = 13.sp
                     )
@@ -193,13 +197,13 @@ fun AnalyticsScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         imageVector = Icons.Default.Apps,
-                        contentDescription = "لا توجد تطبيقات",
+                        contentDescription = "No apps",
                         tint = glassStyle.textTertiary,
                         modifier = Modifier.size(48.dp)
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = if (searchQuery.isNotEmpty()) "لم يتم العثور على تطبيقات مطابقة" else "لا يوجد استهلاك شبكة مسجل لهذه الفترة",
+                        text = if (searchQuery.isNotEmpty()) com.example.model.AppStrings.noMatchingApps(appLanguage) else com.example.model.AppStrings.noAppTraffic(appLanguage),
                         color = glassStyle.textSecondary,
                         fontSize = 13.sp
                     )
@@ -211,7 +215,7 @@ fun AnalyticsScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(apps, key = { it.packageName }) { appItem ->
-                    AppUsageCard(item = appItem, filter = interfaceFilter)
+                    AppUsageCard(item = appItem, filter = interfaceFilter, appLanguage = appLanguage)
                 }
                 item {
                     Spacer(modifier = Modifier.height(20.dp))
@@ -224,6 +228,7 @@ fun AnalyticsScreen(
 @Composable
 fun TimeRangeSelector(
     currentRange: TimeRange,
+    appLanguage: com.example.model.AppLanguage,
     onSelect: (TimeRange) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -240,6 +245,11 @@ fun TimeRangeSelector(
     ) {
         TimeRange.values().forEach { range ->
             val isSelected = (range == currentRange)
+            val label = when (range) {
+                TimeRange.TODAY -> com.example.model.AppStrings.timeToday(appLanguage)
+                TimeRange.WEEK -> com.example.model.AppStrings.timeWeek(appLanguage)
+                TimeRange.MONTH -> com.example.model.AppStrings.timeMonth(appLanguage)
+            }
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -250,7 +260,7 @@ fun TimeRangeSelector(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = range.displayName,
+                    text = label,
                     color = if (isSelected) (if (glassStyle.isDark) Color.Black else Color.White) else glassStyle.textSecondary,
                     fontSize = 12.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
@@ -263,6 +273,7 @@ fun TimeRangeSelector(
 @Composable
 fun InterfaceSelector(
     currentFilter: InterfaceFilter,
+    appLanguage: com.example.model.AppLanguage,
     onSelect: (InterfaceFilter) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -274,6 +285,11 @@ fun InterfaceSelector(
     ) {
         InterfaceFilter.values().forEach { filter ->
             val isSelected = (filter == currentFilter)
+            val label = when (filter) {
+                InterfaceFilter.ALL -> com.example.model.AppStrings.filterAll(appLanguage)
+                InterfaceFilter.MOBILE -> com.example.model.AppStrings.filterCellular(appLanguage)
+                InterfaceFilter.WIFI -> com.example.model.AppStrings.filterWifi(appLanguage)
+            }
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
@@ -290,7 +306,7 @@ fun InterfaceSelector(
                     .padding(horizontal = 14.dp, vertical = 6.dp)
             ) {
                 Text(
-                    text = filter.displayName,
+                    text = label,
                     color = if (isSelected) (if (glassStyle.isDark) glassStyle.textPrimary else glassStyle.accentSecondary) else glassStyle.textSecondary,
                     fontSize = 12.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
@@ -304,6 +320,7 @@ fun InterfaceSelector(
 fun AppUsageCard(
     item: AppUsageItem,
     filter: InterfaceFilter,
+    appLanguage: com.example.model.AppLanguage,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
@@ -354,8 +371,13 @@ fun AppUsageCard(
                         fontWeight = FontWeight.ExtraBold
                     )
                     if (item.percentageOfTotal > 0f) {
+                        val pctText = if (appLanguage == com.example.model.AppLanguage.ARABIC) {
+                            "%.1f%% من الإجمالي".format(item.percentageOfTotal * 100f)
+                        } else {
+                            "%.1f%% of total".format(item.percentageOfTotal * 100f)
+                        }
                         Text(
-                            text = "%.1f%% من الإجمالي".format(item.percentageOfTotal * 100f),
+                            text = pctText,
                             color = glassStyle.textTertiary,
                             fontSize = 10.sp
                         )
@@ -374,13 +396,13 @@ fun AppUsageCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.SignalCellularAlt,
-                        contentDescription = "بيانات الجوال",
+                        contentDescription = com.example.model.AppStrings.filterCellular(appLanguage),
                         tint = glassStyle.accentSecondary,
                         modifier = Modifier.size(13.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "بيانات الجوال: ${FormatUtils.formatBytes(item.mobileBytes)}",
+                        text = "${com.example.model.AppStrings.filterCellular(appLanguage)}: ${FormatUtils.formatBytes(item.mobileBytes)}",
                         color = glassStyle.textSecondary,
                         fontSize = 11.sp
                     )
@@ -389,13 +411,13 @@ fun AppUsageCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Wifi,
-                        contentDescription = "واي فاي",
+                        contentDescription = com.example.model.AppStrings.filterWifi(appLanguage),
                         tint = ElectricBlue,
                         modifier = Modifier.size(13.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "واي فاي: ${FormatUtils.formatBytes(item.wifiBytes)}",
+                        text = "${com.example.model.AppStrings.filterWifi(appLanguage)}: ${FormatUtils.formatBytes(item.wifiBytes)}",
                         color = glassStyle.textSecondary,
                         fontSize = 11.sp
                     )
