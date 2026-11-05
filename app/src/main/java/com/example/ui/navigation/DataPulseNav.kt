@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,8 +37,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.MainViewModel
@@ -143,22 +146,23 @@ fun LiquidGlassBottomNav(
             )
             .padding(horizontal = 10.dp, vertical = 6.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Sequence displayed on screen (Left to Right):
-            // 1. DASHBOARD (Pulse - أقصى اليسار / Far Left)
-            // 2. ANALYTICS (Usage)
-            // 3. SPEED (Speed Meter)
-            // 4. SETTINGS (Settings - أقصى اليمين / Far Right)
-            val navigationItems = listOf(
-                NavDestination.DASHBOARD,
-                NavDestination.ANALYTICS,
-                NavDestination.SPEED,
-                NavDestination.SETTINGS
-            )
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Sequence displayed on screen (Left to Right):
+                // 1. SETTINGS (الاعدادات - أقصى اليسار / Far Left)
+                // 2. SPEED (عداد السرعة)
+                // 3. ANALYTICS (الاستهلاك / Usage)
+                // 4. DASHBOARD (النبض - أقصى اليمين / Far Right)
+                val navigationItems = listOf(
+                    NavDestination.SETTINGS,
+                    NavDestination.SPEED,
+                    NavDestination.ANALYTICS,
+                    NavDestination.DASHBOARD
+                )
 
             navigationItems.forEach { destination ->
                 val isSelected = (destination == currentDestination)
@@ -190,9 +194,12 @@ fun LiquidGlassBottomNav(
                             fontSize = 10.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
+                        }
                     }
                 }
             }
         }
     }
 }
+
+
