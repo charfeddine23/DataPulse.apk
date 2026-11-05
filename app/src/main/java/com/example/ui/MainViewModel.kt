@@ -29,11 +29,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = NetworkStatsRepository(application)
     private val preferences = DataPlanPreferences(application)
     private val themePreferences = com.example.data.ThemePreferences(application)
+    private val appQuotaPreferences = com.example.data.AppQuotaPreferences(application)
     private val speedMonitor = LiveSpeedMonitor(application, viewModelScope)
     private val alertNotifier = SmartAlertNotifier(application)
 
     val speedSample: StateFlow<LiveSpeedSample> = speedMonitor.speedSample
     val speedHistory: StateFlow<List<Float>> = speedMonitor.speedHistory
+
+    // Observable map of per-app custom limits backed by DataStore
+    val customAppLimits: StateFlow<Map<String, com.example.data.AppCustomLimitConfig>> =
+        appQuotaPreferences.allCustomLimitsFlow.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyMap()
+        )
 
     private val _usageSummary = MutableStateFlow(NetworkUsageSummary())
     val usageSummary: StateFlow<NetworkUsageSummary> = _usageSummary.asStateFlow()
@@ -177,11 +186,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun checkAndAlertDailyAppQuota(apps: List<AppUsageItem>) {
-        if (!_dailyAppAlertEnabled.value) return
-
-        val thresholdGB = _dailyAppQuotaGB.value
-        val thresholdBytes = (thresholdGB * 1024L * 1024L * 1024L).toLong()
+        val globalDefaultGB = _dailyAppQuotaGB.value
+        val isGlobalEnabled = _dailyAppAlertEnabled.value
         val isArabic = _appLanguage.value == com.example.model.AppLanguage.ARABIC
+        val perAppConfigs = customAppLimits.value
 
         viewModelScope.launch(Dispatchers.IO) {
             // Query today's usage specifically to ensure accurate daily telemetry
@@ -192,8 +200,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             for (app in todayApps) {
+                val sanitizedPkg = app.packageName.replace('.', '_')
+                val customConfig = perAppConfigs[sanitizedPkg]
+
+                val isAlertEnabled = customConfig?.alertEnabled ?: isGlobalEnabled
+                if (!isAlertEnabled) continue
+
+                val appThresholdGB = customConfig?.dailyLimitGB ?: globalDefaultGB
+                val thresholdBytes = (appThresholdGB * 1024L * 1024L * 1024L).toLong()
+
                 if (app.totalBytes >= thresholdBytes) {
-                    val alertKey = "${app.packageName}_${thresholdGB}"
+                    val alertKey = "${app.packageName}_${appThresholdGB}"
                     if (!notifiedAppsToday.contains(alertKey)) {
                         notifiedAppsToday.add(alertKey)
                         alertNotifier.notifyAppDailyQuotaExceeded(
@@ -205,6 +222,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
             }
+        }
+    }
+
+    fun saveAppCustomLimit(packageName: String, dailyLimitGB: Float, alertEnabled: Boolean) {
+        viewModelScope.launch {
+            appQuotaPreferences.saveAppCustomLimit(packageName, dailyLimitGB, alertEnabled)
+            notifiedAppsToday.removeIf { it.startsWith(packageName) }
+            loadAppUsage()
         }
     }
 

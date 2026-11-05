@@ -138,4 +138,16 @@ object AppStrings {
     fun developedBy(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تطوير: Charfeddine Ka" else "Developed by Charfeddine Ka"
     fun appVersionInfo(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الإصدار 1.0.1 (v1.0.1) | آخر تحديث نوفمبر 2026" else "Version 1.0.1 (v1.0.1) | Last Updated November 2026"
     fun appDescription(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "مصمم بنمط الزجاج السائل المتطور (Liquid Glass) للوضعين النهاري والليلي، مع واجهات Jetpack Compose الحديثة، وتتبع NetworkStatsManager، ودعم الشريحة المزدوجة Dual SIM. متوافق كلياً مع التثبيت فوق الإصدارات السابقة." else "Crafted with Liquid Glass aesthetics for Light & Dark mode, modern Jetpack Compose UI, NetworkStatsManager tracking, Dual SIM readiness, and guaranteed seamless update installation."
+
+    // Per-App Customization Dialog
+    fun perAppDialogTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تخصيص حد الاستهلاك للتطبيق" else "App Quota & Alert Settings"
+    fun perAppDailyLimit(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الحد اليومي المخصص" else "Daily Data Limit"
+    fun perAppAlertToggle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تفعيل التنبيه اليومي لهذا التطبيق" else "Enable Daily Alert for this App"
+    fun perAppAlertDesc(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "إرسال إشعار تحذيري فوري عندما يتجاوز هذا التطبيق حده اليومي" else "Send a warning alert when this specific app exceeds its daily threshold"
+    fun perAppCurrentUsage(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الاستهلاك المسجل:" else "Recorded Traffic:"
+    fun perAppSaveBtn(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "حفظ التخصيص" else "Save Settings"
+    fun perAppCancelBtn(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "إلغاء" else "Cancel"
+    fun perAppLongPressHint(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "اضغط مطولاً لتخصيص الحد اليومي" else "Long-press to customize limit"
+    fun perAppDefaultIndicator(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الافتراضي: 3 غيغابايت" else "Default: 3.0 GB"
 }
+

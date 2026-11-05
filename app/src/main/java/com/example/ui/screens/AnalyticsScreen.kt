@@ -4,10 +4,12 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,8 +28,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SignalCellularAlt
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -37,7 +41,9 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,12 +55,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.data.AppCustomLimitConfig
 import com.example.model.AppUsageItem
 import com.example.model.FormatUtils
 import com.example.model.InterfaceFilter
 import com.example.model.TimeRange
 import com.example.ui.MainViewModel
 import com.example.ui.components.GlassContainer
+import com.example.ui.components.PerAppCustomLimitDialog
 import com.example.ui.components.UsagePermissionCard
 import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.ElectricBlue
@@ -63,6 +71,7 @@ import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.TextTertiary
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AnalyticsScreen(
     viewModel: MainViewModel,
@@ -77,7 +86,11 @@ fun AnalyticsScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val hasUsagePerm by viewModel.hasUsagePermission.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+    val customAppLimits by viewModel.customAppLimits.collectAsStateWithLifecycle()
+    val dailyAppQuotaGB by viewModel.dailyAppQuotaGB.collectAsStateWithLifecycle()
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+
+    var selectedAppForCustomization by remember { mutableStateOf<AppUsageItem?>(null) }
 
     Column(
         modifier = modifier
@@ -96,6 +109,19 @@ fun AnalyticsScreen(
             text = com.example.model.AppStrings.analyticsSubtitle(appLanguage),
             color = glassStyle.textSecondary,
             fontSize = 12.sp
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Quick tip for user discoverability
+        Text(
+            text = if (appLanguage == com.example.model.AppLanguage.ARABIC)
+                "💡 اضغط مطولاً على أي تطبيق لتخصيص الحد اليومي وإشعاراته"
+            else
+                "💡 Long-press any app to customize its daily data limit & alerts",
+            color = glassStyle.accentPrimary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium
         )
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -215,13 +241,41 @@ fun AnalyticsScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(apps, key = { it.packageName }) { appItem ->
-                    AppUsageCard(item = appItem, filter = interfaceFilter, appLanguage = appLanguage)
+                    val sanitizedPkg = appItem.packageName.replace('.', '_')
+                    val config = customAppLimits[sanitizedPkg]
+                    AppUsageCard(
+                        item = appItem,
+                        filter = interfaceFilter,
+                        appLanguage = appLanguage,
+                        customConfig = config,
+                        onLongClick = { selectedAppForCustomization = appItem }
+                    )
                 }
                 item {
                     Spacer(modifier = Modifier.height(20.dp))
                 }
             }
         }
+    }
+
+    // Custom Per-App Dialog triggered by long-press
+    if (selectedAppForCustomization != null) {
+        val targetApp = selectedAppForCustomization!!
+        val sanitizedPkg = targetApp.packageName.replace('.', '_')
+        val existingConfig = customAppLimits[sanitizedPkg]
+        val initialLimit = existingConfig?.dailyLimitGB ?: dailyAppQuotaGB
+        val initialAlert = existingConfig?.alertEnabled ?: true
+
+        PerAppCustomLimitDialog(
+            appItem = targetApp,
+            initialDailyLimitGB = initialLimit,
+            initialAlertEnabled = initialAlert,
+            appLanguage = appLanguage,
+            onDismiss = { selectedAppForCustomization = null },
+            onSave = { limit, alertEnabled ->
+                viewModel.saveAppCustomLimit(targetApp.packageName, limit, alertEnabled)
+            }
+        )
     }
 }
 
@@ -316,19 +370,28 @@ fun InterfaceSelector(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppUsageCard(
     item: AppUsageItem,
     filter: InterfaceFilter,
     appLanguage: com.example.model.AppLanguage,
+    customConfig: AppCustomLimitConfig?,
+    onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
 
     GlassContainer(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .combinedClickable(
+                onClick = { /* Tap */ },
+                onLongClick = onLongClick
+            ),
         backgroundColor = glassStyle.cardBackground,
-        borderColor = glassStyle.borderColor
+        borderColor = if (customConfig != null) glassStyle.accentPrimary.copy(alpha = 0.55f) else glassStyle.borderColor
     ) {
         Column {
             Row(
@@ -354,6 +417,32 @@ fun AppUsageCard(
                         fontSize = 10.sp,
                         maxLines = 1
                     )
+
+                    if (customConfig != null) {
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(glassStyle.accentPrimary.copy(alpha = 0.16f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (customConfig.alertEnabled) Icons.Default.NotificationsActive else Icons.Default.Speed,
+                                contentDescription = null,
+                                tint = glassStyle.accentPrimary,
+                                modifier = Modifier.size(10.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            val limitStr = if (customConfig.dailyLimitGB % 1f == 0f) "${customConfig.dailyLimitGB.toInt()} GB" else "%.1f GB".format(customConfig.dailyLimitGB)
+                            Text(
+                                text = if (appLanguage == com.example.model.AppLanguage.ARABIC) "مخصص: $limitStr / يوم" else "Custom: $limitStr / day",
+                                color = glassStyle.accentPrimary,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
 
                 // Total display
