@@ -83,6 +83,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _powerSavingMode = MutableStateFlow(preferences.powerSavingMode)
     val powerSavingMode: StateFlow<Boolean> = _powerSavingMode.asStateFlow()
 
+    private val _dailyAppQuotaGB = MutableStateFlow(preferences.dailyAppQuotaGB)
+    val dailyAppQuotaGB: StateFlow<Float> = _dailyAppQuotaGB.asStateFlow()
+
+    private val _dailyAppAlertEnabled = MutableStateFlow(preferences.dailyAppAlertEnabled)
+    val dailyAppAlertEnabled: StateFlow<Boolean> = _dailyAppAlertEnabled.asStateFlow()
+
     private val _appLanguage = MutableStateFlow(
         if (preferences.appLanguage == "EN") com.example.model.AppLanguage.ENGLISH else com.example.model.AppLanguage.ARABIC
     )
@@ -171,11 +177,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun checkAndAlertDailyAppQuota(apps: List<AppUsageItem>) {
-        val threeGbBytes = 3L * 1024L * 1024L * 1024L // 3 GB threshold
+        if (!_dailyAppAlertEnabled.value) return
+
+        val thresholdGB = _dailyAppQuotaGB.value
+        val thresholdBytes = (thresholdGB * 1024L * 1024L * 1024L).toLong()
         val isArabic = _appLanguage.value == com.example.model.AppLanguage.ARABIC
 
         viewModelScope.launch(Dispatchers.IO) {
-            // If currently viewing TODAY or query today's usage specifically
+            // Query today's usage specifically to ensure accurate daily telemetry
             val todayApps = if (_selectedTimeRange.value == TimeRange.TODAY) {
                 apps
             } else {
@@ -183,13 +192,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             for (app in todayApps) {
-                if (app.totalBytes >= threeGbBytes) {
-                    if (!notifiedAppsToday.contains(app.packageName)) {
-                        notifiedAppsToday.add(app.packageName)
+                if (app.totalBytes >= thresholdBytes) {
+                    val alertKey = "${app.packageName}_${thresholdGB}"
+                    if (!notifiedAppsToday.contains(alertKey)) {
+                        notifiedAppsToday.add(alertKey)
                         alertNotifier.notifyAppDailyQuotaExceeded(
                             appName = app.appName,
                             usedBytes = app.totalBytes,
-                            thresholdBytes = threeGbBytes,
+                            thresholdBytes = thresholdBytes,
                             isArabic = isArabic
                         )
                     }
@@ -270,6 +280,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleAlert95(enabled: Boolean) {
         preferences.alert95Enabled = enabled
         _dataPlanQuota.value = _dataPlanQuota.value.copy(alertThreshold95 = enabled)
+    }
+
+    fun updateDailyAppQuotaGB(limitGB: Float) {
+        val clamped = limitGB.coerceIn(0.5f, 50.0f)
+        preferences.dailyAppQuotaGB = clamped
+        _dailyAppQuotaGB.value = clamped
+        notifiedAppsToday.clear() // Reset so newly set threshold is evaluated
+        loadAppUsage()
+    }
+
+    fun toggleDailyAppAlert(enabled: Boolean) {
+        preferences.dailyAppAlertEnabled = enabled
+        _dailyAppAlertEnabled.value = enabled
+        if (enabled) {
+            loadAppUsage()
+        }
     }
 
     fun togglePowerSavingMode(enabled: Boolean) {

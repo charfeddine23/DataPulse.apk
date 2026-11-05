@@ -148,7 +148,19 @@ fun LiquidGlassBottomNav(
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            NavDestination.values().forEach { destination ->
+            // Sequence displayed on screen (Left to Right):
+            // 1. DASHBOARD (Pulse - أقصى اليسار / Far Left)
+            // 2. ANALYTICS (Usage)
+            // 3. SPEED (Speed Meter)
+            // 4. SETTINGS (Settings - أقصى اليمين / Far Right)
+            val navigationItems = listOf(
+                NavDestination.DASHBOARD,
+                NavDestination.ANALYTICS,
+                NavDestination.SPEED,
+                NavDestination.SETTINGS
+            )
+
+            navigationItems.forEach { destination ->
                 val isSelected = (destination == currentDestination)
                 val destLabel = destination.getLabel(appLanguage)
 

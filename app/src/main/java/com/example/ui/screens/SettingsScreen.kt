@@ -90,6 +90,8 @@ fun SettingsScreen(
     val hasUsagePerm by viewModel.hasUsagePermission.collectAsStateWithLifecycle()
     val appThemeMode by viewModel.appThemeMode.collectAsStateWithLifecycle()
     val powerSavingMode by viewModel.powerSavingMode.collectAsStateWithLifecycle()
+    val dailyAppQuotaGB by viewModel.dailyAppQuotaGB.collectAsStateWithLifecycle()
+    val dailyAppAlertEnabled by viewModel.dailyAppAlertEnabled.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
@@ -504,37 +506,144 @@ fun SettingsScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-                // 95% Alert Toggle
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                // Custom Daily App Usage Alert (Configurable 0.5 GB to 50 GB)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(glassStyle.cardSubtleBg)
+                        .border(1.dp, glassStyle.accentPrimary.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
+                        .padding(14.dp)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = AppStrings.alert95Title(appLanguage),
-                            color = glassStyle.textPrimary,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = AppStrings.alert95Desc(appLanguage),
-                            color = glassStyle.textTertiary,
-                            fontSize = 11.sp
-                        )
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (appLanguage == AppLanguage.ARABIC) "تنبيه استهلاك التطبيقات اليومي" else "Daily App Usage Alert",
+                                    color = glassStyle.textPrimary,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = if (appLanguage == AppLanguage.ARABIC)
+                                        "إشعار فوري عند تجاوز أي تطبيق لحد الاستهلاك المحدد في اليوم"
+                                    else
+                                        "Notify instantly when any app exceeds daily limit today",
+                                    color = glassStyle.textTertiary,
+                                    fontSize = 11.sp
+                                )
+                            }
+                            Switch(
+                                checked = dailyAppAlertEnabled,
+                                onCheckedChange = { viewModel.toggleDailyAppAlert(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = glassStyle.accentPrimary,
+                                    checkedTrackColor = glassStyle.accentPrimary.copy(alpha = 0.4f),
+                                    uncheckedThumbColor = glassStyle.textTertiary,
+                                    uncheckedTrackColor = if (glassStyle.isDark) Color(0xFF162238) else Color(0xFFCBD5E1)
+                                )
+                            )
+                        }
+
+                        if (dailyAppAlertEnabled) {
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (appLanguage == AppLanguage.ARABIC) "الحد اليومي المخصص لكل تطبيق:" else "Custom Daily Limit per App:",
+                                    color = glassStyle.textSecondary,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    IconButton(
+                                        onClick = {
+                                            val next = (dailyAppQuotaGB - 0.5f).coerceAtLeast(0.5f)
+                                            viewModel.updateDailyAppQuotaGB(next)
+                                        },
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(glassStyle.cardBackground)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Remove,
+                                            contentDescription = "Decrease",
+                                            tint = glassStyle.accentPrimary
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+
+                                    val quotaDisplay = if (dailyAppQuotaGB % 1f == 0f) "${dailyAppQuotaGB.toInt()} GB" else "%.1f GB".format(dailyAppQuotaGB)
+                                    Text(
+                                        text = quotaDisplay,
+                                        color = glassStyle.accentPrimary,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+
+                                    IconButton(
+                                        onClick = {
+                                            val next = (dailyAppQuotaGB + 0.5f).coerceAtMost(50f)
+                                            viewModel.updateDailyAppQuotaGB(next)
+                                        },
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(glassStyle.cardBackground)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription = "Increase",
+                                            tint = glassStyle.accentPrimary
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Quick preset chips (1GB, 2GB, 3GB, 5GB, 10GB)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                listOf(1.0f, 2.0f, 3.0f, 5.0f, 10.0f).forEach { preset ->
+                                    val isSelected = (kotlin.math.abs(dailyAppQuotaGB - preset) < 0.05f)
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(if (isSelected) glassStyle.accentPrimary else glassStyle.cardBackground)
+                                            .clickable { viewModel.updateDailyAppQuotaGB(preset) }
+                                            .padding(vertical = 6.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "${preset.toInt()} GB",
+                                            color = if (isSelected) (if (glassStyle.isDark) Color.Black else Color.White) else glassStyle.textSecondary,
+                                            fontSize = 10.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
-                    Switch(
-                        checked = quota.alertThreshold95,
-                        onCheckedChange = { viewModel.toggleAlert95(it) },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = RedAlert,
-                            checkedTrackColor = RedAlert.copy(alpha = 0.4f),
-                            uncheckedThumbColor = glassStyle.textTertiary,
-                            uncheckedTrackColor = if (glassStyle.isDark) Color(0xFF162238) else Color(0xFFCBD5E1)
-                        )
-                    )
                 }
             }
         }

@@ -130,25 +130,15 @@ fun SpeedMeterScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Live Continuous Wave Graph
-        GlassContainer(modifier = Modifier.fillMaxWidth()) {
-            Column {
-                Text(
-                    text = com.example.model.AppStrings.continuousThroughput(appLanguage),
-                    color = glassStyle.textSecondary,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.5.sp
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                SpeedSparkline(
-                    dataPoints = speedHistory,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(90.dp)
-                )
-            }
-        }
+        // High-Tech Continuous Throughput Graph with Dynamic Speed Colors & Offline Snow
+        val isOffline = (speedSample.connectionType == com.example.model.NetworkType.OFFLINE)
+        com.example.ui.components.ContinuousThroughputGraph(
+            dataPoints = speedHistory,
+            currentSpeedBps = speedSample.downloadBps,
+            isOffline = isOffline,
+            appLanguage = appLanguage,
+            modifier = Modifier.fillMaxWidth()
+        )
 
         Spacer(modifier = Modifier.height(14.dp))
 

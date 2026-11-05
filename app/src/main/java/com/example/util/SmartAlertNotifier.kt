@@ -98,15 +98,15 @@ class SmartAlertNotifier(private val context: Context) {
         val formattedLimit = FormatUtils.formatBytes(thresholdBytes)
 
         val title = if (isArabic) {
-            "تحذير استهلاك: $appName تجاوز 3 جيجابايت اليوم!"
+            "تحذير استهلاك: $appName تجاوز $formattedLimit اليوم!"
         } else {
-            "Usage Alert: $appName exceeded 3 GB today!"
+            "Usage Alert: $appName exceeded $formattedLimit today!"
         }
 
         val message = if (isArabic) {
-            "استهلك تطبيق $appName ما يقارب $formattedUsed اليوم متجاوزاً حد $formattedLimit. اضغط لمراجعة التفاصيل."
+            "استهلك تطبيق $appName ما يقارب $formattedUsed اليوم متجاوزاً حد الاستهلاك اليومي المحدد ($formattedLimit). اضغط لمراجعة التفاصيل."
         } else {
-            "App $appName has consumed $formattedUsed today, exceeding $formattedLimit. Tap to review details."
+            "App $appName has consumed $formattedUsed today, exceeding your customized daily limit of $formattedLimit. Tap to review details."
         }
 
         val intent = Intent(context, MainActivity::class.java).apply {

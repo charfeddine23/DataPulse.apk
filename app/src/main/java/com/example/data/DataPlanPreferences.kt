@@ -43,6 +43,14 @@ class DataPlanPreferences(context: Context) {
         get() = prefs.getString(KEY_APP_LANGUAGE, "AR") ?: "AR"
         set(value) = prefs.edit().putString(KEY_APP_LANGUAGE, value).apply()
 
+    var dailyAppQuotaGB: Float
+        get() = prefs.getFloat(KEY_DAILY_APP_QUOTA_GB, 3.0f)
+        set(value) = prefs.edit().putFloat(KEY_DAILY_APP_QUOTA_GB, value.coerceIn(0.5f, 50.0f)).apply()
+
+    var dailyAppAlertEnabled: Boolean
+        get() = prefs.getBoolean(KEY_DAILY_APP_ALERT_ENABLED, true)
+        set(value) = prefs.edit().putBoolean(KEY_DAILY_APP_ALERT_ENABLED, value).apply()
+
     companion object {
         private const val KEY_PLAN_LIMIT_GB = "plan_limit_gb"
         private const val KEY_BILLING_CYCLE_DAY = "billing_cycle_day"
@@ -53,5 +61,7 @@ class DataPlanPreferences(context: Context) {
         private const val KEY_THEME_MODE = "theme_mode_preference"
         private const val KEY_POWER_SAVING = "power_saving_mode"
         private const val KEY_APP_LANGUAGE = "app_language_preference"
+        private const val KEY_DAILY_APP_QUOTA_GB = "daily_app_quota_gb"
+        private const val KEY_DAILY_APP_ALERT_ENABLED = "daily_app_alert_enabled"
     }
 }
