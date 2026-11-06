@@ -62,10 +62,8 @@ import com.example.model.InterfaceFilter
 import com.example.model.TimeRange
 import com.example.ui.MainViewModel
 import com.example.ui.components.GlassContainer
-import com.example.ui.components.NeumorphicSegmentedPill
 import com.example.ui.components.PerAppCustomLimitDialog
 import com.example.ui.components.UsagePermissionCard
-import com.example.ui.components.neumorphicDepth
 import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.ElectricBlue
 import com.example.ui.theme.NeonPurple
@@ -289,89 +287,38 @@ fun TimeRangeSelector(
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
-    val trayShape = RoundedCornerShape(16.dp)
 
-    // Indented Neumorphic Tray
-    Box(
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .neumorphicDepth(
-                shape = trayShape,
-                lightColor = Color.Transparent,
-                darkColor = glassStyle.neumorphicShadow,
-                offsetDp = 3.dp,
-                isPressed = true
-            )
-            .clip(trayShape)
-            .background(
-                Brush.linearGradient(
-                    listOf(glassStyle.cardSubtleBg, glassStyle.neumorphicSurface)
-                )
-            )
-            .border(1.dp, glassStyle.neumorphicBorderDark, trayShape)
-            .padding(5.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(glassStyle.cardBackground)
+            .border(1.dp, glassStyle.borderColor, RoundedCornerShape(14.dp))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            TimeRange.values().forEach { range ->
-                val isSelected = (range == currentRange)
-                val itemShape = RoundedCornerShape(12.dp)
-                val label = when (range) {
-                    TimeRange.TODAY -> com.example.model.AppStrings.timeToday(appLanguage)
-                    TimeRange.WEEK -> com.example.model.AppStrings.timeWeek(appLanguage)
-                    TimeRange.MONTH -> com.example.model.AppStrings.timeMonth(appLanguage)
-                }
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .neumorphicDepth(
-                            shape = itemShape,
-                            lightColor = if (isSelected) Color.Transparent else glassStyle.neumorphicHighlight.copy(alpha = 0.4f),
-                            darkColor = glassStyle.neumorphicShadow,
-                            offsetDp = 2.dp,
-                            isPressed = isSelected
-                        )
-                        .clip(itemShape)
-                        .background(
-                            if (isSelected) {
-                                Brush.linearGradient(
-                                    listOf(
-                                        glassStyle.cardSubtleBg,
-                                        glassStyle.accentPrimary.copy(alpha = 0.22f)
-                                    )
-                                )
-                            } else {
-                                Brush.linearGradient(
-                                    listOf(
-                                        glassStyle.neumorphicSurface.copy(alpha = 0.6f),
-                                        glassStyle.neumorphicBase.copy(alpha = 0.6f)
-                                    )
-                                )
-                            }
-                        )
-                        .border(
-                            1.dp,
-                            if (isSelected) {
-                                Brush.linearGradient(listOf(glassStyle.accentPrimary.copy(alpha = 0.75f), glassStyle.neumorphicBorderDark))
-                            } else {
-                                Brush.linearGradient(listOf(glassStyle.neumorphicBorderLight.copy(alpha = 0.15f), glassStyle.neumorphicBorderDark))
-                            },
-                            itemShape
-                        )
-                        .clickable { onSelect(range) }
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = label,
-                        color = if (isSelected) glassStyle.accentPrimary else glassStyle.textSecondary,
-                        fontSize = 12.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                    )
-                }
+        TimeRange.values().forEach { range ->
+            val isSelected = (range == currentRange)
+            val label = when (range) {
+                TimeRange.TODAY -> com.example.model.AppStrings.timeToday(appLanguage)
+                TimeRange.WEEK -> com.example.model.AppStrings.timeWeek(appLanguage)
+                TimeRange.MONTH -> com.example.model.AppStrings.timeMonth(appLanguage)
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(if (isSelected) glassStyle.accentPrimary else Color.Transparent)
+                    .clickable { onSelect(range) }
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    color = if (isSelected) (if (glassStyle.isDark) Color.Black else Color.White) else glassStyle.textSecondary,
+                    fontSize = 12.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                )
             }
         }
     }
@@ -397,14 +344,28 @@ fun InterfaceSelector(
                 InterfaceFilter.MOBILE -> com.example.model.AppStrings.filterCellular(appLanguage)
                 InterfaceFilter.WIFI -> com.example.model.AppStrings.filterWifi(appLanguage)
             }
-
-            NeumorphicSegmentedPill(
-                label = label,
-                isSelected = isSelected,
-                onClick = { onSelect(filter) },
-                accentColor = glassStyle.accentSecondary,
-                modifier = Modifier.weight(1f)
-            )
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        if (isSelected) glassStyle.accentSecondary.copy(alpha = if (glassStyle.isDark) 0.2f else 0.12f)
+                        else glassStyle.cardBackground
+                    )
+                    .border(
+                        1.dp,
+                        if (isSelected) glassStyle.accentSecondary else glassStyle.borderColor,
+                        RoundedCornerShape(20.dp)
+                    )
+                    .clickable { onSelect(filter) }
+                    .padding(horizontal = 14.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = label,
+                    color = if (isSelected) (if (glassStyle.isDark) glassStyle.textPrimary else glassStyle.accentSecondary) else glassStyle.textSecondary,
+                    fontSize = 12.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                )
+            }
         }
     }
 }

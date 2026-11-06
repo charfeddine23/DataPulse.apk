@@ -34,7 +34,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -51,7 +50,6 @@ import com.example.ui.components.GlassContainer
 import com.example.ui.components.LiveSpeedCard
 import com.example.ui.components.QuotaProgressGauge
 import com.example.ui.components.UsagePermissionCard
-import com.example.ui.components.neumorphicDepth
 import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.ElectricBlue
 import com.example.ui.theme.NeonPurple
@@ -76,6 +74,7 @@ fun DashboardScreen(
     val selectedSimIndex by viewModel.selectedSimIndex.collectAsStateWithLifecycle()
     val hasUsagePerm by viewModel.hasUsagePermission.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+    val dataForecast by viewModel.dataForecast.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = modifier
@@ -123,6 +122,15 @@ fun DashboardScreen(
                 appLanguage = appLanguage,
                 isInternetConnected = isInternetConnected,
                 onConfigureClick = onNavigateToSettings
+            )
+        }
+
+        // Smart Data Forecasting Card (Predictive Burn Rate, Depletion Timeline & Warning Banner)
+        item {
+            com.example.ui.components.SmartDataForecastingCard(
+                forecast = dataForecast,
+                appLanguage = appLanguage,
+                onConfigurePlanClick = onNavigateToSettings
             )
         }
 
@@ -176,108 +184,50 @@ fun DualSimSelector(
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
-    val trayShape = RoundedCornerShape(18.dp)
 
-    // Indented neumorphic tray
-    Box(
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .neumorphicDepth(
-                shape = trayShape,
-                lightColor = Color.Transparent,
-                darkColor = glassStyle.neumorphicShadow,
-                offsetDp = 3.dp,
-                isPressed = true
-            )
-            .clip(trayShape)
-            .background(
-                androidx.compose.ui.graphics.Brush.linearGradient(
-                    listOf(glassStyle.cardSubtleBg, glassStyle.neumorphicSurface)
-                )
-            )
-            .border(1.dp, glassStyle.neumorphicBorderDark, trayShape)
-            .padding(6.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(glassStyle.cardBackground)
+            .border(1.dp, glassStyle.borderColor, RoundedCornerShape(16.dp))
+            .padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            simCards.forEachIndexed { index, sim ->
-                val isSelected = (index == selectedIndex)
-                val itemShape = RoundedCornerShape(14.dp)
+        simCards.forEachIndexed { index, sim ->
+            val isSelected = (index == selectedIndex)
+            val bgColor = if (isSelected) glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f) else Color.Transparent
+            val borderColor = if (isSelected) glassStyle.accentPrimary.copy(alpha = 0.5f) else Color.Transparent
 
-                val itemScale by androidx.compose.animation.core.animateFloatAsState(
-                    targetValue = if (isSelected) 0.98f else 1.0f,
-                    animationSpec = androidx.compose.animation.core.tween(100),
-                    label = "sim_scale"
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(bgColor)
+                    .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+                    .clickable { onSelect(index) }
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.SimCard,
+                    contentDescription = sim.displayName,
+                    tint = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
+                    modifier = Modifier.size(16.dp)
                 )
-
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .scale(itemScale)
-                        .neumorphicDepth(
-                            shape = itemShape,
-                            lightColor = if (isSelected) Color.Transparent else glassStyle.neumorphicHighlight.copy(alpha = 0.4f),
-                            darkColor = glassStyle.neumorphicShadow,
-                            offsetDp = 2.dp,
-                            isPressed = isSelected
-                        )
-                        .clip(itemShape)
-                        .background(
-                            if (isSelected) {
-                                androidx.compose.ui.graphics.Brush.linearGradient(
-                                    listOf(
-                                        glassStyle.cardSubtleBg,
-                                        glassStyle.accentPrimary.copy(alpha = 0.2f)
-                                    )
-                                )
-                            } else {
-                                androidx.compose.ui.graphics.Brush.linearGradient(
-                                    listOf(
-                                        glassStyle.neumorphicSurface,
-                                        glassStyle.neumorphicBase
-                                    )
-                                )
-                            }
-                        )
-                        .border(
-                            1.dp,
-                            if (isSelected) {
-                                androidx.compose.ui.graphics.Brush.linearGradient(
-                                    listOf(glassStyle.accentPrimary.copy(alpha = 0.7f), glassStyle.neumorphicBorderDark)
-                                )
-                            } else {
-                                androidx.compose.ui.graphics.Brush.linearGradient(
-                                    listOf(glassStyle.neumorphicBorderLight.copy(alpha = 0.2f), glassStyle.neumorphicBorderDark)
-                                )
-                            },
-                            itemShape
-                        )
-                        .clickable { onSelect(index) }
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.SimCard,
-                        contentDescription = sim.displayName,
-                        tint = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
-                        modifier = Modifier.size(16.dp)
+                Spacer(modifier = Modifier.width(6.dp))
+                Column {
+                    Text(
+                        text = sim.displayName,
+                        color = if (isSelected) glassStyle.textPrimary else glassStyle.textSecondary,
+                        fontSize = 12.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Column {
-                        Text(
-                            text = sim.displayName,
-                            color = if (isSelected) glassStyle.accentPrimary else glassStyle.textSecondary,
-                            fontSize = 12.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                        )
-                        Text(
-                            text = sim.carrierName,
-                            color = if (isSelected) glassStyle.textPrimary else glassStyle.textTertiary,
-                            fontSize = 10.sp
-                        )
-                    }
+                    Text(
+                        text = sim.carrierName,
+                        color = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
+                        fontSize = 10.sp
+                    )
                 }
             }
         }
@@ -396,30 +346,13 @@ fun BreakdownMetricCard(
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
-    val cardShape = RoundedCornerShape(18.dp)
 
     Box(
         modifier = modifier
-            .neumorphicDepth(
-                shape = cardShape,
-                lightColor = glassStyle.neumorphicHighlight.copy(alpha = 0.5f),
-                darkColor = glassStyle.neumorphicShadow,
-                offsetDp = 3.dp
-            )
-            .clip(cardShape)
-            .background(
-                androidx.compose.ui.graphics.Brush.linearGradient(
-                    listOf(glassStyle.neumorphicSurface, glassStyle.neumorphicBase)
-                )
-            )
-            .border(
-                1.dp,
-                androidx.compose.ui.graphics.Brush.linearGradient(
-                    listOf(glassStyle.neumorphicBorderLight.copy(alpha = 0.3f), tint.copy(alpha = 0.35f))
-                ),
-                cardShape
-            )
-            .padding(14.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(glassStyle.cardBackground)
+            .border(1.dp, if (glassStyle.isDark) tint.copy(alpha = 0.25f) else glassStyle.borderColor, RoundedCornerShape(16.dp))
+            .padding(12.dp)
     ) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {

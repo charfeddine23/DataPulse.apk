@@ -37,13 +37,7 @@ data class LiquidGlassStyle(
     val rimLightBrush: Brush,
     val backdropBrush: Brush,
     val blurRadius: Dp = 16.dp,
-    val isDark: Boolean = true,
-    val neumorphicBase: Color = Color(0xFF0F1423),
-    val neumorphicSurface: Color = Color(0xFF141C2E),
-    val neumorphicHighlight: Color = Color(0x384E699A),
-    val neumorphicShadow: Color = Color(0xE603050B),
-    val neumorphicBorderLight: Color = Color(0x2BFFFFFF),
-    val neumorphicBorderDark: Color = Color(0x66000000)
+    val isDark: Boolean = true
 )
 
 val LocalLiquidGlass = staticCompositionLocalOf {
@@ -140,16 +134,10 @@ fun createLiquidGlassStyle(mode: AppThemeMode): LiquidGlassStyle = when (mode) {
             listOf(Color(0x4D0066FF), Color(0x1AFFFFFF), Color(0x4D7C4DFF))
         ),
         backdropBrush = Brush.verticalGradient(
-            listOf(Color(0xFF141C2E), Color(0xFF0F1423))
+            listOf(Color(0xEE121C30), Color(0xCC0B0F19))
         ),
         blurRadius = 16.dp,
-        isDark = true,
-        neumorphicBase = NeumorphicSlateBase,
-        neumorphicSurface = NeumorphicSlateSurface,
-        neumorphicHighlight = NeumorphicSlateHighlight,
-        neumorphicShadow = NeumorphicSlateShadow,
-        neumorphicBorderLight = NeumorphicBorderHighlight,
-        neumorphicBorderDark = NeumorphicBorderShadow
+        isDark = true
     )
 
     AppThemeMode.LIQUID_NEON_CYAN -> LiquidGlassStyle(
@@ -167,16 +155,10 @@ fun createLiquidGlassStyle(mode: AppThemeMode): LiquidGlassStyle = when (mode) {
             listOf(Color(0x4D00E5FF), Color(0x1A00FFA3), Color(0x4D00E5FF))
         ),
         backdropBrush = Brush.verticalGradient(
-            listOf(Color(0xFF0D1527), Color(0xFF080D1A))
+            listOf(Color(0xEE0B1528), Color(0xCC020617))
         ),
         blurRadius = 16.dp,
-        isDark = true,
-        neumorphicBase = LiquidNeonCyanBackground,
-        neumorphicSurface = LiquidNeonCyanSurface,
-        neumorphicHighlight = Color(0x3300E5FF),
-        neumorphicShadow = Color(0xCC03060C),
-        neumorphicBorderLight = Color(0x2E00E5FF),
-        neumorphicBorderDark = Color(0x66000000)
+        isDark = true
     )
 
     AppThemeMode.AMOLED_PITCH_BLACK -> LiquidGlassStyle(
@@ -194,16 +176,10 @@ fun createLiquidGlassStyle(mode: AppThemeMode): LiquidGlassStyle = when (mode) {
             listOf(Color(0x4D3B82F6), Color(0x1AFFFFFF), Color(0x4D06B6D4))
         ),
         backdropBrush = Brush.verticalGradient(
-            listOf(Color(0xFF111116), Color(0xFF000000))
+            listOf(Color(0xFF0F0F0F), Color(0xFF000000))
         ),
         blurRadius = 8.dp,
-        isDark = true,
-        neumorphicBase = AmoledPitchBlackBackground,
-        neumorphicSurface = AmoledPitchBlackSurface,
-        neumorphicHighlight = Color(0x263B82F6),
-        neumorphicShadow = Color(0xE6000000),
-        neumorphicBorderLight = Color(0x1FFFFFFF),
-        neumorphicBorderDark = Color(0x80000000)
+        isDark = true
     )
 }
 

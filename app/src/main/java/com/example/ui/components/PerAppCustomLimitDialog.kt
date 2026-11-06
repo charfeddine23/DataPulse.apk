@@ -1,5 +1,6 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,7 +23,13 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,10 +48,11 @@ import androidx.compose.ui.window.Dialog
 import com.example.model.AppLanguage
 import com.example.model.AppUsageItem
 import com.example.ui.screens.AppIconImage
+import com.example.ui.theme.AmberAlert
 import com.example.ui.theme.LocalLiquidGlass
 
 /**
- * Modern Neumorphic (Soft UI) Dialog for customizing per-app daily limit and alert settings on long-press.
+ * Liquid Glass Dark Mode Dialog for customizing per-app daily limit and alert settings on long-press.
  */
 @Composable
 fun PerAppCustomLimitDialog(
@@ -56,7 +64,6 @@ fun PerAppCustomLimitDialog(
     onSave: (dailyLimitGB: Float, alertEnabled: Boolean) -> Unit
 ) {
     val glassStyle = LocalLiquidGlass.current
-    val dialogShape = RoundedCornerShape(26.dp)
 
     var dailyLimit by remember(initialDailyLimitGB) { mutableStateOf(initialDailyLimitGB) }
     var alertEnabled by remember(initialAlertEnabled) { mutableStateOf(initialAlertEnabled) }
@@ -65,30 +72,27 @@ fun PerAppCustomLimitDialog(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .neumorphicDepth(
-                    shape = dialogShape,
-                    lightColor = glassStyle.neumorphicHighlight,
-                    darkColor = glassStyle.neumorphicShadow,
-                    offsetDp = 6.dp
-                )
-                .clip(dialogShape)
+                .clip(RoundedCornerShape(24.dp))
                 .background(
-                    Brush.linearGradient(
-                        colors = listOf(glassStyle.neumorphicSurface, glassStyle.neumorphicBase)
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFA111A2E),
+                            Color(0xF00B0F19)
+                        )
                     )
                 )
                 .border(
                     width = 1.dp,
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            glassStyle.neumorphicBorderLight,
-                            glassStyle.accentPrimary.copy(alpha = 0.4f),
-                            glassStyle.neumorphicBorderDark
+                            glassStyle.accentPrimary.copy(alpha = 0.6f),
+                            Color(0x22FFFFFF),
+                            glassStyle.accentSecondary.copy(alpha = 0.5f)
                         )
                     ),
-                    shape = dialogShape
+                    shape = RoundedCornerShape(24.dp)
                 )
-                .padding(22.dp)
+                .padding(20.dp)
         ) {
             Column {
                 // Header with App Icon and Close button
@@ -120,35 +124,31 @@ fun PerAppCustomLimitDialog(
                         }
                     }
 
-                    NeumorphicIconButton(
-                        icon = Icons.Default.Close,
-                        contentDescription = "Close",
+                    IconButton(
                         onClick = onDismiss,
-                        sizeDp = 32.dp
-                    )
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(glassStyle.cardSubtleBg)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = glassStyle.textSecondary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                // Custom Daily Limit Section in an indented neumorphic card
-                val sectionShape = RoundedCornerShape(18.dp)
+                // Custom Daily Limit Section
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .neumorphicDepth(
-                            shape = sectionShape,
-                            lightColor = Color.Transparent,
-                            darkColor = glassStyle.neumorphicShadow,
-                            offsetDp = 3.dp,
-                            isPressed = true
-                        )
-                        .clip(sectionShape)
-                        .background(
-                            Brush.linearGradient(
-                                listOf(glassStyle.cardSubtleBg, glassStyle.neumorphicSurface)
-                            )
-                        )
-                        .border(1.dp, glassStyle.neumorphicBorderDark, sectionShape)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(glassStyle.cardSubtleBg)
+                        .border(1.dp, glassStyle.borderColor, RoundedCornerShape(16.dp))
                         .padding(14.dp)
                 ) {
                     Column {
@@ -158,22 +158,28 @@ fun PerAppCustomLimitDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = if (appLanguage == AppLanguage.ARABIC) "الحد اليومي المخصص" else "Custom Daily Limit",
+                                text = if (appLanguage == AppLanguage.ARABIC) "الحد اليومي المخصص للتطبيق" else "Custom Daily Data Limit",
                                 color = glassStyle.textSecondary,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                NeumorphicIconButton(
-                                    icon = Icons.Default.Remove,
-                                    contentDescription = "Decrease",
+                                IconButton(
                                     onClick = { dailyLimit = (dailyLimit - 0.5f).coerceAtLeast(0.5f) },
-                                    tint = glassStyle.accentPrimary,
-                                    sizeDp = 32.dp
-                                )
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                        .background(glassStyle.cardBackground)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Remove,
+                                        contentDescription = "Decrease",
+                                        tint = glassStyle.accentPrimary
+                                    )
+                                }
 
-                                Spacer(modifier = Modifier.width(12.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
 
                                 val formattedLimit = if (dailyLimit % 1f == 0f) "${dailyLimit.toInt()} GB" else "%.1f GB".format(dailyLimit)
                                 Text(
@@ -183,19 +189,25 @@ fun PerAppCustomLimitDialog(
                                     fontWeight = FontWeight.ExtraBold
                                 )
 
-                                Spacer(modifier = Modifier.width(12.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
 
-                                NeumorphicIconButton(
-                                    icon = Icons.Default.Add,
-                                    contentDescription = "Increase",
+                                IconButton(
                                     onClick = { dailyLimit = (dailyLimit + 0.5f).coerceAtMost(50f) },
-                                    tint = glassStyle.accentPrimary,
-                                    sizeDp = 32.dp
-                                )
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                        .background(glassStyle.cardBackground)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = "Increase",
+                                        tint = glassStyle.accentPrimary
+                                    )
+                                }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
                         // Quick Presets
                         Row(
@@ -204,13 +216,22 @@ fun PerAppCustomLimitDialog(
                         ) {
                             listOf(1.0f, 2.0f, 3.0f, 5.0f).forEach { preset ->
                                 val isSelected = (kotlin.math.abs(dailyLimit - preset) < 0.05f)
-                                NeumorphicSegmentedPill(
-                                    label = "${preset.toInt()} GB",
-                                    isSelected = isSelected,
-                                    onClick = { dailyLimit = preset },
-                                    accentColor = glassStyle.accentPrimary,
-                                    modifier = Modifier.weight(1f)
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isSelected) glassStyle.accentPrimary else glassStyle.cardBackground)
+                                        .clickable { dailyLimit = preset }
+                                        .padding(vertical = 6.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "${preset.toInt()} GB",
+                                        color = if (isSelected) (if (glassStyle.isDark) Color.Black else Color.White) else glassStyle.textSecondary,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
                             }
                         }
                     }
@@ -218,24 +239,13 @@ fun PerAppCustomLimitDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Toggle Notification for this App (Indented Neumorphic Card with NeumorphicSwitch)
+                // Toggle Notification for this App
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .neumorphicDepth(
-                            shape = sectionShape,
-                            lightColor = Color.Transparent,
-                            darkColor = glassStyle.neumorphicShadow,
-                            offsetDp = 3.dp,
-                            isPressed = true
-                        )
-                        .clip(sectionShape)
-                        .background(
-                            Brush.linearGradient(
-                                listOf(glassStyle.cardSubtleBg, glassStyle.neumorphicSurface)
-                            )
-                        )
-                        .border(1.dp, glassStyle.neumorphicBorderDark, sectionShape)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(glassStyle.cardSubtleBg)
+                        .border(1.dp, glassStyle.borderColor, RoundedCornerShape(16.dp))
                         .padding(14.dp)
                 ) {
                     Row(
@@ -245,73 +255,75 @@ fun PerAppCustomLimitDialog(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = if (appLanguage == AppLanguage.ARABIC) "تفعيل إشعار التجاوز للتطبيق" else "Enable Alerts for this App",
+                                text = if (appLanguage == AppLanguage.ARABIC) "تفعيل إشعار التجاوز لهذا التطبيق" else "Enable Alerts for this App",
                                 color = glassStyle.textPrimary,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
                                 text = if (appLanguage == AppLanguage.ARABIC)
-                                    "إرسال تنبيه فوري عند بلوغ هذا التطبيق حده اليومي"
+                                    "إرسال تنبيه فوري عند بلوغ الاستهلاك اليومي لهذا التطبيق الحد المحدد"
                                 else
-                                    "Send instant alert when this app consumes custom quota",
+                                    "Send instant alert when this app consumes custom daily quota",
                                 color = glassStyle.textTertiary,
                                 fontSize = 10.sp
                             )
                         }
 
-                        NeumorphicSwitch(
+                        Switch(
                             checked = alertEnabled,
                             onCheckedChange = { alertEnabled = it },
-                            accentColor = glassStyle.accentPrimary
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = glassStyle.accentPrimary,
+                                checkedTrackColor = glassStyle.accentPrimary.copy(alpha = 0.4f),
+                                uncheckedThumbColor = glassStyle.textTertiary,
+                                uncheckedTrackColor = if (glassStyle.isDark) Color(0xFF162238) else Color(0xFFCBD5E1)
+                            )
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Action Buttons (Cancel / Save) using tactile NeumorphicButton
+                // Action Buttons (Cancel / Save)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    NeumorphicButton(
+                    OutlinedButton(
                         onClick = onDismiss,
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
                             text = if (appLanguage == AppLanguage.ARABIC) "إلغاء" else "Cancel",
                             color = glassStyle.textSecondary,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium
+                            fontSize = 13.sp
                         )
                     }
 
-                    NeumorphicButton(
+                    Button(
                         onClick = {
                             onSave(dailyLimit, alertEnabled)
                             onDismiss()
                         },
-                        accentColor = glassStyle.accentPrimary,
-                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = glassStyle.accentPrimary),
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null,
-                                tint = glassStyle.accentPrimary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (appLanguage == AppLanguage.ARABIC) "حفظ التخصيص" else "Save Limit",
-                                color = glassStyle.accentPrimary,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = if (glassStyle.isDark) Color.Black else Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (appLanguage == AppLanguage.ARABIC) "حفظ التخصيص" else "Save Limit",
+                            color = if (glassStyle.isDark) Color.Black else Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
                     }
                 }
             }
