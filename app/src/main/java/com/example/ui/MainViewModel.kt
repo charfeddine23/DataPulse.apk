@@ -69,6 +69,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _dataPlanQuota = MutableStateFlow(DataPlanQuota())
     val dataPlanQuota: StateFlow<DataPlanQuota> = _dataPlanQuota.asStateFlow()
 
+    private val _dataForecast = MutableStateFlow(com.example.model.SmartDataForecast())
+    val dataForecast: StateFlow<com.example.model.SmartDataForecast> = _dataForecast.asStateFlow()
+
     private val _hasUsagePermission = MutableStateFlow(repository.hasUsageStatsPermission())
     val hasUsagePermission: StateFlow<Boolean> = _hasUsagePermission.asStateFlow()
 
@@ -258,6 +261,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             daysRemaining = daysRemaining,
             status = status
         )
+
+        // Compute predictive smart forecasting
+        val forecast = com.example.model.DataForecastCalculator.calculate(
+            usedMobileBytes = usedMobileBytes,
+            planLimitGB = limitGB,
+            billingCycleStartDay = preferences.billingCycleStartDay,
+            daysRemainingInCycle = daysRemaining,
+            mobileTodayBytes = _usageSummary.value.mobileTodayBytes
+        )
+        _dataForecast.value = forecast
 
         // Check if smart alerts should fire
         triggerAlertIfNeeded(status, usedMobileBytes, limitBytes, percent)

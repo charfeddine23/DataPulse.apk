@@ -33,4 +33,49 @@ class DataPulseUnitTest {
         )
         assertEquals(4, statuses.size)
     }
+
+    @Test
+    fun testSmartDataForecastPrediction() {
+        val gb = 1024L * 1024L * 1024L
+        val planLimitGB = 120.0f
+        // Used 100 GB out of 120 GB with high daily burn rate (10 GB/day)
+        val usedBytes = 100L * gb
+        val todayBytes = 10L * gb
+
+        val forecast = com.example.model.DataForecastCalculator.calculate(
+            usedMobileBytes = usedBytes,
+            planLimitGB = planLimitGB,
+            billingCycleStartDay = 1,
+            daysRemainingInCycle = 15,
+            mobileTodayBytes = todayBytes
+        )
+
+        // 20 GB remaining with >= 10 GB/day burn rate will deplete in <= 3 days -> CRITICAL_DEPLETION
+        org.junit.Assert.assertTrue(forecast.predictedDaysRemaining <= 3)
+        assertEquals(com.example.model.ForecastStatus.CRITICAL_DEPLETION, forecast.status)
+        org.junit.Assert.assertTrue(forecast.willDepleteBeforeCycleEnd)
+    }
+
+    @Test
+    fun testSmartDataForecastSustainable() {
+        val gb = 1024L * 1024L * 1024L
+        val planLimitGB = 120.0f
+        // Used 20 GB out of 120 GB, with only 1 GB today and 10 days remaining
+        val usedBytes = 20L * gb
+        val todayBytes = 1L * gb
+
+        val forecast = com.example.model.DataForecastCalculator.calculate(
+            usedMobileBytes = usedBytes,
+            planLimitGB = planLimitGB,
+            billingCycleStartDay = 1,
+            daysRemainingInCycle = 10,
+            mobileTodayBytes = todayBytes
+        )
+
+        // With 100 GB remaining and 10 days left in cycle, pace is sustainable
+        assertEquals(com.example.model.ForecastStatus.SUSTAINABLE, forecast.status)
+        org.junit.Assert.assertFalse(forecast.willDepleteBeforeCycleEnd)
+        org.junit.Assert.assertTrue(forecast.isSurplus)
+    }
 }
+

@@ -95,54 +95,50 @@ fun GlassContainer(
     backgroundColor: Color? = null,
     borderColor: Color? = null,
     enableBlur: Boolean = true,
+    isPressed: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val glassStyle = LocalLiquidGlass.current
-    val effectiveBg = backgroundColor ?: glassStyle.surfaceColor
-    val effectiveBorder = borderColor ?: glassStyle.borderColor
+    val effectiveBg = backgroundColor ?: glassStyle.neumorphicSurface
+    val lightShadow = glassStyle.neumorphicHighlight
+    val darkShadow = glassStyle.neumorphicShadow
+
+    val bevelBorderBrush = if (borderColor != null) {
+        Brush.linearGradient(
+            listOf(borderColor.copy(alpha = 0.6f), glassStyle.neumorphicBorderLight.copy(alpha = 0.4f), borderColor.copy(alpha = 0.25f))
+        )
+    } else if (isPressed) {
+        Brush.linearGradient(
+            listOf(glassStyle.neumorphicBorderDark, glassStyle.neumorphicBorderLight.copy(alpha = 0.15f))
+        )
+    } else {
+        Brush.linearGradient(
+            listOf(glassStyle.neumorphicBorderLight, glassStyle.neumorphicBorderDark)
+        )
+    }
 
     Box(
-        modifier = modifier.clip(shape)
-    ) {
-        // Frosted Blur Layer (on Android 12+)
-        if (enableBlur && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .blur(glassStyle.blurRadius)
-                    .background(if (glassStyle.isDark) Color(0x550B1222) else Color(0x33CBD5E1))
+        modifier = modifier
+            .neumorphicDepth(
+                shape = shape,
+                lightColor = lightShadow,
+                darkColor = darkShadow,
+                isPressed = isPressed
             )
-        }
-
-        // Semi-transparent Backdrop Gradient & Rim Highlight
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            effectiveBg,
-                            effectiveBg.copy(alpha = if (glassStyle.isDark) 0.85f else 0.95f)
-                        )
-                    )
+            .clip(shape)
+            .background(
+                Brush.linearGradient(
+                    colors = if (isPressed) {
+                        listOf(glassStyle.cardSubtleBg, effectiveBg.copy(alpha = 0.85f))
+                    } else {
+                        listOf(effectiveBg, glassStyle.neumorphicBase.copy(alpha = 0.95f))
+                    }
                 )
-                .border(
-                    width = 1.dp,
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            effectiveBorder,
-                            effectiveBorder.copy(alpha = 0.2f),
-                            effectiveBorder.copy(alpha = 0.45f)
-                        )
-                    ),
-                    shape = shape
-                )
-        )
-
-        // Card Content
-        Box(modifier = Modifier.padding(16.dp)) {
-            content()
-        }
+            )
+            .border(width = 1.dp, brush = bevelBorderBrush, shape = shape)
+            .padding(16.dp)
+    ) {
+        content()
     }
 }
 

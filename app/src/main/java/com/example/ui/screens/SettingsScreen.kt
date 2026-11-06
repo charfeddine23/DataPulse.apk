@@ -59,6 +59,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
@@ -74,6 +75,11 @@ import com.example.model.AppStrings
 import com.example.model.ThemeMode
 import com.example.ui.MainViewModel
 import com.example.ui.components.GlassContainer
+import com.example.ui.components.NeumorphicButton
+import com.example.ui.components.NeumorphicIconButton
+import com.example.ui.components.NeumorphicSegmentedPill
+import com.example.ui.components.NeumorphicSwitch
+import com.example.ui.components.neumorphicDepth
 import com.example.ui.theme.AmberAlert
 import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.NeonPurple
@@ -319,7 +325,7 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    Button(
+                    NeumorphicButton(
                         onClick = {
                             focusManager.clearFocus()
                             val parsed = customLimitInput.toFloatOrNull()
@@ -327,11 +333,11 @@ fun SettingsScreen(
                                 viewModel.updatePlanLimit(parsed.coerceIn(0.1f, 10000f))
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = glassStyle.accentPrimary),
-                        shape = RoundedCornerShape(12.dp),
+                        accentColor = glassStyle.accentPrimary,
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.height(52.dp)
                     ) {
-                        Text(AppStrings.set(appLanguage), color = if (glassStyle.isDark) Color.Black else Color.White, fontWeight = FontWeight.Bold)
+                        Text(AppStrings.set(appLanguage), color = glassStyle.accentPrimary, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -362,30 +368,16 @@ fun SettingsScreen(
                 ) {
                     listOf(10f, 50f, 100f, 250f, 500f, 1000f).forEach { preset ->
                         val isSelected = (quota.planLimitGB == preset)
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) glassStyle.accentPrimary else glassStyle.cardBackground)
-                                .border(
-                                    1.dp,
-                                    if (isSelected) glassStyle.accentPrimary else glassStyle.borderColor,
-                                    RoundedCornerShape(10.dp)
-                                )
-                                .clickable {
-                                    viewModel.updatePlanLimit(preset)
-                                    customLimitInput = preset.toInt().toString()
-                                }
-                                .padding(vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "${preset.toInt()}G",
-                                color = if (isSelected) (if (glassStyle.isDark) Color.Black else Color.White) else glassStyle.textSecondary,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        NeumorphicSegmentedPill(
+                            label = "${preset.toInt()}G",
+                            isSelected = isSelected,
+                            onClick = {
+                                viewModel.updatePlanLimit(preset)
+                                customLimitInput = preset.toInt().toString()
+                            },
+                            accentColor = glassStyle.accentPrimary,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
@@ -416,17 +408,15 @@ fun SettingsScreen(
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(
+                        NeumorphicIconButton(
+                            icon = Icons.Default.Remove,
+                            contentDescription = "Decrease",
                             onClick = { viewModel.updateBillingCycleDay(quota.billingCycleStartDay - 1) },
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(glassStyle.cardSubtleBg)
-                        ) {
-                            Icon(imageVector = Icons.Default.Remove, contentDescription = "Decrease", tint = glassStyle.accentPrimary)
-                        }
+                            tint = glassStyle.accentPrimary,
+                            sizeDp = 34.dp
+                        )
 
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(14.dp))
 
                         Text(
                             text = "${quota.billingCycleStartDay}",
@@ -435,17 +425,15 @@ fun SettingsScreen(
                             fontWeight = FontWeight.Bold
                         )
 
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(14.dp))
 
-                        IconButton(
+                        NeumorphicIconButton(
+                            icon = Icons.Default.Add,
+                            contentDescription = "Increase",
                             onClick = { viewModel.updateBillingCycleDay(quota.billingCycleStartDay + 1) },
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(glassStyle.cardSubtleBg)
-                        ) {
-                            Icon(imageVector = Icons.Default.Add, contentDescription = "Increase", tint = glassStyle.accentPrimary)
-                        }
+                            tint = glassStyle.accentPrimary,
+                            sizeDp = 34.dp
+                        )
                     }
                 }
             }
@@ -567,24 +555,18 @@ fun SettingsScreen(
                                 )
 
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    IconButton(
+                                    NeumorphicIconButton(
+                                        icon = Icons.Default.Remove,
+                                        contentDescription = "Decrease",
                                         onClick = {
                                             val next = (dailyAppQuotaGB - 0.5f).coerceAtLeast(0.5f)
                                             viewModel.updateDailyAppQuotaGB(next)
                                         },
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .clip(CircleShape)
-                                            .background(glassStyle.cardBackground)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Remove,
-                                            contentDescription = "Decrease",
-                                            tint = glassStyle.accentPrimary
-                                        )
-                                    }
+                                        tint = glassStyle.accentPrimary,
+                                        sizeDp = 34.dp
+                                    )
 
-                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Spacer(modifier = Modifier.width(12.dp))
 
                                     val quotaDisplay = if (dailyAppQuotaGB % 1f == 0f) "${dailyAppQuotaGB.toInt()} GB" else "%.1f GB".format(dailyAppQuotaGB)
                                     Text(
@@ -594,28 +576,22 @@ fun SettingsScreen(
                                         fontWeight = FontWeight.ExtraBold
                                     )
 
-                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Spacer(modifier = Modifier.width(12.dp))
 
-                                    IconButton(
+                                    NeumorphicIconButton(
+                                        icon = Icons.Default.Add,
+                                        contentDescription = "Increase",
                                         onClick = {
                                             val next = (dailyAppQuotaGB + 0.5f).coerceAtMost(50f)
                                             viewModel.updateDailyAppQuotaGB(next)
                                         },
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .clip(CircleShape)
-                                            .background(glassStyle.cardBackground)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Add,
-                                            contentDescription = "Increase",
-                                            tint = glassStyle.accentPrimary
-                                        )
-                                    }
+                                        tint = glassStyle.accentPrimary,
+                                        sizeDp = 34.dp
+                                    )
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
 
                             // Quick preset chips (1GB, 2GB, 3GB, 5GB, 10GB)
                             Row(
@@ -624,22 +600,13 @@ fun SettingsScreen(
                             ) {
                                 listOf(1.0f, 2.0f, 3.0f, 5.0f, 10.0f).forEach { preset ->
                                     val isSelected = (kotlin.math.abs(dailyAppQuotaGB - preset) < 0.05f)
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(if (isSelected) glassStyle.accentPrimary else glassStyle.cardBackground)
-                                            .clickable { viewModel.updateDailyAppQuotaGB(preset) }
-                                            .padding(vertical = 6.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "${preset.toInt()} GB",
-                                            color = if (isSelected) (if (glassStyle.isDark) Color.Black else Color.White) else glassStyle.textSecondary,
-                                            fontSize = 10.sp,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                        )
-                                    }
+                                    NeumorphicSegmentedPill(
+                                        label = "${preset.toInt()} GB",
+                                        isSelected = isSelected,
+                                        onClick = { viewModel.updateDailyAppQuotaGB(preset) },
+                                        accentColor = glassStyle.accentPrimary,
+                                        modifier = Modifier.weight(1f)
+                                    )
                                 }
                             }
                         }
@@ -884,18 +851,53 @@ fun ThemeOptionButton(
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val itemShape = RoundedCornerShape(16.dp)
+
+    val itemScale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isSelected) 0.98f else 1.0f,
+        animationSpec = androidx.compose.animation.core.tween(100),
+        label = "theme_btn_scale"
+    )
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (isSelected) glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f) else glassStyle.cardBackground)
+            .scale(itemScale)
+            .neumorphicDepth(
+                shape = itemShape,
+                lightColor = if (isSelected) androidx.compose.ui.graphics.Color.Transparent else glassStyle.neumorphicHighlight.copy(alpha = 0.45f),
+                darkColor = glassStyle.neumorphicShadow,
+                offsetDp = 2.dp,
+                isPressed = isSelected
+            )
+            .clip(itemShape)
+            .background(
+                if (isSelected) {
+                    androidx.compose.ui.graphics.Brush.linearGradient(
+                        listOf(
+                            glassStyle.cardSubtleBg,
+                            glassStyle.accentPrimary.copy(alpha = 0.22f)
+                        )
+                    )
+                } else {
+                    androidx.compose.ui.graphics.Brush.linearGradient(
+                        listOf(
+                            glassStyle.neumorphicSurface,
+                            glassStyle.neumorphicBase
+                        )
+                    )
+                }
+            )
             .border(
                 1.dp,
-                if (isSelected) glassStyle.accentPrimary else glassStyle.borderColor,
-                RoundedCornerShape(14.dp)
+                if (isSelected) {
+                    androidx.compose.ui.graphics.Brush.linearGradient(listOf(glassStyle.accentPrimary.copy(alpha = 0.75f), glassStyle.neumorphicBorderDark))
+                } else {
+                    androidx.compose.ui.graphics.Brush.linearGradient(listOf(glassStyle.neumorphicBorderLight.copy(alpha = 0.2f), glassStyle.neumorphicBorderDark))
+                },
+                itemShape
             )
             .clickable { onClick() }
-            .padding(vertical = 10.dp, horizontal = 6.dp),
+            .padding(vertical = 12.dp, horizontal = 6.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -908,13 +910,13 @@ fun ThemeOptionButton(
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = title,
-                color = if (isSelected) glassStyle.textPrimary else glassStyle.textSecondary,
+                color = if (isSelected) glassStyle.accentPrimary else glassStyle.textSecondary,
                 fontSize = 12.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
             )
             Text(
                 text = subtitle,
-                color = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
+                color = if (isSelected) glassStyle.textPrimary else glassStyle.textTertiary,
                 fontSize = 9.sp
             )
         }

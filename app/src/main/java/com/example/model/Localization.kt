@@ -149,5 +149,36 @@ object AppStrings {
     fun perAppCancelBtn(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "إلغاء" else "Cancel"
     fun perAppLongPressHint(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "اضغط مطولاً لتخصيص الحد اليومي" else "Long-press to customize limit"
     fun perAppDefaultIndicator(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الافتراضي: 3 غيغابايت" else "Default: 3.0 GB"
+
+    // Smart Data Forecasting
+    fun smartForecastTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التنبؤ الذكي باستهلاك البيانات" else "Smart Data Forecasting"
+    fun smartForecastSubtitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تحليل تنبؤي لمعدل الحرق وموعد نفاد الباقة الشهرية" else "Predictive burn rate & data depletion analysis"
+    fun forecastBurnRate(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "معدل الحرق اليومي" else "Daily Burn Rate"
+    fun forecastDaysToDeplete(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "النفاد المتوقع" else "Depletion In"
+    fun forecastEndOfCycle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "توقع نهاية الدورة" else "Cycle End Est."
+    fun forecastSurplus(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "فائض متوقع" else "Surplus"
+    fun forecastDeficit(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "عجز متوقع" else "Deficit"
+    fun statusCritical(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "حرج: وشيك النفاد" else "Critical Risk"
+    fun statusEarlyWarning(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تنبيه: نفاد مبكر" else "Early Depletion"
+    fun statusSustainable(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "استهلاك متوازن" else "Sustainable Pace"
+    fun statusExhausted(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تم استهلاك الباقة" else "Cap Exhausted"
+    fun forecastDays(days: Int, lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "$days أيام" else "$days Days"
+    fun warningCriticalBanner(days: Int, planCapGB: Float, lang: AppLanguage) = if (lang == AppLanguage.ARABIC)
+        "⚠️ تحذير: بناءً على استهلاكك، ستنفد باقتك ($planCapGB غيغابايت) بالكامل خلال $days أيام فقط!"
+    else
+        "⚠️ Warning: Based on your usage, your ${planCapGB.toInt()} GB data cap will deplete in $days days!"
+    fun warningEarlyBanner(days: Int, cycleDays: Int, lang: AppLanguage) = if (lang == AppLanguage.ARABIC)
+        "⚠️ تنبيه: بمعدل استهلاكك الحالي، ستنفد باقتك خلال $days يوماً (قبل $cycleDays يوماً من تجديد الدورة)."
+    else
+        "⚠️ Attention: At your current pace, your data will deplete in $days days ($cycleDays days left in cycle)."
+    fun safeBanner(surplusFormatted: String, daysLeft: Int, lang: AppLanguage) = if (lang == AppLanguage.ARABIC)
+        "✨ استهلاكك متوازن وممتاز: ستكفيك الباقة طوال الـ $daysLeft يوماً المتبقية مع فائض متوقع قدره $surplusFormatted."
+    else
+        "✨ Sustainable Pace: At this rate, your data will comfortably last the remaining $daysLeft days with ~$surplusFormatted surplus."
+    fun exhaustedBanner(lang: AppLanguage) = if (lang == AppLanguage.ARABIC)
+        "🚨 تم استهلاك كامل سعة الباقة المحددة! يرجى شحن الرصيد أو تجديد الباقة."
+    else
+        "🚨 Data cap has been fully exhausted! Please recharge or extend your monthly plan."
 }
+
 

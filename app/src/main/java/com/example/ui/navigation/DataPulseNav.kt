@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -43,6 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.components.neumorphicDepth
+import com.example.ui.theme.LocalLiquidGlass
 import com.example.ui.MainViewModel
 import com.example.ui.screens.AnalyticsScreen
 import com.example.ui.screens.DashboardScreen
@@ -131,20 +134,31 @@ fun LiquidGlassBottomNav(
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val navShape = RoundedCornerShape(26.dp)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .background(brush = glassStyle.backdropBrush)
+            .neumorphicDepth(
+                shape = navShape,
+                lightColor = glassStyle.neumorphicHighlight,
+                darkColor = glassStyle.neumorphicShadow,
+                offsetDp = 5.dp
+            )
+            .clip(navShape)
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(glassStyle.neumorphicSurface, glassStyle.neumorphicBase)
+                )
+            )
             .border(
                 1.dp,
-                glassStyle.rimLightBrush,
-                RoundedCornerShape(24.dp)
+                Brush.linearGradient(listOf(glassStyle.neumorphicBorderLight, glassStyle.neumorphicBorderDark)),
+                navShape
             )
-            .padding(horizontal = 10.dp, vertical = 6.dp)
+            .padding(horizontal = 10.dp, vertical = 7.dp)
     ) {
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Row(
@@ -164,36 +178,81 @@ fun LiquidGlassBottomNav(
                     NavDestination.DASHBOARD
                 )
 
-            navigationItems.forEach { destination ->
-                val isSelected = (destination == currentDestination)
-                val destLabel = destination.getLabel(appLanguage)
+                navigationItems.forEach { destination ->
+                    val isSelected = (destination == currentDestination)
+                    val destLabel = destination.getLabel(appLanguage)
+                    val itemShape = RoundedCornerShape(16.dp)
 
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(if (isSelected) glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f) else Color.Transparent)
-                        .clickable { onSelectDestination(destination) }
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                        .testTag(destination.tag),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                    // Animate item scale for tactile feel
+                    val itemScale by androidx.compose.animation.core.animateFloatAsState(
+                        targetValue = if (isSelected) 0.98f else 1.0f,
+                        animationSpec = androidx.compose.animation.core.tween(durationMillis = 150),
+                        label = "nav_item_scale"
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .scale(itemScale)
+                            .neumorphicDepth(
+                                shape = itemShape,
+                                lightColor = if (isSelected) Color.Transparent else glassStyle.neumorphicHighlight.copy(alpha = 0.4f),
+                                darkColor = if (isSelected) glassStyle.neumorphicShadow else glassStyle.neumorphicShadow.copy(alpha = 0.4f),
+                                offsetDp = 2.dp,
+                                isPressed = isSelected
+                            )
+                            .clip(itemShape)
+                            .background(
+                                if (isSelected) {
+                                    Brush.linearGradient(
+                                        listOf(
+                                            glassStyle.cardSubtleBg,
+                                            glassStyle.accentPrimary.copy(alpha = 0.18f)
+                                        )
+                                    )
+                                } else {
+                                    Brush.linearGradient(
+                                        listOf(
+                                            glassStyle.neumorphicSurface.copy(alpha = 0.5f),
+                                            glassStyle.neumorphicBase.copy(alpha = 0.5f)
+                                        )
+                                    )
+                                }
+                            )
+                            .border(
+                                1.dp,
+                                if (isSelected) {
+                                    Brush.linearGradient(
+                                        listOf(glassStyle.accentPrimary.copy(alpha = 0.7f), glassStyle.neumorphicBorderDark)
+                                    )
+                                } else {
+                                    Brush.linearGradient(
+                                        listOf(glassStyle.neumorphicBorderLight.copy(alpha = 0.15f), glassStyle.neumorphicBorderDark.copy(alpha = 0.3f))
+                                    )
+                                },
+                                itemShape
+                            )
+                            .clickable { onSelectDestination(destination) }
+                            .padding(horizontal = 14.dp, vertical = 7.dp)
+                            .testTag(destination.tag),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = destination.icon,
-                            contentDescription = destLabel,
-                            tint = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = destLabel,
-                            color = if (isSelected) glassStyle.textPrimary else glassStyle.textTertiary,
-                            fontSize = 10.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = destination.icon,
+                                contentDescription = destLabel,
+                                tint = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.height(3.dp))
+                            Text(
+                                text = destLabel,
+                                color = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
+                                fontSize = 10.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                            )
                         }
                     }
                 }

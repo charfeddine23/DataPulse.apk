@@ -179,20 +179,27 @@ fun ContinuousThroughputGraph(
         }
     }
 
+    val graphShape = RoundedCornerShape(22.dp)
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
+            .neumorphicDepth(
+                shape = graphShape,
+                lightColor = if (isOffline) Color(0x3380DEEA) else glassStyle.neumorphicHighlight.copy(alpha = 0.5f),
+                darkColor = glassStyle.neumorphicShadow,
+                offsetDp = 4.dp
+            )
+            .clip(graphShape)
             .background(
-                brush = Brush.verticalGradient(
+                brush = Brush.linearGradient(
                     colors = if (isOffline) {
-                        listOf(Color(0xEE0B1924), Color(0xCC06121D)) // Frosty dark ice glass
+                        listOf(Color(0xFF0F1E29), Color(0xFF08121A)) // Frosty dark ice
                     } else {
-                        listOf(Color(0xEE121C30), Color(0xCC0B0F19)) // Liquid Glass dark obsidian
+                        listOf(glassStyle.neumorphicSurface, glassStyle.neumorphicBase)
                     }
                 )
             )
-            .border(1.dp, containerBorderBrush, RoundedCornerShape(22.dp))
+            .border(1.dp, containerBorderBrush, graphShape)
             .padding(16.dp)
     ) {
         Column {

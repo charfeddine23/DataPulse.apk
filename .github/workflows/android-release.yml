@@ -62,24 +62,33 @@ jobs:
             echo "::warning::KEYSTORE_BASE64 secret is not set. Generating fallback self-signed keystore for build testing..."
             keytool -genkeypair -v -keystore "$KEYSTORE_DEST" -storepass "${STORE_PASS:-android}" \
               -alias upload -keypass "${KEY_PASS:-android}" -keyalg RSA -keysize 2048 -validity 10000 \
-              -dname "CN=DataPulse, OU=Mobile, O=CharfeddineKa, L=Tunis, C=TN"
-            echo "STORE_PASSWORD=${STORE_PASS:-android}" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=${KEY_PASS:-android}" >> $GITHUB_ENV
+              -dname "CN=DataPulse, OU=Mobile, O=CharfeddineKa, L=Tunis, C=TN" -noprompt
           fi
           echo "KEYSTORE_PATH=$KEYSTORE_DEST" >> $GITHUB_ENV
+          echo "STORE_PASSWORD=${STORE_PASS:-android}" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=${KEY_PASS:-android}" >> $GITHUB_ENV
 
       - name: Build Signed Release APK
         env:
-          KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD || env.STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || env.KEY_PASSWORD }}
+          KEYSTORE_PATH: ${{ env.KEYSTORE_PATH || format('{0}/my-upload-key.jks', github.workspace) }}
+          STORE_PASSWORD: ${{ env.STORE_PASSWORD || secrets.STORE_PASSWORD || 'android' }}
+          KEY_PASSWORD: ${{ env.KEY_PASSWORD || secrets.KEY_PASSWORD || 'android' }}
         run: |
-          if [ -f "./gradlew" ]; then
-            chmod +x gradlew
-            ./gradlew assembleRelease --stacktrace
-          else
-            gradle assembleRelease --stacktrace
+          if [ ! -f "./gradlew" ]; then
+            echo "gradlew not found, ensuring wrapper is ready..."
+            gradle wrapper || true
           fi
+          chmod +x ./gradlew
+
+          if [ ! -f "$KEYSTORE_PATH" ]; then
+            echo "Keystore file missing at $KEYSTORE_PATH, creating fallback upload keystore..."
+            keytool -genkeypair -v -keystore "$KEYSTORE_PATH" \
+              -storepass "$STORE_PASSWORD" -alias upload \
+              -keypass "$KEY_PASSWORD" -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=DataPulse, OU=Mobile, O=CharfeddineKa, L=Tunis, C=TN" -noprompt
+          fi
+
+          ./gradlew assembleRelease --stacktrace
 
       - name: Prepare Release Artifacts
         run: |
