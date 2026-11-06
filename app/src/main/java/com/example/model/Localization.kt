@@ -151,6 +151,8 @@ object AppStrings {
     fun perAppDefaultIndicator(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الافتراضي: 3 غيغابايت" else "Default: 3.0 GB"
 
     // Smart Data Forecasting
+    fun navForecast(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التنبؤ الذكي" else "Forecast"
+    fun navSmartAnalytics(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التحليلات الذكية" else "Smart Analytics"
     fun smartForecastTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التنبؤ الذكي باستهلاك البيانات" else "Smart Data Forecasting"
     fun smartForecastSubtitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تحليل تنبؤي لمعدل الحرق وموعد نفاد الباقة الشهرية" else "Predictive burn rate & data depletion analysis"
     fun forecastBurnRate(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "معدل الحرق اليومي" else "Daily Burn Rate"
@@ -179,6 +181,23 @@ object AppStrings {
         "🚨 تم استهلاك كامل سعة الباقة المحددة! يرجى شحن الرصيد أو تجديد الباقة."
     else
         "🚨 Data cap has been fully exhausted! Please recharge or extend your monthly plan."
+
+    // Smart Analytics Screen Additional Strings
+    fun smartAnalyticsTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التحليلات الذكية والتنبؤ" else "Smart Analytics & Forecast"
+    fun smartAnalyticsSubtitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "توقعات استهلاك الباقة ومعدل الحرق ومدرج البيانات" else "Predictive consumption runway, burn rate & depletion timeline"
+    fun safeRunwayBudget(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الميزانية اليومية الآمنة" else "Safe Daily Runway"
+    fun safeRunwayDesc(days: Int, lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "لإنهاء الـ $days يوماً المتبقية بأمان" else "To safely complete remaining $days days"
+    fun burnVelocity(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "سرعة الاستهلاك" else "Consumption Velocity"
+    fun burnVelocityFast(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "أسرع من المخطط" else "Above safe pace"
+    fun burnVelocityOptimal(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "ضمن الميزانية الآمنة" else "Optimal safe pace"
+    fun cycleProgress(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "مسار دورة الفاتورة" else "Billing Cycle Timeline"
+    fun cycleDaysElapsed(elapsed: Int, total: Int, lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "اليوم $elapsed من إجمالي $total يوماً" else "Day $elapsed of $total in cycle"
+    fun recommendationsTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "توصيات ذكية لإطالة عمر الباقة" else "Smart Data Runway Tips"
+    fun recCritical(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "خطر النفاد وشيك: قلل دقة تشغيل الفيديو عبر بيانات الجوال وأوقف التحديثات التلقائية في الخلفية." else "Critical risk: Lower streaming video quality and pause background auto-updates on cellular."
+    fun recWarning(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تنبيه: سرعة الحرق الحالية ستؤدي لنفاد الباقة مبكراً، قم بتنزيل الملفات الكبيرة عبر شبكات Wi-Fi." else "Warning: Your current burn rate will deplete your cap early. Offload large downloads to Wi-Fi."
+    fun recSafe(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "ممتاز! استهلاكك منضبط وضمن المسار الآمن حتى موعد التجديد القادم." else "Optimal! Your mobile consumption is comfortably on track to finish with data to spare."
+    fun openSettingsMenu(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الإعدادات العامة" else "Open Settings"
+    fun backToPrevious(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "رجوع" else "Back"
 }
 
 

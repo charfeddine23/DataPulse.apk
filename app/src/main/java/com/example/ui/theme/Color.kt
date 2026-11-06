@@ -4,52 +4,61 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 // =========================================================================
-// 1. LIQUID_GLASS_DEFAULT Palette
-// Background: Deep dark glass background (#0B0F19)
-// Surface: Translucent dark glass (~85% opacity #D90E1628)
+// 1. NEUMORPHIC_DARK_DEFAULT Palette (Base #0F1423)
+// Background: Sleek dark neumorphic slate (#0F1423)
+// Surface: Soft tactile dark surface (#141C2E)
 // Primary: Vibrant Blue (#0066FF)
 // Accent: Violet (#7C4DFF)
+// Highlights & Shadows: Dual shadows for soft extruded / indented depth
 // =========================================================================
-val LiquidGlassDefaultBackground = Color(0xFF0B0F19)
-val LiquidGlassDefaultSurface = Color(0xD90E1628)
-val LiquidGlassDefaultSurfaceTranslucent = Color(0x99131F37)
+val NeumorphicSlateBase = Color(0xFF0F1423)
+val NeumorphicSlateSurface = Color(0xFF141C2E)
+val NeumorphicSlateSurfaceSubtle = Color(0xFF101726)
+val NeumorphicSlateHighlight = Color(0x384E699A) // Soft top-left light highlight
+val NeumorphicSlateShadow = Color(0xE603050B)    // Deep bottom-right ambient shadow
+val NeumorphicBorderHighlight = Color(0x2BFFFFFF)
+val NeumorphicBorderShadow = Color(0x66000000)
+
+val LiquidGlassDefaultBackground = NeumorphicSlateBase
+val LiquidGlassDefaultSurface = NeumorphicSlateSurface
+val LiquidGlassDefaultSurfaceTranslucent = Color(0xD9141C2E)
 val LiquidGlassDefaultPrimary = Color(0xFF0066FF)
 val LiquidGlassDefaultAccent = Color(0xFF7C4DFF)
-val LiquidGlassDefaultBorder = Color(0x330066FF)
-val LiquidGlassDefaultCardBg = Color(0xFF0F1728)
-val LiquidGlassDefaultCardSubtleBg = Color(0xFF0B111E)
+val LiquidGlassDefaultBorder = Color(0x2B4A6A9E)
+val LiquidGlassDefaultCardBg = NeumorphicSlateSurface
+val LiquidGlassDefaultCardSubtleBg = NeumorphicSlateSurfaceSubtle
 
 // =========================================================================
-// 2. LIQUID_NEON_CYAN Palette
-// Background: Dark slate background (#020617)
-// Surface: Translucent dark slate (#D90F172A)
+// 2. LIQUID_NEON_CYAN Palette (Neumorphic Dark Cyan)
+// Background: Deep dark slate background (#080D1A)
+// Surface: Soft dark slate surface (#0D1527)
 // Primary: Bright cyan (#00E5FF)
 // Accent: Neon green / teal (#00FFA3)
 // =========================================================================
-val LiquidNeonCyanBackground = Color(0xFF020617)
-val LiquidNeonCyanSurface = Color(0xD90F172A)
-val LiquidNeonCyanSurfaceTranslucent = Color(0x990F172A)
+val LiquidNeonCyanBackground = Color(0xFF080D1A)
+val LiquidNeonCyanSurface = Color(0xFF0D1527)
+val LiquidNeonCyanSurfaceTranslucent = Color(0xD90D1527)
 val LiquidNeonCyanPrimary = Color(0xFF00E5FF)
 val LiquidNeonCyanAccent = Color(0xFF00FFA3)
 val LiquidNeonCyanBorder = Color(0x3300E5FF)
-val LiquidNeonCyanCardBg = Color(0xFF090E1F)
-val LiquidNeonCyanCardSubtleBg = Color(0xFF030712)
+val LiquidNeonCyanCardBg = Color(0xFF0D1527)
+val LiquidNeonCyanCardSubtleBg = Color(0xFF080D19)
 
 // =========================================================================
-// 3. AMOLED_PITCH_BLACK Palette
+// 3. AMOLED_PITCH_BLACK Palette (Neumorphic OLED Soft Dark)
 // Background: Pure pitch-black (#000000) for OLED battery saving
-// Surface: Dark gray surface (#121212)
+// Surface: Soft tactile deep dark surface (#111116)
 // Primary: Electric blue (#3B82F6)
 // Accent: Crisp Cyan (#06B6D4)
 // =========================================================================
 val AmoledPitchBlackBackground = Color(0xFF000000)
-val AmoledPitchBlackSurface = Color(0xFF121212)
-val AmoledPitchBlackSurfaceTranslucent = Color(0xCC121212)
+val AmoledPitchBlackSurface = Color(0xFF111116)
+val AmoledPitchBlackSurfaceTranslucent = Color(0xD9111116)
 val AmoledPitchBlackPrimary = Color(0xFF3B82F6)
 val AmoledPitchBlackAccent = Color(0xFF06B6D4)
-val AmoledPitchBlackBorder = Color(0x333B82F6)
-val AmoledPitchBlackCardBg = Color(0xFF0D0D0D)
-val AmoledPitchBlackCardSubtleBg = Color(0xFF050505)
+val AmoledPitchBlackBorder = Color(0x2E3B82F6)
+val AmoledPitchBlackCardBg = Color(0xFF111116)
+val AmoledPitchBlackCardSubtleBg = Color(0xFF0A0A0E)
 
 // Shared Common Colors & Status Alerts
 val CyanPulse = Color(0xFF00F5D4)

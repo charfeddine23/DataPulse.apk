@@ -84,7 +84,11 @@ fun DashboardScreen(
     ) {
         // App Branding Header with external app icon and clean title
         item {
-            DashboardHeader(speedSample = speedSample, appLanguage = appLanguage)
+            DashboardHeader(
+                speedSample = speedSample,
+                appLanguage = appLanguage,
+                onOpenSettings = onNavigateToSettings
+            )
         }
 
         // Usage Permission Warning if not granted

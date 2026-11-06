@@ -48,6 +48,7 @@ import com.example.model.FormatUtils
 import com.example.ui.MainViewModel
 import com.example.ui.components.GlassContainer
 import com.example.ui.components.SpeedSparkline
+import com.example.ui.components.neumorphicDepth
 import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.ElectricBlue
 import com.example.ui.theme.NeonPurple
@@ -277,26 +278,49 @@ fun SpeedometerDial(
             )
         }
 
-        // Center Speed Readout
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                imageVector = Icons.Default.Speed,
-                contentDescription = null,
-                tint = glassStyle.accentPrimary,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = formattedSpeed,
-                color = glassStyle.textPrimary,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
-            Text(
-                text = com.example.model.AppStrings.liveBandwidth(appLanguage),
-                color = glassStyle.textTertiary,
-                fontSize = 11.sp
-            )
+        // Center Speed Readout sitting on soft Neumorphic circular well
+        Box(
+            modifier = Modifier
+                .size(130.dp)
+                .neumorphicDepth(
+                    shape = CircleShape,
+                    lightColor = glassStyle.neumorphicHighlight.copy(alpha = 0.5f),
+                    darkColor = glassStyle.neumorphicShadow,
+                    offsetDp = 4.dp
+                )
+                .clip(CircleShape)
+                .background(
+                    Brush.linearGradient(
+                        listOf(glassStyle.neumorphicSurface, glassStyle.neumorphicBase)
+                    )
+                )
+                .border(
+                    1.dp,
+                    Brush.linearGradient(listOf(glassStyle.neumorphicBorderLight, glassStyle.neumorphicBorderDark)),
+                    CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.Speed,
+                    contentDescription = null,
+                    tint = glassStyle.accentPrimary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = formattedSpeed,
+                    color = glassStyle.textPrimary,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    text = com.example.model.AppStrings.liveBandwidth(appLanguage),
+                    color = glassStyle.textTertiary,
+                    fontSize = 10.sp
+                )
+            }
         }
     }
 }
@@ -311,15 +335,26 @@ fun SpeedTelemetryCard(
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val cardShape = RoundedCornerShape(20.dp)
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
-            .background(glassStyle.cardBackground)
+            .neumorphicDepth(
+                shape = cardShape,
+                lightColor = glassStyle.neumorphicHighlight.copy(alpha = 0.45f),
+                darkColor = glassStyle.neumorphicShadow,
+                offsetDp = 3.dp
+            )
+            .clip(cardShape)
+            .background(
+                Brush.linearGradient(
+                    listOf(glassStyle.neumorphicSurface, glassStyle.neumorphicBase)
+                )
+            )
             .border(
                 1.dp,
-                if (glassStyle.isDark) accentColor.copy(alpha = 0.35f) else glassStyle.borderColor,
-                RoundedCornerShape(18.dp)
+                Brush.linearGradient(listOf(glassStyle.neumorphicBorderLight.copy(alpha = 0.3f), accentColor.copy(alpha = 0.4f))),
+                cardShape
             )
             .padding(14.dp)
     ) {

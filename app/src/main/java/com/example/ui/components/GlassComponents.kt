@@ -150,6 +150,7 @@ fun GlassContainer(
 fun DashboardHeader(
     speedSample: LiveSpeedSample,
     appLanguage: AppLanguage,
+    onOpenSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val glassStyle = LocalLiquidGlass.current
@@ -192,8 +193,94 @@ fun DashboardHeader(
                 )
             }
 
-            // Connection Status Badge
-            ConnectionStatusPill(speedSample = speedSample, appLanguage = appLanguage)
+            // Connection Status Badge + adjacent 3-line Hamburger Menu Button on far right
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ConnectionStatusPill(speedSample = speedSample, appLanguage = appLanguage)
+
+                LiquidGlassHamburgerMenuButton(
+                    onClick = onOpenSettings,
+                    contentDescription = AppStrings.openSettingsMenu(appLanguage)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Premium 3-line hamburger menu button styled with Liquid Glass Dark Mode aesthetic.
+ * 3 stacked horizontal lines with glowing accents.
+ */
+@Composable
+fun LiquidGlassHamburgerMenuButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentDescription: String = "Open Settings"
+) {
+    val glassStyle = LocalLiquidGlass.current
+
+    Box(
+        modifier = modifier
+            .size(40.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(glassStyle.cardSubtleBg)
+            .border(
+                1.dp,
+                Brush.linearGradient(
+                    colors = listOf(
+                        glassStyle.accentPrimary.copy(alpha = 0.55f),
+                        glassStyle.accentSecondary.copy(alpha = 0.25f)
+                    )
+                ),
+                RoundedCornerShape(14.dp)
+            )
+            .clickable(onClick = onClick)
+            .testTag("top_bar_settings_menu_button"),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(3.5.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Top line with glowing primary gradient
+            Box(
+                modifier = Modifier
+                    .width(18.dp)
+                    .height(2.2.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(glassStyle.accentPrimary, glassStyle.accentSecondary)
+                        )
+                    )
+            )
+            // Middle line with glowing highlight
+            Box(
+                modifier = Modifier
+                    .width(18.dp)
+                    .height(2.2.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(glassStyle.textPrimary, glassStyle.accentPrimary)
+                        )
+                    )
+            )
+            // Bottom line with secondary accent glow
+            Box(
+                modifier = Modifier
+                    .width(14.dp)
+                    .height(2.2.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(glassStyle.accentSecondary, glassStyle.accentPrimary)
+                        )
+                    )
+            )
         }
     }
 }

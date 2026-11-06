@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Settings
@@ -47,6 +48,7 @@ import com.example.ui.MainViewModel
 import com.example.ui.screens.AnalyticsScreen
 import com.example.ui.screens.DashboardScreen
 import com.example.ui.screens.SettingsScreen
+import com.example.ui.screens.SmartForecastScreen
 import com.example.ui.screens.SpeedMeterScreen
 import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.TextPrimary
@@ -57,15 +59,17 @@ import com.example.ui.theme.TextTertiary
 
 enum class NavDestination(val icon: ImageVector, val tag: String) {
     DASHBOARD(Icons.Default.GraphicEq, "nav_dashboard"),
-    ANALYTICS(Icons.Default.Equalizer, "nav_analytics"),
+    USAGE(Icons.Default.Equalizer, "nav_usage"),
     SPEED(Icons.Default.Speed, "nav_speed"),
+    FORECAST(Icons.Default.AutoAwesome, "nav_forecast"),
     SETTINGS(Icons.Default.Settings, "nav_settings")
 }
 
 fun NavDestination.getLabel(lang: AppLanguage): String = when (this) {
     NavDestination.DASHBOARD -> AppStrings.navPulse(lang)
-    NavDestination.ANALYTICS -> AppStrings.navUsage(lang)
+    NavDestination.USAGE -> AppStrings.navUsage(lang)
     NavDestination.SPEED -> AppStrings.navSpeed(lang)
+    NavDestination.FORECAST -> AppStrings.navForecast(lang)
     NavDestination.SETTINGS -> AppStrings.navSettings(lang)
 }
 
@@ -77,7 +81,19 @@ fun DataPulseApp(
     modifier: Modifier = Modifier
 ) {
     var currentDestination by remember { mutableStateOf(NavDestination.DASHBOARD) }
+    var previousDestination by remember { mutableStateOf(NavDestination.DASHBOARD) }
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+
+    fun navigateTo(dest: NavDestination) {
+        if (dest != currentDestination) {
+            previousDestination = currentDestination
+            currentDestination = dest
+        }
+    }
+
+    fun navigateBack() {
+        currentDestination = previousDestination
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -86,7 +102,7 @@ fun DataPulseApp(
             LiquidGlassBottomNav(
                 currentDestination = currentDestination,
                 appLanguage = appLanguage,
-                onSelectDestination = { currentDestination = it }
+                onSelectDestination = { navigateTo(it) }
             )
         }
     ) { innerPadding ->
@@ -101,10 +117,10 @@ fun DataPulseApp(
                         viewModel = viewModel,
                         onRequestUsagePermission = onRequestUsagePermission,
                         onOpenAppInfo = onOpenAppInfo,
-                        onNavigateToSettings = { currentDestination = NavDestination.SETTINGS },
-                        onNavigateToAnalytics = { currentDestination = NavDestination.ANALYTICS }
+                        onNavigateToSettings = { navigateTo(NavDestination.SETTINGS) },
+                        onNavigateToAnalytics = { navigateTo(NavDestination.USAGE) }
                     )
-                    NavDestination.ANALYTICS -> AnalyticsScreen(
+                    NavDestination.USAGE -> AnalyticsScreen(
                         viewModel = viewModel,
                         onRequestUsagePermission = onRequestUsagePermission,
                         onOpenAppInfo = onOpenAppInfo
@@ -112,10 +128,15 @@ fun DataPulseApp(
                     NavDestination.SPEED -> SpeedMeterScreen(
                         viewModel = viewModel
                     )
+                    NavDestination.FORECAST -> SmartForecastScreen(
+                        viewModel = viewModel,
+                        onNavigateToSettings = { navigateTo(NavDestination.SETTINGS) }
+                    )
                     NavDestination.SETTINGS -> SettingsScreen(
                         viewModel = viewModel,
                         onRequestUsagePermission = onRequestUsagePermission,
-                        onOpenAppInfo = onOpenAppInfo
+                        onOpenAppInfo = onOpenAppInfo,
+                        onNavigateBack = { navigateBack() }
                     )
                 }
             }
@@ -153,15 +174,15 @@ fun LiquidGlassBottomNav(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Sequence displayed on screen (Left to Right):
-                // 1. SETTINGS (الاعدادات - أقصى اليسار / Far Left)
-                // 2. SPEED (عداد السرعة)
-                // 3. ANALYTICS (الاستهلاك / Usage)
-                // 4. DASHBOARD (النبض - أقصى اليمين / Far Right)
+                // 1. DASHBOARD (النبض - أقصى اليسار / Far Left)
+                // 2. USAGE (الاستهلاك / Apps Usage)
+                // 3. SPEED (عداد السرعة)
+                // 4. FORECAST (التنبؤ الذكي / Forecast - أقصى اليمين / Far Right)
                 val navigationItems = listOf(
-                    NavDestination.SETTINGS,
+                    NavDestination.DASHBOARD,
+                    NavDestination.USAGE,
                     NavDestination.SPEED,
-                    NavDestination.ANALYTICS,
-                    NavDestination.DASHBOARD
+                    NavDestination.FORECAST
                 )
 
             navigationItems.forEach { destination ->

@@ -13,6 +13,10 @@ data class SmartDataForecast(
     val dailyBurnRateBytes: Long = 0L,
     val predictedDaysRemaining: Int = 0,
     val daysRemainingInCycle: Int = 30,
+    val daysElapsedInCycle: Int = 1,
+    val totalCycleDays: Int = 30,
+    val recommendedSafeDailyBytes: Long = 0L,
+    val burnRateVelocityRatio: Float = 1.0f,
     val willDepleteBeforeCycleEnd: Boolean = false,
     val projectedEndOfCycleUsageBytes: Long = 0L,
     val projectedSurplusDeficitBytes: Long = 0L,
@@ -24,8 +28,14 @@ data class SmartDataForecast(
     val dailyBurnRateFormatted: String
         get() = "${FormatUtils.formatBytes(dailyBurnRateBytes)} / day"
 
+    val recommendedSafeDailyFormatted: String
+        get() = "${FormatUtils.formatBytes(recommendedSafeDailyBytes)} / day"
+
     val isSurplus: Boolean
         get() = projectedSurplusDeficitBytes >= 0L
+
+    val cycleProgressPercent: Float
+        get() = (daysElapsedInCycle.toFloat() / totalCycleDays.toFloat().coerceAtLeast(1f)).coerceIn(0f, 1f)
 }
 
 object DataForecastCalculator {
@@ -48,15 +58,29 @@ object DataForecastCalculator {
         val now = System.currentTimeMillis()
         val cycleStartMs = getStartOfBillingCycle(billingCycleStartDay)
         val elapsedMillis = (now - cycleStartMs).coerceAtLeast(0L)
-        val daysElapsed = (elapsedMillis / (1000L * 60 * 60 * 24)).toInt().coerceAtLeast(1)
+        val daysElapsed = (elapsedMillis / (1000L * 60 * 60 * 24)).toInt().coerceIn(1, 31)
+        val totalCycleDays = (daysElapsed + daysRemainingInCycle).coerceAtLeast(28)
 
-        // Calculate average daily burn rate
+        // Calculate average daily burn rate from past history
         val cycleDailyAverage = if (usedMobileBytes > 0L) usedMobileBytes / daysElapsed else 0L
-        // Smooth burn rate: weight with today's activity if non-zero
+        // Smooth burn rate: take daily average or today's activity
         val burnRate = when {
             cycleDailyAverage > 0L -> cycleDailyAverage
             mobileTodayBytes > 0L -> mobileTodayBytes
             else -> 0L
+        }
+
+        // Safe daily runway calculation
+        val safeDailyBytes = if (daysRemainingInCycle > 0) {
+            remainingBytes / daysRemainingInCycle
+        } else {
+            0L
+        }
+
+        val velocityRatio = if (safeDailyBytes > 0L && burnRate > 0L) {
+            (burnRate.toFloat() / safeDailyBytes.toFloat()).coerceIn(0.1f, 10f)
+        } else {
+            1.0f
         }
 
         // Check if already exhausted
@@ -65,6 +89,10 @@ object DataForecastCalculator {
                 dailyBurnRateBytes = burnRate,
                 predictedDaysRemaining = 0,
                 daysRemainingInCycle = daysRemainingInCycle,
+                daysElapsedInCycle = daysElapsed,
+                totalCycleDays = totalCycleDays,
+                recommendedSafeDailyBytes = 0L,
+                burnRateVelocityRatio = 9.9f,
                 willDepleteBeforeCycleEnd = true,
                 projectedEndOfCycleUsageBytes = usedMobileBytes + (burnRate * daysRemainingInCycle),
                 projectedSurplusDeficitBytes = -usedMobileBytes,
@@ -98,6 +126,10 @@ object DataForecastCalculator {
             dailyBurnRateBytes = burnRate,
             predictedDaysRemaining = predictedDays,
             daysRemainingInCycle = daysRemainingInCycle,
+            daysElapsedInCycle = daysElapsed,
+            totalCycleDays = totalCycleDays,
+            recommendedSafeDailyBytes = safeDailyBytes,
+            burnRateVelocityRatio = velocityRatio,
             willDepleteBeforeCycleEnd = willDepleteEarly,
             projectedEndOfCycleUsageBytes = projectedTotal,
             projectedSurplusDeficitBytes = surplusDeficit,
