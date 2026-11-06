@@ -58,8 +58,11 @@ jobs:
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "Decoding Keystore from GitHub Secrets..."
             echo "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_DEST"
+          elif [ -f "$KEYSTORE_DEST" ]; then
+            echo "Using existing signing keystore committed in repository at $KEYSTORE_DEST"
           else
-            echo "::warning::KEYSTORE_BASE64 secret is not set. Generating fallback self-signed keystore for build testing..."
+            echo "::warning::KEYSTORE_BASE64 secret is not set and no keystore found. Generating fallback self-signed keystore for build testing..."
+            rm -f "$KEYSTORE_DEST"
             keytool -genkeypair -v -keystore "$KEYSTORE_DEST" -storepass "${STORE_PASS:-android}" \
               -alias upload -keypass "${KEY_PASS:-android}" -keyalg RSA -keysize 2048 -validity 10000 \
               -dname "CN=DataPulse, OU=Mobile, O=CharfeddineKa, L=Tunis, C=TN" -noprompt
@@ -82,6 +85,7 @@ jobs:
 
           if [ ! -f "$KEYSTORE_PATH" ]; then
             echo "Keystore file missing at $KEYSTORE_PATH, creating fallback upload keystore..."
+            rm -f "$KEYSTORE_PATH"
             keytool -genkeypair -v -keystore "$KEYSTORE_PATH" \
               -storepass "$STORE_PASSWORD" -alias upload \
               -keypass "$KEY_PASSWORD" -keyalg RSA -keysize 2048 -validity 10000 \
