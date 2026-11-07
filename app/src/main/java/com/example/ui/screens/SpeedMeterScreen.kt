@@ -68,12 +68,16 @@ fun SpeedMeterScreen(
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val dimensions = com.example.ui.theme.LocalAppDimensions.current
+
+    val isOffline = (speedSample.connectionType == com.example.model.NetworkType.OFFLINE)
+    val peakPrefix = if (appLanguage == com.example.model.AppLanguage.ARABIC) "الذروة: " else "Peak: "
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = dimensions.screenPaddingHorizontal),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(8.dp))
@@ -81,58 +85,109 @@ fun SpeedMeterScreen(
         Text(
             text = com.example.model.AppStrings.speedMeterTitle(appLanguage),
             color = glassStyle.textPrimary,
-            fontSize = 22.sp,
+            fontSize = dimensions.textTitleLarge,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.fillMaxWidth()
         )
         Text(
             text = com.example.model.AppStrings.speedMeterSubtitle(appLanguage),
             color = glassStyle.textSecondary,
-            fontSize = 12.sp,
+            fontSize = dimensions.textBodyMedium,
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Large Futuristic Speed Gauge
-        SpeedometerDial(
-            currentSpeedBps = speedSample.downloadBps,
-            formattedSpeed = speedSample.downloadFormatted,
-            appLanguage = appLanguage,
-            modifier = Modifier.size(240.dp)
-        )
+        if (dimensions.isTablet) {
+            // Adaptive Tablet 2-Column Section
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(dimensions.gridSpacing),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Left Column: Large Speedometer Dial
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    SpeedometerDial(
+                        currentSpeedBps = speedSample.downloadBps,
+                        formattedSpeed = speedSample.downloadFormatted,
+                        appLanguage = appLanguage,
+                        modifier = Modifier.size(dimensions.speedometerDialSize)
+                    )
+                }
 
-        Spacer(modifier = Modifier.height(20.dp))
+                // Right Column: Telemetry Cards & Diagnostics
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(dimensions.gridSpacing)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(dimensions.gridSpacing)
+                    ) {
+                        SpeedTelemetryCard(
+                            title = com.example.model.AppStrings.currentDownload(appLanguage),
+                            speed = speedSample.downloadFormatted,
+                            peak = "$peakPrefix${FormatUtils.formatSpeed(speedSample.peakDownloadBps)}",
+                            icon = Icons.Default.ArrowDownward,
+                            accentColor = glassStyle.accentPrimary,
+                            modifier = Modifier.weight(1f)
+                        )
 
-        // Real-time Upload & Download Cards
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            val peakPrefix = if (appLanguage == com.example.model.AppLanguage.ARABIC) "الذروة: " else "Peak: "
-            SpeedTelemetryCard(
-                title = com.example.model.AppStrings.currentDownload(appLanguage),
-                speed = speedSample.downloadFormatted,
-                peak = "$peakPrefix${FormatUtils.formatSpeed(speedSample.peakDownloadBps)}",
-                icon = Icons.Default.ArrowDownward,
-                accentColor = glassStyle.accentPrimary,
-                modifier = Modifier.weight(1f)
+                        SpeedTelemetryCard(
+                            title = com.example.model.AppStrings.currentUpload(appLanguage),
+                            speed = speedSample.uploadFormatted,
+                            peak = "$peakPrefix${FormatUtils.formatSpeed(speedSample.peakUploadBps)}",
+                            icon = Icons.Default.ArrowUpward,
+                            accentColor = glassStyle.accentSecondary,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    NetworkDiagnosticsCard(speedSample = speedSample, appLanguage = appLanguage)
+                }
+            }
+        } else {
+            // Phone Single-Column Layout
+            SpeedometerDial(
+                currentSpeedBps = speedSample.downloadBps,
+                formattedSpeed = speedSample.downloadFormatted,
+                appLanguage = appLanguage,
+                modifier = Modifier.size(dimensions.speedometerDialSize)
             )
 
-            SpeedTelemetryCard(
-                title = com.example.model.AppStrings.currentUpload(appLanguage),
-                speed = speedSample.uploadFormatted,
-                peak = "$peakPrefix${FormatUtils.formatSpeed(speedSample.peakUploadBps)}",
-                icon = Icons.Default.ArrowUpward,
-                accentColor = glassStyle.accentSecondary,
-                modifier = Modifier.weight(1f)
-            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Real-time Upload & Download Cards
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                SpeedTelemetryCard(
+                    title = com.example.model.AppStrings.currentDownload(appLanguage),
+                    speed = speedSample.downloadFormatted,
+                    peak = "$peakPrefix${FormatUtils.formatSpeed(speedSample.peakDownloadBps)}",
+                    icon = Icons.Default.ArrowDownward,
+                    accentColor = glassStyle.accentPrimary,
+                    modifier = Modifier.weight(1f)
+                )
+
+                SpeedTelemetryCard(
+                    title = com.example.model.AppStrings.currentUpload(appLanguage),
+                    speed = speedSample.uploadFormatted,
+                    peak = "$peakPrefix${FormatUtils.formatSpeed(speedSample.peakUploadBps)}",
+                    icon = Icons.Default.ArrowUpward,
+                    accentColor = glassStyle.accentSecondary,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // High-Tech Continuous Throughput Graph with Dynamic Speed Colors & Offline Snow
-        val isOffline = (speedSample.connectionType == com.example.model.NetworkType.OFFLINE)
+        // High-Tech Continuous Throughput Graph spanning container
         com.example.ui.components.ContinuousThroughputGraph(
             dataPoints = speedHistory,
             currentSpeedBps = speedSample.downloadBps,
@@ -141,76 +196,87 @@ fun SpeedMeterScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // Network Diagnostics Glass Card
-        val connectionNameTranslated = if (appLanguage == com.example.model.AppLanguage.ARABIC) {
-            when (speedSample.connectionType) {
-                com.example.model.NetworkType.WIFI -> "واي فاي"
-                com.example.model.NetworkType.CELLULAR_5G -> "شبكة الجيل الخامس 5G"
-                com.example.model.NetworkType.CELLULAR_4G -> "شبكة الجيل الرابع 4G"
-                com.example.model.NetworkType.CELLULAR_3G -> "شبكة الجيل الثالث 3G"
-                com.example.model.NetworkType.CELLULAR_GENERIC -> "بيانات الجوال"
-                com.example.model.NetworkType.ETHERNET -> "إيثرنت"
-                com.example.model.NetworkType.OFFLINE -> "غير متصل"
-            }
-        } else {
-            when (speedSample.connectionType) {
-                com.example.model.NetworkType.WIFI -> "Wi-Fi"
-                com.example.model.NetworkType.CELLULAR_5G -> "5G Cellular"
-                com.example.model.NetworkType.CELLULAR_4G -> "4G LTE"
-                com.example.model.NetworkType.CELLULAR_3G -> "3G Mobile"
-                com.example.model.NetworkType.CELLULAR_GENERIC -> "Cellular Data"
-                com.example.model.NetworkType.ETHERNET -> "Ethernet"
-                com.example.model.NetworkType.OFFLINE -> "Disconnected"
-            }
+        if (!dimensions.isTablet) {
+            Spacer(modifier = Modifier.height(14.dp))
+            NetworkDiagnosticsCard(speedSample = speedSample, appLanguage = appLanguage)
         }
 
-        val disconnectedLabel = if (appLanguage == com.example.model.AppLanguage.ARABIC) "غير متصل" else "Disconnected"
-        val unknownLabel = if (appLanguage == com.example.model.AppLanguage.ARABIC) "غير متوفر" else "Unavailable"
-        val latencyUnit = if (appLanguage == com.example.model.AppLanguage.ARABIC) "مللي ثانية" else "ms"
+        Spacer(modifier = Modifier.height(28.dp))
+    }
+}
 
-        GlassContainer(modifier = Modifier.fillMaxWidth()) {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.NetworkCheck,
-                        contentDescription = com.example.model.AppStrings.networkDiagnostics(appLanguage),
-                        tint = glassStyle.accentPrimary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = com.example.model.AppStrings.networkDiagnostics(appLanguage),
-                        color = glassStyle.textPrimary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
-                    )
-                }
+@Composable
+fun NetworkDiagnosticsCard(
+    speedSample: com.example.model.LiveSpeedSample,
+    appLanguage: com.example.model.AppLanguage,
+    modifier: Modifier = Modifier
+) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
 
-                Spacer(modifier = Modifier.height(12.dp))
+    val connectionNameTranslated = if (appLanguage == com.example.model.AppLanguage.ARABIC) {
+        when (speedSample.connectionType) {
+            com.example.model.NetworkType.WIFI -> "واي فاي"
+            com.example.model.NetworkType.CELLULAR_5G -> "شبكة الجيل الخامس 5G"
+            com.example.model.NetworkType.CELLULAR_4G -> "شبكة الجيل الرابع 4G"
+            com.example.model.NetworkType.CELLULAR_3G -> "شبكة الجيل الثالث 3G"
+            com.example.model.NetworkType.CELLULAR_GENERIC -> "بيانات الجوال"
+            com.example.model.NetworkType.ETHERNET -> "إيثرنت"
+            com.example.model.NetworkType.OFFLINE -> "غير متصل"
+        }
+    } else {
+        when (speedSample.connectionType) {
+            com.example.model.NetworkType.WIFI -> "Wi-Fi"
+            com.example.model.NetworkType.CELLULAR_5G -> "5G Cellular"
+            com.example.model.NetworkType.CELLULAR_4G -> "4G LTE"
+            com.example.model.NetworkType.CELLULAR_3G -> "3G Mobile"
+            com.example.model.NetworkType.CELLULAR_GENERIC -> "Cellular Data"
+            com.example.model.NetworkType.ETHERNET -> "Ethernet"
+            com.example.model.NetworkType.OFFLINE -> "Disconnected"
+        }
+    }
 
-                DiagnosticRow(
-                    label = com.example.model.AppStrings.activeInterface(appLanguage),
-                    value = if (speedSample.connectionName == "Disconnected") disconnectedLabel else speedSample.connectionName
+    val disconnectedLabel = if (appLanguage == com.example.model.AppLanguage.ARABIC) "غير متصل" else "Disconnected"
+    val unknownLabel = if (appLanguage == com.example.model.AppLanguage.ARABIC) "غير متوفر" else "Unavailable"
+    val latencyUnit = if (appLanguage == com.example.model.AppLanguage.ARABIC) "مللي ثانية" else "ms"
+
+    GlassContainer(modifier = modifier.fillMaxWidth()) {
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.NetworkCheck,
+                    contentDescription = com.example.model.AppStrings.networkDiagnostics(appLanguage),
+                    tint = glassStyle.accentPrimary,
+                    modifier = Modifier.size(18.dp)
                 )
-                DiagnosticRow(
-                    label = com.example.model.AppStrings.localIp(appLanguage),
-                    value = if (speedSample.ipAddress == "Unknown") unknownLabel else speedSample.ipAddress
-                )
-                DiagnosticRow(
-                    label = com.example.model.AppStrings.estimatedLatency(appLanguage),
-                    value = "${speedSample.pingMs} $latencyUnit"
-                )
-                DiagnosticRow(
-                    label = com.example.model.AppStrings.connectionState(appLanguage),
-                    value = connectionNameTranslated
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = com.example.model.AppStrings.networkDiagnostics(appLanguage),
+                    color = glassStyle.textPrimary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            DiagnosticRow(
+                label = com.example.model.AppStrings.activeInterface(appLanguage),
+                value = if (speedSample.connectionName == "Disconnected") disconnectedLabel else speedSample.connectionName
+            )
+            DiagnosticRow(
+                label = com.example.model.AppStrings.localIp(appLanguage),
+                value = if (speedSample.ipAddress == "Unknown") unknownLabel else speedSample.ipAddress
+            )
+            DiagnosticRow(
+                label = com.example.model.AppStrings.estimatedLatency(appLanguage),
+                value = "${speedSample.pingMs} $latencyUnit"
+            )
+            DiagnosticRow(
+                label = com.example.model.AppStrings.connectionState(appLanguage),
+                value = connectionNameTranslated
+            )
+        }
     }
 }
 
@@ -222,6 +288,8 @@ fun SpeedometerDial(
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val dimensions = com.example.ui.theme.LocalAppDimensions.current
+
     // 0 to 100 Mbps mapping
     val currentMbps = (currentSpeedBps / 1_000_000.0).toFloat().coerceIn(0f, 100f)
     val sweepFraction = (currentMbps / 100f).coerceIn(0.02f, 1f)
@@ -234,7 +302,7 @@ fun SpeedometerDial(
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = 14.dp.toPx()
+            val strokeWidth = dimensions.speedometerDialStroke.toPx()
             val arcSize = size.width - strokeWidth * 2
             val topLeft = Offset(strokeWidth, strokeWidth)
 
@@ -281,7 +349,7 @@ fun SpeedometerDial(
         // Center Speed Readout sitting on soft Neumorphic circular well
         Box(
             modifier = Modifier
-                .size(130.dp)
+                .size(dimensions.speedometerInnerWell)
                 .neumorphicDepth(
                     shape = CircleShape,
                     lightColor = glassStyle.neumorphicHighlight.copy(alpha = 0.5f),

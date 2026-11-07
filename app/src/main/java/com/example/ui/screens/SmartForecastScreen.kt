@@ -78,12 +78,13 @@ fun SmartForecastScreen(
     val quota by viewModel.dataPlanQuota.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val glassStyle = LocalLiquidGlass.current
+    val dimensions = com.example.ui.theme.LocalAppDimensions.current
 
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .padding(horizontal = dimensions.screenPaddingHorizontal),
+        verticalArrangement = Arrangement.spacedBy(dimensions.sectionSpacing)
     ) {
         // 1. Top Header with title and Hamburger Menu Icon on far right
         item {
@@ -97,7 +98,7 @@ fun SmartForecastScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(dimensions.headerIconBoxSize)
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(glassStyle.accentPrimary.copy(alpha = 0.16f))
                                 .border(1.dp, glassStyle.accentPrimary.copy(alpha = 0.45f), RoundedCornerShape(12.dp)),
@@ -107,14 +108,14 @@ fun SmartForecastScreen(
                                 imageVector = Icons.Default.Insights,
                                 contentDescription = null,
                                 tint = glassStyle.accentPrimary,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(dimensions.headerIconSize * 0.55f)
                             )
                         }
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = AppStrings.smartAnalyticsTitle(appLanguage),
                             color = glassStyle.textPrimary,
-                            fontSize = 20.sp,
+                            fontSize = dimensions.textTitleLarge,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.3.sp
                         )
@@ -123,7 +124,7 @@ fun SmartForecastScreen(
                     Text(
                         text = AppStrings.smartAnalyticsSubtitle(appLanguage),
                         color = glassStyle.textSecondary,
-                        fontSize = 11.5.sp,
+                        fontSize = dimensions.textCaption,
                         lineHeight = 16.sp
                     )
                 }
@@ -142,43 +143,84 @@ fun SmartForecastScreen(
             }
         }
 
-        // 2. Primary Smart Data Forecasting & Warning Card
-        item {
-            SmartDataForecastingCard(
-                forecast = dataForecast,
-                appLanguage = appLanguage,
-                onConfigurePlanClick = onNavigateToSettings
-            )
-        }
+        if (dimensions.isTablet) {
+            // Adaptive 2-Column Tablet Grid
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(dimensions.gridSpacing)
+                ) {
+                    // Left Column (50%): Primary Forecast & Tips
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(dimensions.gridSpacing)
+                    ) {
+                        SmartDataForecastingCard(
+                            forecast = dataForecast,
+                            appLanguage = appLanguage,
+                            onConfigurePlanClick = onNavigateToSettings
+                        )
 
-        // 3. Billing Cycle Runway & Velocity Meter Card
-        item {
-            CycleRunwayCard(
-                forecast = dataForecast,
-                appLanguage = appLanguage
-            )
-        }
+                        SmartRunwayTipsCard(
+                            forecast = dataForecast,
+                            appLanguage = appLanguage
+                        )
+                    }
 
-        // 4. Average Daily Consumption Breakdown Card
-        item {
-            DailyConsumptionBreakdownCard(
-                forecast = dataForecast,
-                usageSummary = usageSummary,
-                appLanguage = appLanguage
-            )
-        }
+                    // Right Column (50%): Runway Velocity & Daily Consumption Breakdown
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(dimensions.gridSpacing)
+                    ) {
+                        CycleRunwayCard(
+                            forecast = dataForecast,
+                            appLanguage = appLanguage
+                        )
 
-        // 5. Smart Data Runway Recommendations Card
-        item {
-            SmartRunwayTipsCard(
-                forecast = dataForecast,
-                appLanguage = appLanguage
-            )
+                        DailyConsumptionBreakdownCard(
+                            forecast = dataForecast,
+                            usageSummary = usageSummary,
+                            appLanguage = appLanguage
+                        )
+                    }
+                }
+            }
+        } else {
+            // Phone Single-Column Stack
+            item {
+                SmartDataForecastingCard(
+                    forecast = dataForecast,
+                    appLanguage = appLanguage,
+                    onConfigurePlanClick = onNavigateToSettings
+                )
+            }
+
+            item {
+                CycleRunwayCard(
+                    forecast = dataForecast,
+                    appLanguage = appLanguage
+                )
+            }
+
+            item {
+                DailyConsumptionBreakdownCard(
+                    forecast = dataForecast,
+                    usageSummary = usageSummary,
+                    appLanguage = appLanguage
+                )
+            }
+
+            item {
+                SmartRunwayTipsCard(
+                    forecast = dataForecast,
+                    appLanguage = appLanguage
+                )
+            }
         }
 
         // Bottom padding
         item {
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

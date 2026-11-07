@@ -77,6 +77,8 @@ fun DashboardScreen(
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isDashboardRefreshing.collectAsStateWithLifecycle()
 
+    val dimensions = com.example.ui.theme.LocalAppDimensions.current
+
     ElasticFlamePullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = { viewModel.refreshAll() },
@@ -85,96 +87,168 @@ fun DashboardScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = dimensions.screenPaddingHorizontal),
+            verticalArrangement = Arrangement.spacedBy(dimensions.sectionSpacing)
         ) {
-        // App Branding Header with external app icon and clean title
-        item {
-            DashboardHeader(
-                speedSample = speedSample,
-                appLanguage = appLanguage,
-                onOpenSettings = onNavigateToSettings
-            )
-        }
-
-        // Usage Permission Warning if not granted
-        if (!hasUsagePerm) {
+            // App Branding Header with external app icon and clean title
             item {
-                UsagePermissionCard(
-                    onRequestPermission = onRequestUsagePermission,
-                    onOpenAppInfo = onOpenAppInfo,
-                    appLanguage = appLanguage
+                DashboardHeader(
+                    speedSample = speedSample,
+                    appLanguage = appLanguage,
+                    onOpenSettings = onNavigateToSettings
                 )
             }
-        }
 
-        // Dual SIM Selector / Status
-        if (simCards.isNotEmpty()) {
-            item {
-                DualSimSelector(
-                    simCards = simCards,
-                    selectedIndex = selectedSimIndex,
-                    onSelect = { viewModel.setSimIndex(it) }
-                )
-            }
-        }
-
-        // Monthly Quota Circular Progress Gauge with Heartbeat & Dynamic Live Colors
-        item {
-            val limitBytes = (quota.planLimitGB * 1024L * 1024L * 1024L).toLong()
-            val isInternetConnected = (speedSample.connectionType != com.example.model.NetworkType.OFFLINE)
-            CircularQuotaProgressGauge(
-                usedBytes = quota.usedBytes,
-                limitBytes = limitBytes,
-                percentage = quota.usagePercent,
-                status = quota.status,
-                daysRemaining = quota.daysRemaining,
-                appLanguage = appLanguage,
-                isInternetConnected = isInternetConnected,
-                onConfigureClick = onNavigateToSettings
-            )
-        }
-
-        // 3. Quick Summaries for Data Usage (Breakdown Grid)
-        item {
-            val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = com.example.model.AppStrings.dataBreakdownTitle(appLanguage),
-                    color = glassStyle.textSecondary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.5.sp
-                )
-                IconButton(
-                    onClick = { viewModel.refreshAll() },
-                    modifier = Modifier.size(28.dp).testTag("refresh_dashboard_button")
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = com.example.model.AppStrings.refresh(appLanguage),
-                        tint = glassStyle.accentPrimary,
-                        modifier = Modifier.size(18.dp)
+            // Usage Permission Warning if not granted
+            if (!hasUsagePerm) {
+                item {
+                    UsagePermissionCard(
+                        onRequestPermission = onRequestUsagePermission,
+                        onOpenAppInfo = onOpenAppInfo,
+                        appLanguage = appLanguage
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            DataBreakdownGrid(
-                usageSummary = usageSummary,
-                appLanguage = appLanguage,
-                onViewFullAnalytics = onNavigateToAnalytics
-            )
-        }
 
-        // Bottom spacing
-        item {
-            Spacer(modifier = Modifier.height(20.dp))
+            if (dimensions.isTablet) {
+                // Adaptive Tablet / Foldable 2-Column Dashboard Layout
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(dimensions.gridSpacing)
+                    ) {
+                        // Left Column (50%): Circular Quota Gauge & Dual SIM
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(dimensions.gridSpacing)
+                        ) {
+                            val limitBytes = (quota.planLimitGB * 1024L * 1024L * 1024L).toLong()
+                            val isInternetConnected = (speedSample.connectionType != com.example.model.NetworkType.OFFLINE)
+                            CircularQuotaProgressGauge(
+                                usedBytes = quota.usedBytes,
+                                limitBytes = limitBytes,
+                                percentage = quota.usagePercent,
+                                status = quota.status,
+                                daysRemaining = quota.daysRemaining,
+                                appLanguage = appLanguage,
+                                isInternetConnected = isInternetConnected,
+                                onConfigureClick = onNavigateToSettings
+                            )
+
+                            if (simCards.isNotEmpty()) {
+                                DualSimSelector(
+                                    simCards = simCards,
+                                    selectedIndex = selectedSimIndex,
+                                    onSelect = { viewModel.setSimIndex(it) }
+                                )
+                            }
+                        }
+
+                        // Right Column (50%): Data Breakdown Summary Grid
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(dimensions.gridSpacing)
+                        ) {
+                            val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = com.example.model.AppStrings.dataBreakdownTitle(appLanguage),
+                                    color = glassStyle.textSecondary,
+                                    fontSize = dimensions.textBodyLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.5.sp
+                                )
+                                IconButton(
+                                    onClick = { viewModel.refreshAll() },
+                                    modifier = Modifier.size(32.dp).testTag("refresh_dashboard_button")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = com.example.model.AppStrings.refresh(appLanguage),
+                                        tint = glassStyle.accentPrimary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                            DataBreakdownGrid(
+                                usageSummary = usageSummary,
+                                appLanguage = appLanguage,
+                                onViewFullAnalytics = onNavigateToAnalytics
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Phone Single-Column Stack
+                if (simCards.isNotEmpty()) {
+                    item {
+                        DualSimSelector(
+                            simCards = simCards,
+                            selectedIndex = selectedSimIndex,
+                            onSelect = { viewModel.setSimIndex(it) }
+                        )
+                    }
+                }
+
+                item {
+                    val limitBytes = (quota.planLimitGB * 1024L * 1024L * 1024L).toLong()
+                    val isInternetConnected = (speedSample.connectionType != com.example.model.NetworkType.OFFLINE)
+                    CircularQuotaProgressGauge(
+                        usedBytes = quota.usedBytes,
+                        limitBytes = limitBytes,
+                        percentage = quota.usagePercent,
+                        status = quota.status,
+                        daysRemaining = quota.daysRemaining,
+                        appLanguage = appLanguage,
+                        isInternetConnected = isInternetConnected,
+                        onConfigureClick = onNavigateToSettings
+                    )
+                }
+
+                item {
+                    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = com.example.model.AppStrings.dataBreakdownTitle(appLanguage),
+                            color = glassStyle.textSecondary,
+                            fontSize = dimensions.textBodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        )
+                        IconButton(
+                            onClick = { viewModel.refreshAll() },
+                            modifier = Modifier.size(28.dp).testTag("refresh_dashboard_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = com.example.model.AppStrings.refresh(appLanguage),
+                                tint = glassStyle.accentPrimary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    DataBreakdownGrid(
+                        usageSummary = usageSummary,
+                        appLanguage = appLanguage,
+                        onViewFullAnalytics = onNavigateToAnalytics
+                    )
+                }
+            }
+
+            // Bottom spacing
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
-    }
     }
 }
 
@@ -348,6 +422,7 @@ fun BreakdownMetricCard(
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val dimensions = com.example.ui.theme.LocalAppDimensions.current
 
     Box(
         modifier = modifier
@@ -368,7 +443,7 @@ fun BreakdownMetricCard(
                 Text(
                     text = title,
                     color = glassStyle.textSecondary,
-                    fontSize = 11.sp,
+                    fontSize = dimensions.textCaption,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -376,7 +451,7 @@ fun BreakdownMetricCard(
             Text(
                 text = value,
                 color = glassStyle.textPrimary,
-                fontSize = 17.sp,
+                fontSize = dimensions.textMetricValue,
                 fontWeight = FontWeight.Bold
             )
         }

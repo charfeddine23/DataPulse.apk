@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen & Layout Margins (Large Tablets sw720dp) -->
+    <dimen name="screen_padding_horizontal">40dp</dimen>
+    <dimen name="screen_padding_vertical">18dp</dimen>
+    <dimen name="screen_content_max_width">1100dp</dimen>
+    <dimen name="bottom_nav_max_width">640dp</dimen>
+
+    <!-- Card & Component Geometry -->
+    <dimen name="card_corner_radius">28dp</dimen>
+    <dimen name="card_corner_radius_small">18dp</dimen>
+    <dimen name="card_padding">22dp</dimen>
+    <dimen name="card_padding_compact">16dp</dimen>
+    <dimen name="grid_spacing">16dp</dimen>
+    <dimen name="section_spacing">20dp</dimen>
+
+    <!-- Gauges & Visual Assets -->
+    <dimen name="circular_gauge_size">290dp</dimen>
+    <dimen name="circular_gauge_stroke">18dp</dimen>
+    <dimen name="speedometer_dial_size">310dp</dimen>
+    <dimen name="speedometer_dial_stroke">18dp</dimen>
+    <dimen name="speedometer_inner_well">165dp</dimen>
+    <dimen name="header_icon_box_size">56dp</dimen>
+    <dimen name="header_icon_size">48dp</dimen>
+    <dimen name="sparkline_height">85dp</dimen>
+    <dimen name="throughput_graph_height">200dp</dimen>
+    <dimen name="app_item_icon_size">48dp</dimen>
+
+    <!-- Scalable Typography Dimension Resources (Large Tablets sw720dp) -->
+    <dimen name="text_display_hero">32sp</dimen>
+    <dimen name="text_title_large">27sp</dimen>
+    <dimen name="text_title_medium">20sp</dimen>
+    <dimen name="text_title_small">17sp</dimen>
+    <dimen name="text_metric_value">24sp</dimen>
+    <dimen name="text_body_large">15.5sp</dimen>
+    <dimen name="text_body_medium">14sp</dimen>
+    <dimen name="text_caption">13sp</dimen>
+    <dimen name="text_micro">11.5sp</dimen>
+</resources>

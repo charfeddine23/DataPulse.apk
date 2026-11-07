@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen & Layout Margins (Phones) -->
+    <dimen name="screen_padding_horizontal">16dp</dimen>
+    <dimen name="screen_padding_vertical">8dp</dimen>
+    <dimen name="screen_content_max_width">600dp</dimen>
+    <dimen name="bottom_nav_max_width">520dp</dimen>
+
+    <!-- Card & Component Geometry -->
+    <dimen name="card_corner_radius">22dp</dimen>
+    <dimen name="card_corner_radius_small">14dp</dimen>
+    <dimen name="card_padding">16dp</dimen>
+    <dimen name="card_padding_compact">12dp</dimen>
+    <dimen name="grid_spacing">10dp</dimen>
+    <dimen name="section_spacing">14dp</dimen>
+
+    <!-- Gauges & Visual Assets -->
+    <dimen name="circular_gauge_size">220dp</dimen>
+    <dimen name="circular_gauge_stroke">14dp</dimen>
+    <dimen name="speedometer_dial_size">240dp</dimen>
+    <dimen name="speedometer_dial_stroke">14dp</dimen>
+    <dimen name="speedometer_inner_well">130dp</dimen>
+    <dimen name="header_icon_box_size">44dp</dimen>
+    <dimen name="header_icon_size">38dp</dimen>
+    <dimen name="sparkline_height">60dp</dimen>
+    <dimen name="throughput_graph_height">150dp</dimen>
+    <dimen name="app_item_icon_size">38dp</dimen>
+
+    <!-- Scalable Typography Dimension Resources (Phones) -->
+    <dimen name="text_display_hero">24sp</dimen>
+    <dimen name="text_title_large">22sp</dimen>
+    <dimen name="text_title_medium">16sp</dimen>
+    <dimen name="text_title_small">14sp</dimen>
+    <dimen name="text_metric_value">19sp</dimen>
+    <dimen name="text_body_large">13sp</dimen>
+    <dimen name="text_body_medium">12sp</dimen>
+    <dimen name="text_caption">11sp</dimen>
+    <dimen name="text_micro">9.5sp</dimen>
+</resources>

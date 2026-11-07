@@ -93,24 +93,25 @@ fun AnalyticsScreen(
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
 
     var selectedAppForCustomization by remember { mutableStateOf<AppUsageItem?>(null) }
+    val dimensions = com.example.ui.theme.LocalAppDimensions.current
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = dimensions.screenPaddingHorizontal)
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = com.example.model.AppStrings.analyticsTitle(appLanguage),
             color = glassStyle.textPrimary,
-            fontSize = 22.sp,
+            fontSize = dimensions.textTitleLarge,
             fontWeight = FontWeight.Bold
         )
         Text(
             text = com.example.model.AppStrings.analyticsSubtitle(appLanguage),
             color = glassStyle.textSecondary,
-            fontSize = 12.sp
+            fontSize = dimensions.textBodyMedium
         )
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -122,27 +123,49 @@ fun AnalyticsScreen(
             else
                 "💡 Long-press any app to customize its daily data limit & alerts",
             color = glassStyle.accentPrimary,
-            fontSize = 11.sp,
+            fontSize = dimensions.textCaption,
             fontWeight = FontWeight.Medium
         )
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Time Range Selector Tabs
-        TimeRangeSelector(
-            currentRange = timeRange,
-            appLanguage = appLanguage,
-            onSelect = { viewModel.setTimeRange(it) }
-        )
+        if (dimensions.isTablet) {
+            // Adaptive Side-by-Side Filter Bar on Tablets
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(dimensions.gridSpacing),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TimeRangeSelector(
+                    currentRange = timeRange,
+                    appLanguage = appLanguage,
+                    onSelect = { viewModel.setTimeRange(it) },
+                    modifier = Modifier.weight(1.15f)
+                )
 
-        Spacer(modifier = Modifier.height(10.dp))
+                InterfaceSelector(
+                    currentFilter = interfaceFilter,
+                    appLanguage = appLanguage,
+                    onSelect = { viewModel.setInterfaceFilter(it) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        } else {
+            // Phone Stacked Filter Selectors
+            TimeRangeSelector(
+                currentRange = timeRange,
+                appLanguage = appLanguage,
+                onSelect = { viewModel.setTimeRange(it) }
+            )
 
-        // Interface filter chips (All, Cellular, Wi-Fi)
-        InterfaceSelector(
-            currentFilter = interfaceFilter,
-            appLanguage = appLanguage,
-            onSelect = { viewModel.setInterfaceFilter(it) }
-        )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            InterfaceSelector(
+                currentFilter = interfaceFilter,
+                appLanguage = appLanguage,
+                onSelect = { viewModel.setInterfaceFilter(it) }
+            )
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -197,7 +220,7 @@ fun AnalyticsScreen(
             Spacer(modifier = Modifier.height(12.dp))
         }
 
-        // Apps List
+        // Apps List / Grid
         if (isRefreshing) {
             Box(
                 modifier = Modifier
@@ -211,7 +234,7 @@ fun AnalyticsScreen(
                     Text(
                         text = com.example.model.AppStrings.analyzingNetwork(appLanguage),
                         color = glassStyle.textSecondary,
-                        fontSize = 13.sp
+                        fontSize = dimensions.textBodyLarge
                     )
                 }
             }
@@ -233,28 +256,56 @@ fun AnalyticsScreen(
                     Text(
                         text = if (searchQuery.isNotEmpty()) com.example.model.AppStrings.noMatchingApps(appLanguage) else com.example.model.AppStrings.noAppTraffic(appLanguage),
                         color = glassStyle.textSecondary,
-                        fontSize = 13.sp
+                        fontSize = dimensions.textBodyLarge
                     )
                 }
             }
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(dimensions.gridSpacing)
             ) {
-                items(apps, key = { it.packageName }) { appItem ->
-                    val sanitizedPkg = appItem.packageName.replace('.', '_')
-                    val config = customAppLimits[sanitizedPkg]
-                    AppUsageCard(
-                        item = appItem,
-                        filter = interfaceFilter,
-                        appLanguage = appLanguage,
-                        customConfig = config,
-                        onLongClick = { selectedAppForCustomization = appItem }
-                    )
+                if (dimensions.isTablet) {
+                    // Adaptive 2-Column App Grid on Tablets & Foldables
+                    items(apps.chunked(2), key = { chunk -> chunk.first().packageName }) { rowApps ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(dimensions.gridSpacing)
+                        ) {
+                            for (appItem in rowApps) {
+                                val sanitizedPkg = appItem.packageName.replace('.', '_')
+                                val config = customAppLimits[sanitizedPkg]
+                                AppUsageCard(
+                                    item = appItem,
+                                    filter = interfaceFilter,
+                                    appLanguage = appLanguage,
+                                    customConfig = config,
+                                    onLongClick = { selectedAppForCustomization = appItem },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            if (rowApps.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                } else {
+                    // Phone 1-Column List
+                    items(apps, key = { it.packageName }) { appItem ->
+                        val sanitizedPkg = appItem.packageName.replace('.', '_')
+                        val config = customAppLimits[sanitizedPkg]
+                        AppUsageCard(
+                            item = appItem,
+                            filter = interfaceFilter,
+                            appLanguage = appLanguage,
+                            customConfig = config,
+                            onLongClick = { selectedAppForCustomization = appItem }
+                        )
+                    }
                 }
+
                 item {
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
@@ -420,6 +471,7 @@ fun AppUsageCard(
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val dimensions = com.example.ui.theme.LocalAppDimensions.current
 
     GlassContainer(
         modifier = modifier
@@ -446,14 +498,14 @@ fun AppUsageCard(
                     Text(
                         text = item.appName,
                         color = glassStyle.textPrimary,
-                        fontSize = 14.sp,
+                        fontSize = dimensions.textTitleSmall,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1
                     )
                     Text(
                         text = item.packageName,
                         color = glassStyle.textTertiary,
-                        fontSize = 10.sp,
+                        fontSize = dimensions.textMicro,
                         maxLines = 1
                     )
 
@@ -477,7 +529,7 @@ fun AppUsageCard(
                             Text(
                                 text = if (appLanguage == com.example.model.AppLanguage.ARABIC) "مخصص: $limitStr / يوم" else "Custom: $limitStr / day",
                                 color = glassStyle.accentPrimary,
-                                fontSize = 9.sp,
+                                fontSize = dimensions.textMicro,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -495,7 +547,7 @@ fun AppUsageCard(
                     Text(
                         text = FormatUtils.formatBytes(primaryBytes),
                         color = glassStyle.accentPrimary,
-                        fontSize = 15.sp,
+                        fontSize = dimensions.textMetricValue,
                         fontWeight = FontWeight.ExtraBold
                     )
                     if (item.percentageOfTotal > 0f) {
@@ -507,7 +559,7 @@ fun AppUsageCard(
                         Text(
                             text = pctText,
                             color = glassStyle.textTertiary,
-                            fontSize = 10.sp
+                            fontSize = dimensions.textMicro
                         )
                     }
                 }
@@ -532,7 +584,7 @@ fun AppUsageCard(
                     Text(
                         text = "${com.example.model.AppStrings.filterCellular(appLanguage)}: ${FormatUtils.formatBytes(item.mobileBytes)}",
                         color = glassStyle.textSecondary,
-                        fontSize = 11.sp
+                        fontSize = dimensions.textCaption
                     )
                 }
 
@@ -547,7 +599,7 @@ fun AppUsageCard(
                     Text(
                         text = "${com.example.model.AppStrings.filterWifi(appLanguage)}: ${FormatUtils.formatBytes(item.wifiBytes)}",
                         color = glassStyle.textSecondary,
-                        fontSize = 11.sp
+                        fontSize = dimensions.textCaption
                     )
                 }
             }
@@ -582,6 +634,7 @@ fun AppUsageCard(
 @Composable
 fun AppIconImage(drawable: Drawable?, appName: String) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val dimensions = com.example.ui.theme.LocalAppDimensions.current
     val bitmap = remember(drawable) {
         drawableToBitmap(drawable)
     }
@@ -591,13 +644,13 @@ fun AppIconImage(drawable: Drawable?, appName: String) {
             bitmap = bitmap.asImageBitmap(),
             contentDescription = appName,
             modifier = Modifier
-                .size(38.dp)
+                .size(dimensions.appItemIconSize)
                 .clip(RoundedCornerShape(10.dp))
         )
     } else {
         Box(
             modifier = Modifier
-                .size(38.dp)
+                .size(dimensions.appItemIconSize)
                 .clip(RoundedCornerShape(10.dp))
                 .background(glassStyle.cardSubtleBg),
             contentAlignment = Alignment.Center
@@ -606,7 +659,7 @@ fun AppIconImage(drawable: Drawable?, appName: String) {
                 imageVector = Icons.Default.Apps,
                 contentDescription = appName,
                 tint = glassStyle.accentPrimary,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(dimensions.appItemIconSize * 0.55f)
             )
         }
     }

@@ -81,6 +81,7 @@ import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.ElectricBlue
 import com.example.ui.theme.EmeraldSafe
 import com.example.ui.theme.LocalLiquidGlass
+import com.example.ui.theme.LocalAppDimensions
 import com.example.ui.theme.NeonPurple
 import com.example.ui.theme.RedAlert
 
@@ -154,6 +155,7 @@ fun DashboardHeader(
     modifier: Modifier = Modifier
 ) {
     val glassStyle = LocalLiquidGlass.current
+    val dimensions = LocalAppDimensions.current
 
     Column(
         modifier = modifier
@@ -169,7 +171,7 @@ fun DashboardHeader(
                 // Outer App Icon converted and displayed inside the app
                 Box(
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(dimensions.headerIconBoxSize)
                         .clip(RoundedCornerShape(14.dp))
                         .background(glassStyle.cardSubtleBg)
                         .border(1.dp, glassStyle.accentPrimary.copy(alpha = 0.45f), RoundedCornerShape(14.dp)),
@@ -178,7 +180,7 @@ fun DashboardHeader(
                     Image(
                         painter = painterResource(id = R.drawable.ic_launcher_foreground),
                         contentDescription = "Data Pulse",
-                        modifier = Modifier.size(38.dp)
+                        modifier = Modifier.size(dimensions.headerIconSize)
                     )
                 }
 
@@ -187,7 +189,7 @@ fun DashboardHeader(
                 Text(
                     text = "Data Pulse",
                     color = glassStyle.textPrimary,
-                    fontSize = 24.sp,
+                    fontSize = dimensions.textTitleLarge,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.5.sp
                 )
@@ -551,6 +553,7 @@ fun CircularQuotaProgressGauge(
     modifier: Modifier = Modifier
 ) {
     val glassStyle = LocalLiquidGlass.current
+    val dimensions = LocalAppDimensions.current
     val statusColor = when (status) {
         QuotaStatus.SAFE -> glassStyle.accentPrimary
         QuotaStatus.WARNING -> AmberAlert
@@ -700,12 +703,12 @@ fun CircularQuotaProgressGauge(
 
             // Central Circular Progress Gauge with Realistic Heartbeat & Dynamic Live Colors
             Box(
-                modifier = Modifier.size(220.dp),
+                modifier = Modifier.size(dimensions.circularGaugeSize),
                 contentAlignment = Alignment.Center
             ) {
                 // Dynamic Live Colors Background Aura Canvas
                 Canvas(modifier = Modifier.fillMaxSize()) {
-                    val strokeWidth = 14.dp.toPx()
+                    val strokeWidth = dimensions.circularGaugeStroke.toPx()
                     val arcSize = size.width - strokeWidth * 2
                     val topLeft = Offset(strokeWidth, strokeWidth)
                     val centerOffset = Offset(size.width / 2f, size.height / 2f)
@@ -773,7 +776,7 @@ fun CircularQuotaProgressGauge(
                         // Ambient luminous backplate
                         Box(
                             modifier = Modifier
-                                .size(76.dp)
+                                .size(if (dimensions.isTablet) 92.dp else 76.dp)
                                 .clip(CircleShape)
                                 .background(
                                     Brush.radialGradient(
@@ -788,7 +791,7 @@ fun CircularQuotaProgressGauge(
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             // Pulsing Heart Drawn with Smooth Bezier Curves
-                            Canvas(modifier = Modifier.size(26.dp)) {
+                            Canvas(modifier = Modifier.size(if (dimensions.isTablet) 32.dp else 26.dp)) {
                                 val heartColor = Color(
                                     red = 0.98f,
                                     green = (0.15f + 0.20f * (heartbeatScale - 1f)).coerceIn(0f, 1f),
@@ -838,7 +841,7 @@ fun CircularQuotaProgressGauge(
                             Text(
                                 text = "Pulse",
                                 color = glassStyle.textPrimary,
-                                fontSize = 24.sp,
+                                fontSize = dimensions.textDisplayHero,
                                 fontWeight = FontWeight.Black,
                                 letterSpacing = 1.sp
                             )
@@ -850,14 +853,14 @@ fun CircularQuotaProgressGauge(
                     Text(
                         text = "%.1f%%".format(percentage),
                         color = glassStyle.textPrimary,
-                        fontSize = 17.sp,
+                        fontSize = dimensions.textMetricValue,
                         fontWeight = FontWeight.Bold
                     )
 
                     Text(
                         text = "${FormatUtils.formatBytes(usedBytes)} / ${FormatUtils.formatBytes(limitBytes)}",
                         color = glassStyle.textTertiary,
-                        fontSize = 11.sp
+                        fontSize = dimensions.textCaption
                     )
                 }
             }

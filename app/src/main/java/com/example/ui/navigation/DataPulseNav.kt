@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -95,6 +96,8 @@ fun DataPulseApp(
         currentDestination = previousDestination
     }
 
+    val dimensions = com.example.ui.theme.LocalAppDimensions.current
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
@@ -106,11 +109,11 @@ fun DataPulseApp(
             )
         }
     ) { innerPadding ->
-        Box(
+        com.example.ui.theme.AdaptiveScreenContainer(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-        ) {
+        ) { appDimensions ->
             Crossfade(targetState = currentDestination, label = "screen_crossfade") { dest ->
                 when (dest) {
                     NavDestination.DASHBOARD -> DashboardScreen(
@@ -152,21 +155,31 @@ fun LiquidGlassBottomNav(
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val dimensions = com.example.ui.theme.LocalAppDimensions.current
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .background(brush = glassStyle.backdropBrush)
-            .border(
-                1.dp,
-                glassStyle.rimLightBrush,
-                RoundedCornerShape(24.dp)
-            )
-            .padding(horizontal = 10.dp, vertical = 6.dp)
+            .padding(
+                horizontal = dimensions.screenPaddingHorizontal,
+                vertical = dimensions.screenPaddingVertical
+            ),
+        contentAlignment = Alignment.Center
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = dimensions.bottomNavMaxWidth)
+                .clip(RoundedCornerShape(24.dp))
+                .background(brush = glassStyle.backdropBrush)
+                .border(
+                    1.dp,
+                    glassStyle.rimLightBrush,
+                    RoundedCornerShape(24.dp)
+                )
+                .padding(horizontal = 10.dp, vertical = 6.dp)
+        ) {
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -222,5 +235,7 @@ fun LiquidGlassBottomNav(
         }
     }
 }
+}
+
 
 

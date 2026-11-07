@@ -231,8 +231,11 @@ fun DataPulseTheme(
         }
     }
 
+    val dimensions = rememberAppDimensions()
+
     CompositionLocalProvider(
         LocalLiquidGlass provides liquidGlassStyle,
+        LocalAppDimensions provides dimensions,
         LocalLayoutDirection provides LayoutDirection.Ltr
     ) {
         MaterialTheme(

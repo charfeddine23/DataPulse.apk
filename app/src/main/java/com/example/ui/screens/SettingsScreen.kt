@@ -78,6 +78,7 @@ import com.example.ui.MainViewModel
 import com.example.ui.components.GlassContainer
 import com.example.ui.theme.AmberAlert
 import com.example.ui.theme.CyanPulse
+import com.example.ui.theme.LocalAppDimensions
 import com.example.ui.theme.NeonPurple
 import com.example.ui.theme.RedAlert
 
@@ -103,62 +104,14 @@ fun SettingsScreen(
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val dimensions = LocalAppDimensions.current
 
     var customLimitInput by remember(quota.planLimitGB) {
         mutableStateOf(if (quota.planLimitGB % 1f == 0f) quota.planLimitGB.toInt().toString() else "%.1f".format(quota.planLimitGB))
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp)
-    ) {
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (onNavigateBack != null) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(glassStyle.cardSubtleBg)
-                        .border(1.dp, glassStyle.borderColor, RoundedCornerShape(12.dp))
-                        .clickable { onNavigateBack() }
-                        .testTag("settings_back_button"),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = AppStrings.backToPrevious(appLanguage),
-                        tint = glassStyle.accentPrimary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-            }
-
-            Column {
-                Text(
-                    text = AppStrings.settingsTitle(appLanguage),
-                    color = glassStyle.textPrimary,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = AppStrings.settingsSubtitle(appLanguage),
-                    color = glassStyle.textSecondary,
-                    fontSize = 12.sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 1. Language Selection Card (العربية / English)
+    // 1. Language Selection Card
+    val languageCard: @Composable () -> Unit = {
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -204,10 +157,10 @@ fun SettingsScreen(
                 }
             }
         }
+    }
 
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // 2. Comprehensive Liquid Glass Theme Engine (3 Themes)
+    // 2. Comprehensive Liquid Glass Theme Engine (3 Themes)
+    val themeEngineCard: @Composable () -> Unit = {
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -265,10 +218,10 @@ fun SettingsScreen(
                 }
             }
         }
+    }
 
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // 3. Monthly Data Plan Limit Card (Freeform up to 1000GB)
+    // 3. Monthly Data Plan Limit Card (Freeform up to 1000GB)
+    val planLimitCard: @Composable () -> Unit = {
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -425,10 +378,10 @@ fun SettingsScreen(
                 }
             }
         }
+    }
 
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // 4. Billing Cycle Reset Day
+    // 4. Billing Cycle Reset Day
+    val billingCycleCard: @Composable () -> Unit = {
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(
@@ -485,10 +438,10 @@ fun SettingsScreen(
                 }
             }
         }
+    }
 
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // 5. Smart Alert Thresholds Card
+    // 5. Smart Alert Thresholds Card
+    val smartAlertsCard: @Composable () -> Unit = {
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -682,10 +635,10 @@ fun SettingsScreen(
                 }
             }
         }
+    }
 
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // 6. Power Saving & Battery Card
+    // 6. Power Saving & Battery Card
+    val powerSavingCard: @Composable () -> Unit = {
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -743,10 +696,10 @@ fun SettingsScreen(
                 }
             }
         }
+    }
 
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // 7. Permissions Status Card (Cleaned - without PACKAGE_USAGE_STATS)
+    // 7. Permissions Status Card (Cleaned - without PACKAGE_USAGE_STATS)
+    val permissionsCard: @Composable () -> Unit = {
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -845,10 +798,10 @@ fun SettingsScreen(
                 }
             }
         }
+    }
 
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // 8. Developer Branding & App Version Card
+    // 8. Developer Branding & App Version Card
+    val developerCard: @Composable () -> Unit = {
         GlassContainer(
             modifier = Modifier.fillMaxWidth(),
             borderColor = glassStyle.accentSecondary.copy(alpha = 0.4f)
@@ -904,8 +857,99 @@ fun SettingsScreen(
                 )
             }
         }
+    }
 
-        Spacer(modifier = Modifier.height(24.dp))
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(horizontal = dimensions.screenPaddingHorizontal)
+    ) {
+        Spacer(modifier = Modifier.height(dimensions.screenPaddingVertical))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (onNavigateBack != null) {
+                Box(
+                    modifier = Modifier
+                        .size(dimensions.headerIconBoxSize)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(glassStyle.cardSubtleBg)
+                        .border(1.dp, glassStyle.borderColor, RoundedCornerShape(12.dp))
+                        .clickable { onNavigateBack() }
+                        .testTag("settings_back_button"),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = AppStrings.backToPrevious(appLanguage),
+                        tint = glassStyle.accentPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+            }
+
+            Column {
+                Text(
+                    text = AppStrings.settingsTitle(appLanguage),
+                    color = glassStyle.textPrimary,
+                    fontSize = dimensions.textTitleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = AppStrings.settingsSubtitle(appLanguage),
+                    color = glassStyle.textSecondary,
+                    fontSize = dimensions.textBodyMedium
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(dimensions.sectionSpacing))
+
+        if (dimensions.isTablet) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(dimensions.sectionSpacing)
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(dimensions.sectionSpacing)
+                ) {
+                    languageCard()
+                    themeEngineCard()
+                    planLimitCard()
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(dimensions.sectionSpacing)
+                ) {
+                    billingCycleCard()
+                    smartAlertsCard()
+                    powerSavingCard()
+                    permissionsCard()
+                    developerCard()
+                }
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(dimensions.sectionSpacing)
+            ) {
+                languageCard()
+                themeEngineCard()
+                planLimitCard()
+                billingCycleCard()
+                smartAlertsCard()
+                powerSavingCard()
+                permissionsCard()
+                developerCard()
+            }
+        }
+
+        Spacer(modifier = Modifier.height(dimensions.sectionSpacing * 2))
     }
 }
 
