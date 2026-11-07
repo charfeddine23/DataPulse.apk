@@ -11,11 +11,17 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,24 +32,29 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.ElectricBlue
 import kotlinx.coroutines.launch
@@ -66,7 +77,8 @@ enum class ElasticFlameRefreshState {
 /**
  * Custom, cinematic Elastic Flame Pull-to-Refresh container.
  * Features rubber-band tension physics, anchor-pinned teardrop stretching,
- * fluid bezier curve deformation, and a vibrant fiery-cyan plasma gradient.
+ * fluid bezier curve deformation, animated snap-retract on release,
+ * and glowing "إسحب للمزامنة" Arabic text hint.
  */
 @Composable
 fun ElasticFlamePullToRefreshBox(
@@ -91,6 +103,38 @@ fun ElasticFlamePullToRefreshBox(
     var rawDragDistance by remember { mutableFloatStateOf(0f) }
     var hasTriggeredHaptic by remember { mutableStateOf(false) }
 
+    // Helper function to animate pull progress smoothly back to 0f on release
+    fun retractToZero(stiffness: Float = Spring.StiffnessMedium) {
+        coroutineScope.launch {
+            pullDistanceAnim.animateTo(
+                targetValue = 0f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = stiffness
+                )
+            )
+            refreshState = ElasticFlameRefreshState.IDLE
+            rawDragDistance = 0f
+            hasTriggeredHaptic = false
+        }
+    }
+
+    // Helper function to snap and trigger refresh
+    fun snapAndSync() {
+        refreshState = ElasticFlameRefreshState.SNAP_RELEASED
+        coroutineScope.launch {
+            pullDistanceAnim.animateTo(
+                targetValue = restingSyncOffsetPx,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            )
+            refreshState = ElasticFlameRefreshState.SYNCING
+            onRefresh()
+        }
+    }
+
     // Synchronize with external isRefreshing state changes
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
@@ -109,7 +153,7 @@ fun ElasticFlamePullToRefreshBox(
                 refreshState == ElasticFlameRefreshState.SNAP_RELEASED
             ) {
                 refreshState = ElasticFlameRefreshState.COMPLETED
-                // Brief radiant completion flash before collapsing
+                // Brief radiant completion flash before collapsing cleanly
                 pullDistanceAnim.animateTo(
                     targetValue = 0f,
                     animationSpec = spring(
@@ -187,33 +231,9 @@ fun ElasticFlamePullToRefreshBox(
                 if (refreshState == ElasticFlameRefreshState.PULLING) {
                     val currentPull = pullDistanceAnim.value
                     if (currentPull >= thresholdPx) {
-                        // Snap-release into active syncing state
-                        refreshState = ElasticFlameRefreshState.SNAP_RELEASED
-                        coroutineScope.launch {
-                            pullDistanceAnim.animateTo(
-                                targetValue = restingSyncOffsetPx,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMediumLow
-                                )
-                            )
-                            refreshState = ElasticFlameRefreshState.SYNCING
-                            onRefresh()
-                        }
+                        snapAndSync()
                     } else {
-                        // Retract back to zero
-                        coroutineScope.launch {
-                            pullDistanceAnim.animateTo(
-                                targetValue = 0f,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioNoBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                )
-                            )
-                            refreshState = ElasticFlameRefreshState.IDLE
-                            rawDragDistance = 0f
-                            hasTriggeredHaptic = false
-                        }
+                        retractToZero()
                     }
                 }
                 return Velocity.Zero
@@ -246,10 +266,34 @@ fun ElasticFlamePullToRefreshBox(
     val currentOffset = pullDistanceAnim.value
     val stretchProgress = (currentOffset / thresholdPx).coerceIn(0f, 1.8f)
 
+    // Opacity for the Arabic text hint ("إسحب للمزامنة")
+    val textAlpha = ((stretchProgress - 0.16f) / 0.65f).coerceIn(0f, 1f)
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .nestedScroll(nestedScrollConnection)
+            // Dual-safety gesture listener: guarantees that when pointer touch is lifted
+            // below threshold, the flame ALWAYS animates back to 0f without getting stuck.
+            .pointerInput(thresholdPx) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    do {
+                        val event = awaitPointerEvent()
+                        val anyPressed = event.changes.any { it.pressed }
+                    } while (anyPressed)
+
+                    // All fingers lifted
+                    if (refreshState == ElasticFlameRefreshState.PULLING) {
+                        val currentPull = pullDistanceAnim.value
+                        if (currentPull >= thresholdPx) {
+                            snapAndSync()
+                        } else {
+                            retractToZero()
+                        }
+                    }
+                }
+            }
     ) {
         // Content smoothly translated down with GPU hardware layer
         Box(
@@ -268,8 +312,8 @@ fun ElasticFlamePullToRefreshBox(
             content()
         }
 
-        // Custom Elastic Flame Canvas pinned strictly at the top center
-        if (currentOffset > 2f || refreshState == ElasticFlameRefreshState.SYNCING) {
+        // Custom Elastic Flame Canvas pinned strictly at top center
+        if (currentOffset > 1.5f || refreshState == ElasticFlameRefreshState.SYNCING) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -283,6 +327,61 @@ fun ElasticFlamePullToRefreshBox(
                     phase = flamePhase,
                     corePulse = corePulse,
                     modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+
+        // Sleek Arabic Text Hint: "إسحب للمزامنة"
+        // Directly below the flame with opacity linked to stretch progress
+        if (textAlpha > 0.01f || refreshState == ElasticFlameRefreshState.SYNCING) {
+            val hintText = when {
+                refreshState == ElasticFlameRefreshState.SYNCING -> "جاري المزامنة..."
+                refreshState == ElasticFlameRefreshState.COMPLETED -> "تمت المزامنة بنجاح"
+                stretchProgress >= 1.0f -> "أفلت للمزامنة"
+                else -> "إسحب للمزامنة"
+            }
+
+            val textGlowColor = if (stretchProgress >= 1.0f) CyanPulse else Color(0xFFFF9100)
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .graphicsLayer {
+                        val tipPos = if (refreshState == ElasticFlameRefreshState.SYNCING || refreshState == ElasticFlameRefreshState.COMPLETED) {
+                            restingSyncOffsetPx + with(density) { 14.dp.toPx() }
+                        } else {
+                            currentOffset + with(density) { 14.dp.toPx() }
+                        }
+                        translationY = tipPos
+                        alpha = if (refreshState == ElasticFlameRefreshState.SYNCING || refreshState == ElasticFlameRefreshState.COMPLETED) 1f else textAlpha
+                    }
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xD9080D1A))
+                    .border(
+                        1.dp,
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                CyanPulse.copy(alpha = 0.45f * textAlpha),
+                                textGlowColor.copy(alpha = 0.65f * textAlpha),
+                                CyanPulse.copy(alpha = 0.45f * textAlpha)
+                            )
+                        ),
+                        RoundedCornerShape(12.dp)
+                    )
+                    .padding(horizontal = 14.dp, vertical = 5.dp)
+            ) {
+                Text(
+                    text = hintText,
+                    color = Color(0xFFF1F8FF),
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = textGlowColor.copy(alpha = 0.75f * textAlpha),
+                            offset = Offset(0f, 0f),
+                            blurRadius = 12f
+                        )
+                    )
                 )
             }
         }
@@ -302,8 +401,6 @@ private fun ElasticFlameCanvas(
     corePulse: Float,
     modifier: Modifier = Modifier
 ) {
-    val density = LocalDensity.current
-
     val flameRuby = Color(0xFFFF1744)
     val flameOrange = Color(0xFFFF6D00)
     val flameAmber = Color(0xFFFFD600)
@@ -430,7 +527,7 @@ private fun ElasticFlameCanvas(
             val stretchL = currentOffsetPx.coerceAtLeast(4.dp.toPx())
             val progressClamped = stretchProgress.coerceIn(0.05f, 1.8f)
 
-            // Top anchor strictly tethered to the ceiling
+            // Top anchor strictly tethered to ceiling
             val tetherHalfWidth = (16.dp.toPx() * (1f - 0.22f * progressClamped.coerceAtMost(1f))).coerceAtLeast(7.dp.toPx())
             val anchorLeft = Offset(centerX - tetherHalfWidth, topAnchorY)
             val anchorRight = Offset(centerX + tetherHalfWidth, topAnchorY)
