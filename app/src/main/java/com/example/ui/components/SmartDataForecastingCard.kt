@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,7 +27,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.WarningAmber
@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -49,15 +50,13 @@ import com.example.model.ForecastStatus
 import com.example.model.FormatUtils
 import com.example.model.SmartDataForecast
 import com.example.ui.theme.AmberAlert
-import com.example.ui.theme.CyanPulse
-import com.example.ui.theme.ElectricBlue
 import com.example.ui.theme.EmeraldSafe
 import com.example.ui.theme.LocalLiquidGlass
 import com.example.ui.theme.RedAlert
 
 /**
- * Sleek "Smart Data Forecasting" card featuring the Liquid Glass Dark Mode aesthetic.
- * Displays predicted depletion timeline, daily burn rate, and a dynamic warning banner.
+ * Harmonized "Smart Data Forecasting" card featuring the Liquid Glass Dark Mode aesthetic.
+ * Symmetrical containers, consistent typography, and dynamic glow lighting.
  */
 @Composable
 fun SmartDataForecastingCard(
@@ -68,7 +67,7 @@ fun SmartDataForecastingCard(
 ) {
     val glassStyle = LocalLiquidGlass.current
 
-    // Determine semantic status color
+    // Semantic status color
     val statusColor = when (forecast.status) {
         ForecastStatus.CRITICAL_DEPLETION, ForecastStatus.EXHAUSTED -> RedAlert
         ForecastStatus.EARLY_DEPLETION -> AmberAlert
@@ -96,16 +95,16 @@ fun SmartDataForecastingCard(
         modifier = modifier
             .fillMaxWidth()
             .testTag("smart_data_forecasting_card"),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(22.dp),
         backgroundColor = glassStyle.cardBackground,
         borderColor = animatedBorderColor
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp)
+                .padding(16.dp)
         ) {
-            // Header: Icon + Title + Live Status Badge
+            // 1. Header: Icon + Title + Live Status Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -117,7 +116,7 @@ fun SmartDataForecastingCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(38.dp)
                             .clip(CircleShape)
                             .background(statusColor.copy(alpha = 0.18f))
                             .border(1.dp, statusColor.copy(alpha = 0.45f), CircleShape),
@@ -127,7 +126,7 @@ fun SmartDataForecastingCard(
                             imageVector = Icons.Default.AutoAwesome,
                             contentDescription = AppStrings.smartForecastTitle(appLanguage),
                             tint = statusColor,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(19.dp)
                         )
                     }
 
@@ -139,12 +138,13 @@ fun SmartDataForecastingCard(
                             color = glassStyle.textPrimary,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.3.sp
+                            letterSpacing = 0.3.sp,
+                            lineHeight = 20.sp
                         )
                         Text(
                             text = AppStrings.smartForecastSubtitle(appLanguage),
                             color = glassStyle.textTertiary,
-                            fontSize = 10.sp,
+                            fontSize = 11.sp,
                             maxLines = 1
                         )
                     }
@@ -161,9 +161,9 @@ fun SmartDataForecastingCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
-                        .background(statusColor.copy(alpha = 0.15f))
-                        .border(1.dp, statusColor.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
-                        .padding(horizontal = 9.dp, vertical = 4.dp)
+                        .background(statusColor.copy(alpha = 0.16f))
+                        .border(1.dp, statusColor.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
                 ) {
                     Text(
                         text = statusLabel,
@@ -176,7 +176,7 @@ fun SmartDataForecastingCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Prominent Warning / Status Banner Container
+            // 2. Prominent Warning / Status Banner Container
             val bannerBg = when (forecast.status) {
                 ForecastStatus.CRITICAL_DEPLETION, ForecastStatus.EXHAUSTED -> RedAlert.copy(alpha = 0.12f)
                 ForecastStatus.EARLY_DEPLETION -> AmberAlert.copy(alpha = 0.12f)
@@ -235,14 +235,14 @@ fun SmartDataForecastingCard(
                         color = glassStyle.textPrimary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        lineHeight = 16.sp
+                        lineHeight = 17.sp
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 3-Metric Glass Chips Row
+            // 3. Three Symmetrical Metric Chips (Uniform Height & Balanced Alignment)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -286,7 +286,7 @@ fun SmartDataForecastingCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Projected Consumption Track
+            // 4. Projected Consumption Track (Aligned With Consistent 8.dp Height)
             val limit = forecast.planLimitBytes.toFloat().coerceAtLeast(1f)
             val currentUsedFraction = (forecast.usedBytes.toFloat() / limit).coerceIn(0f, 1f)
             val projectedFraction = (forecast.projectedEndOfCycleUsageBytes.toFloat() / limit).coerceIn(0f, 1.25f)
@@ -300,7 +300,8 @@ fun SmartDataForecastingCard(
                     Text(
                         text = "${AppStrings.used(appLanguage)}: ${FormatUtils.formatBytes(forecast.usedBytes)} / ${forecast.planLimitGB.toInt()} GB",
                         color = glassStyle.textSecondary,
-                        fontSize = 11.sp
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Medium
                     )
 
                     val deltaText = if (forecast.isSurplus) {
@@ -311,12 +312,12 @@ fun SmartDataForecastingCard(
                     Text(
                         text = deltaText,
                         color = if (forecast.isSurplus) EmeraldSafe else RedAlert,
-                        fontSize = 11.sp,
+                        fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Box(
                     modifier = Modifier
@@ -356,20 +357,22 @@ fun SmartDataForecastingCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Footer link to adjust monthly plan cap
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onConfigurePlanClick() },
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onConfigurePlanClick() }
+                    .padding(vertical = 4.dp),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "${AppStrings.editCap(appLanguage)} (${forecast.planLimitGB.toInt()} GB) →",
                     color = glassStyle.accentPrimary,
-                    fontSize = 11.sp,
+                    fontSize = 11.5.sp,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -377,12 +380,15 @@ fun SmartDataForecastingCard(
     }
 }
 
+/**
+ * Harmonized metric chip with uniform height, balanced padding, and clean typography.
+ */
 @Composable
 private fun ForecastMetricChip(
     title: String,
     value: String,
     unit: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     accentColor: Color,
     modifier: Modifier = Modifier
 ) {
@@ -390,20 +396,27 @@ private fun ForecastMetricChip(
 
     Box(
         modifier = modifier
+            .heightIn(min = 78.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(glassStyle.cardSubtleBg)
             .border(1.dp, glassStyle.borderColor, RoundedCornerShape(14.dp))
-            .padding(10.dp)
+            .padding(horizontal = 10.dp, vertical = 9.dp)
     ) {
-        Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     tint = accentColor,
                     modifier = Modifier.size(13.dp)
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(5.dp))
                 Text(
                     text = title,
                     color = glassStyle.textTertiary,
@@ -413,21 +426,24 @@ private fun ForecastMetricChip(
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            Text(
-                text = value,
-                color = glassStyle.textPrimary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1
-            )
-            if (unit.isNotEmpty()) {
+            Column {
                 Text(
-                    text = unit,
-                    color = glassStyle.textSecondary,
-                    fontSize = 9.sp
+                    text = value,
+                    color = glassStyle.textPrimary,
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
                 )
+                if (unit.isNotEmpty()) {
+                    Text(
+                        text = unit,
+                        color = glassStyle.textSecondary,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Normal
+                    )
+                }
             }
         }
     }

@@ -74,7 +74,6 @@ fun DashboardScreen(
     val selectedSimIndex by viewModel.selectedSimIndex.collectAsStateWithLifecycle()
     val hasUsagePerm by viewModel.hasUsagePermission.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
-    val dataForecast by viewModel.dataForecast.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = modifier
@@ -126,15 +125,6 @@ fun DashboardScreen(
                 appLanguage = appLanguage,
                 isInternetConnected = isInternetConnected,
                 onConfigureClick = onNavigateToSettings
-            )
-        }
-
-        // Smart Data Forecasting Card (Predictive Burn Rate, Depletion Timeline & Warning Banner)
-        item {
-            com.example.ui.components.SmartDataForecastingCard(
-                forecast = dataForecast,
-                appLanguage = appLanguage,
-                onConfigurePlanClick = onNavigateToSettings
             )
         }
 

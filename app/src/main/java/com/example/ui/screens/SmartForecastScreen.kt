@@ -1,6 +1,5 @@
 package com.example.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -15,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,20 +24,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CellTower
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Insights
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Timeline
-import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,7 +41,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -71,8 +64,7 @@ import com.example.ui.theme.RedAlert
 
 /**
  * Dedicated "Smart Analytics & Forecast" screen for Data Pulse.
- * Features the prediction algorithm breakdown, daily burn rate runway,
- * velocity gauge, and sleek Liquid Glass prediction & warning cards.
+ * Features harmonized containers, balanced typography, and symmetrical Liquid Glass cards.
  */
 @Composable
 fun SmartForecastScreen(
@@ -91,7 +83,7 @@ fun SmartForecastScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // 1. Top Header with title and Hamburger Menu Icon on far right
         item {
@@ -105,17 +97,17 @@ fun SmartForecastScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(34.dp)
-                                .clip(RoundedCornerShape(10.dp))
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(glassStyle.accentPrimary.copy(alpha = 0.16f))
-                                .border(1.dp, glassStyle.accentPrimary.copy(alpha = 0.45f), RoundedCornerShape(10.dp)),
+                                .border(1.dp, glassStyle.accentPrimary.copy(alpha = 0.45f), RoundedCornerShape(12.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Insights,
                                 contentDescription = null,
                                 tint = glassStyle.accentPrimary,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(10.dp))
@@ -124,14 +116,15 @@ fun SmartForecastScreen(
                             color = glassStyle.textPrimary,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.4.sp
+                            letterSpacing = 0.3.sp
                         )
                     }
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
                         text = AppStrings.smartAnalyticsSubtitle(appLanguage),
                         color = glassStyle.textSecondary,
-                        fontSize = 11.sp
+                        fontSize = 11.5.sp,
+                        lineHeight = 16.sp
                     )
                 }
 
@@ -143,7 +136,7 @@ fun SmartForecastScreen(
                     ConnectionStatusPill(speedSample = speedSample, appLanguage = appLanguage)
                     LiquidGlassHamburgerMenuButton(
                         onClick = onNavigateToSettings,
-                        contentDescription = AppStrings.navSettings(appLanguage)
+                        contentDescription = AppStrings.openSettingsMenu(appLanguage)
                     )
                 }
             }
@@ -158,12 +151,11 @@ fun SmartForecastScreen(
             )
         }
 
-        // 3. Billing Cycle Runway & Velocity Meter
+        // 3. Billing Cycle Runway & Velocity Meter Card
         item {
             CycleRunwayCard(
                 forecast = dataForecast,
-                appLanguage = appLanguage,
-                onConfigurePlanClick = onNavigateToSettings
+                appLanguage = appLanguage
             )
         }
 
@@ -186,19 +178,19 @@ fun SmartForecastScreen(
 
         // Bottom padding
         item {
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(18.dp))
         }
     }
 }
 
 /**
  * Interactive card comparing actual burn rate against the safe runway budget.
+ * Harmonized with 16.dp internal padding, balanced 78.dp metric boxes, and 8.dp progress track.
  */
 @Composable
 private fun CycleRunwayCard(
     forecast: SmartDataForecast,
     appLanguage: AppLanguage,
-    onConfigurePlanClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = LocalLiquidGlass.current
@@ -224,8 +216,9 @@ private fun CycleRunwayCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp)
+                .padding(16.dp)
         ) {
+            // Header Row: Title + Velocity Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -242,31 +235,32 @@ private fun CycleRunwayCard(
                     Text(
                         text = AppStrings.cycleProgress(appLanguage),
                         color = glassStyle.textPrimary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.2.sp
                     )
                 }
 
                 // Velocity Badge
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(velocityColor.copy(alpha = 0.15f))
-                        .border(1.dp, velocityColor.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(velocityColor.copy(alpha = 0.16f))
+                        .border(1.dp, velocityColor.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 9.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = velocityText,
                         color = velocityColor,
-                        fontSize = 10.sp,
+                        fontSize = 10.5.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Cycle Timeline Progress Track
+            // Cycle Timeline Progress Track (Harmonized to 8.dp)
             val progressAnimated by animateFloatAsState(
                 targetValue = forecast.cycleProgressPercent,
                 animationSpec = tween(600, easing = FastOutSlowInEasing),
@@ -275,7 +269,8 @@ private fun CycleRunwayCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = AppStrings.cycleDaysElapsed(
@@ -284,30 +279,31 @@ private fun CycleRunwayCard(
                         lang = appLanguage
                     ),
                     color = glassStyle.textSecondary,
-                    fontSize = 11.sp
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Medium
                 )
                 Text(
                     text = "${forecast.daysRemainingInCycle} ${AppStrings.forecastDays(forecast.daysRemainingInCycle, appLanguage).split(" ").last()}",
                     color = glassStyle.accentPrimary,
-                    fontSize = 11.sp,
+                    fontSize = 11.5.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp))
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
                     .background(if (glassStyle.isDark) Color(0xFF0F172A) else Color(0xFFE2E8F0))
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(progressAnimated)
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp))
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
                         .background(
                             Brush.horizontalGradient(
                                 colors = listOf(glassStyle.accentSecondary, glassStyle.accentPrimary)
@@ -318,12 +314,12 @@ private fun CycleRunwayCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Safe Runway vs Current Burn Rate comparison
+            // Safe Runway vs Current Burn Rate comparison (Balanced symmetrical chips)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Safe Daily Budget
+                // Safe Daily Budget Box
                 RunwaySubMetricBox(
                     label = AppStrings.safeRunwayBudget(appLanguage),
                     value = forecast.recommendedSafeDailyFormatted,
@@ -332,11 +328,11 @@ private fun CycleRunwayCard(
                     modifier = Modifier.weight(1f)
                 )
 
-                // Current Burn Pace
+                // Current Burn Pace Box
                 RunwaySubMetricBox(
                     label = AppStrings.forecastBurnRate(appLanguage),
                     value = forecast.dailyBurnRateFormatted,
-                    subtext = if (forecast.willDepleteBeforeCycleEnd) "Exceeds runway" else "Healthy pace",
+                    subtext = if (forecast.willDepleteBeforeCycleEnd) "Exceeds safe runway" else "Healthy pace",
                     accentColor = if (forecast.willDepleteBeforeCycleEnd) AmberAlert else CyanPulse,
                     modifier = Modifier.weight(1f)
                 )
@@ -357,30 +353,36 @@ private fun RunwaySubMetricBox(
 
     Box(
         modifier = modifier
+            .heightIn(min = 78.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(glassStyle.cardSubtleBg)
             .border(1.dp, glassStyle.borderColor, RoundedCornerShape(14.dp))
-            .padding(12.dp)
+            .padding(11.dp)
     ) {
-        Column {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
             Text(
                 text = label,
                 color = glassStyle.textTertiary,
                 fontSize = 10.sp,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                maxLines = 1
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = value,
                 color = accentColor,
                 fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = subtext,
                 color = glassStyle.textSecondary,
-                fontSize = 9.sp,
+                fontSize = 9.5.sp,
                 maxLines = 1
             )
         }
@@ -389,6 +391,7 @@ private fun RunwaySubMetricBox(
 
 /**
  * Breakdown of consumption metrics: Cellular, Wi-Fi, and today's burn rate.
+ * Symmetrical 68.dp row chips with circular icon badges.
  */
 @Composable
 private fun DailyConsumptionBreakdownCard(
@@ -408,7 +411,7 @@ private fun DailyConsumptionBreakdownCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp)
+                .padding(16.dp)
         ) {
             Text(
                 text = AppStrings.dataBreakdownTitle(appLanguage),
@@ -479,15 +482,19 @@ private fun BreakdownRowChip(
 
     Box(
         modifier = modifier
+            .heightIn(min = 68.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(glassStyle.cardSubtleBg)
             .border(1.dp, glassStyle.borderColor, RoundedCornerShape(14.dp))
-            .padding(12.dp)
+            .padding(11.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Box(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(34.dp)
                     .clip(CircleShape)
                     .background(tint.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
@@ -496,22 +503,25 @@ private fun BreakdownRowChip(
                     imageVector = icon,
                     contentDescription = title,
                     tint = tint,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(17.dp)
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     color = glassStyle.textTertiary,
                     fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1
                 )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = value,
                     color = glassStyle.textPrimary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
                 )
             }
         }
@@ -520,6 +530,7 @@ private fun BreakdownRowChip(
 
 /**
  * Actionable tips card adapting dynamically to user's forecast status.
+ * Beautifully styled with 14.dp padding, glowing badge, and comfortable typography.
  */
 @Composable
 private fun SmartRunwayTipsCard(
@@ -572,12 +583,12 @@ private fun SmartRunwayTipsCard(
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = tipText,
                     color = glassStyle.textPrimary,
-                    fontSize = 11.sp,
-                    lineHeight = 15.sp
+                    fontSize = 11.5.sp,
+                    lineHeight = 16.sp
                 )
             }
         }
