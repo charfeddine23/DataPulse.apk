@@ -154,16 +154,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             _isDashboardRefreshing.value = true
-            val startMs = System.currentTimeMillis()
-            val summary = repository.fetchUsageSummary(preferences.billingCycleStartDay)
-            _usageSummary.value = summary
-            computeQuota(summary.mobileMonthBytes)
-            loadAppUsage()
-            val elapsed = System.currentTimeMillis() - startMs
-            if (elapsed < 1100L) {
-                kotlinx.coroutines.delay(1100L - elapsed)
+            try {
+                val startMs = System.currentTimeMillis()
+                val summary = repository.fetchUsageSummary(preferences.billingCycleStartDay)
+                _usageSummary.value = summary
+                computeQuota(summary.mobileMonthBytes)
+                loadAppUsage()
+                val elapsed = System.currentTimeMillis() - startMs
+                if (elapsed < 1100L) {
+                    kotlinx.coroutines.delay(1100L - elapsed)
+                }
+            } catch (_: Exception) {
+                // Ensure resilient recovery
+            } finally {
+                _isDashboardRefreshing.value = false
             }
-            _isDashboardRefreshing.value = false
         }
     }
 

@@ -6,6 +6,7 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
@@ -57,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.ElectricBlue
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.cos
@@ -77,8 +79,8 @@ enum class ElasticFlameRefreshState {
 /**
  * Custom, cinematic Elastic Flame Pull-to-Refresh container.
  * Features rubber-band tension physics, anchor-pinned teardrop stretching,
- * fluid bezier curve deformation, animated snap-retract on release,
- * and glowing "إسحب للمزامنة" Arabic text hint.
+ * fluid bezier curve deformation, automatic spring retraction to 0f after sync,
+ * and glowing "أفلت للمزامنة" Arabic text hint upon reaching the release threshold.
  */
 @Composable
 fun ElasticFlamePullToRefreshBox(
@@ -103,42 +105,90 @@ fun ElasticFlamePullToRefreshBox(
     var rawDragDistance by remember { mutableFloatStateOf(0f) }
     var hasTriggeredHaptic by remember { mutableStateOf(false) }
 
-    // Helper function to animate pull progress smoothly back to 0f on release
-    fun retractToZero(stiffness: Float = Spring.StiffnessMedium) {
-        coroutineScope.launch {
-            pullDistanceAnim.animateTo(
-                targetValue = 0f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioNoBouncy,
-                    stiffness = stiffness
-                )
-            )
+    // Unified release handler: handles finger release gracefully
+    fun handleRelease() {
+        if (refreshState == ElasticFlameRefreshState.SYNCING) {
+            // Already syncing: make sure offset rests at restingSyncOffsetPx
+            if (pullDistanceAnim.value > restingSyncOffsetPx) {
+                coroutineScope.launch {
+                    pullDistanceAnim.animateTo(
+                        targetValue = restingSyncOffsetPx,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    )
+                }
+            }
+            return
+        }
+
+        if (refreshState == ElasticFlameRefreshState.COMPLETED) {
+            return
+        }
+
+        val currentPull = pullDistanceAnim.value
+        if (currentPull <= 1f) {
             refreshState = ElasticFlameRefreshState.IDLE
             rawDragDistance = 0f
             hasTriggeredHaptic = false
+            return
         }
-    }
 
-    // Helper function to snap and trigger refresh
-    fun snapAndSync() {
-        refreshState = ElasticFlameRefreshState.SNAP_RELEASED
-        coroutineScope.launch {
-            pullDistanceAnim.animateTo(
-                targetValue = restingSyncOffsetPx,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessMediumLow
-                )
-            )
+        if (currentPull >= thresholdPx) {
+            // Reached or exceeded threshold: transition to SYNCING and trigger refresh
             refreshState = ElasticFlameRefreshState.SYNCING
+            coroutineScope.launch {
+                pullDistanceAnim.animateTo(
+                    targetValue = restingSyncOffsetPx,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                )
+            }
             onRefresh()
+        } else {
+            // Released below threshold: smoothly retract flame back to 0f
+            refreshState = ElasticFlameRefreshState.IDLE
+            coroutineScope.launch {
+                pullDistanceAnim.animateTo(
+                    targetValue = 0f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                )
+                rawDragDistance = 0f
+                hasTriggeredHaptic = false
+            }
         }
     }
 
-    // Synchronize with external isRefreshing state changes
+    // Automatically retract the flame when synchronization finishes (isRefreshing becomes false)
     LaunchedEffect(isRefreshing) {
-        if (isRefreshing) {
-            if (refreshState != ElasticFlameRefreshState.SYNCING) {
+        if (!isRefreshing) {
+            if (refreshState == ElasticFlameRefreshState.SYNCING ||
+                refreshState == ElasticFlameRefreshState.SNAP_RELEASED ||
+                pullDistanceAnim.value > 0.5f
+            ) {
+                refreshState = ElasticFlameRefreshState.COMPLETED
+                // Brief 100ms completion flare, then smoothly retract to 0f
+                delay(100)
+                pullDistanceAnim.animateTo(
+                    targetValue = 0f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                )
+                refreshState = ElasticFlameRefreshState.IDLE
+                rawDragDistance = 0f
+                hasTriggeredHaptic = false
+            }
+        } else {
+            // If isRefreshing became true and user actually pulled the flame
+            if (refreshState != ElasticFlameRefreshState.SYNCING && pullDistanceAnim.value > 10f) {
                 refreshState = ElasticFlameRefreshState.SYNCING
                 pullDistanceAnim.animateTo(
                     targetValue = restingSyncOffsetPx,
@@ -148,12 +198,14 @@ fun ElasticFlamePullToRefreshBox(
                     )
                 )
             }
-        } else {
-            if (refreshState == ElasticFlameRefreshState.SYNCING ||
-                refreshState == ElasticFlameRefreshState.SNAP_RELEASED
-            ) {
-                refreshState = ElasticFlameRefreshState.COMPLETED
-                // Brief radiant completion flash before collapsing cleanly
+        }
+    }
+
+    // Safety watchdog timer: If syncing takes longer than 3.5 seconds, automatically retract to 0f
+    LaunchedEffect(refreshState) {
+        if (refreshState == ElasticFlameRefreshState.SYNCING) {
+            delay(3500)
+            if (refreshState == ElasticFlameRefreshState.SYNCING) {
                 pullDistanceAnim.animateTo(
                     targetValue = 0f,
                     animationSpec = spring(
@@ -173,7 +225,7 @@ fun ElasticFlamePullToRefreshBox(
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 // If user drags upwards while flame is extended, consume drag to retract flame
-                if (available.y < 0f && pullDistanceAnim.value > 0f) {
+                if (available.y < 0f && pullDistanceAnim.value > 0f && refreshState != ElasticFlameRefreshState.SYNCING) {
                     val currentVal = pullDistanceAnim.value
                     val delta = available.y
                     val newTarget = (currentVal + delta).coerceAtLeast(0f)
@@ -228,14 +280,12 @@ fun ElasticFlamePullToRefreshBox(
             }
 
             override suspend fun onPreFling(available: Velocity): Velocity {
-                if (refreshState == ElasticFlameRefreshState.PULLING) {
-                    val currentPull = pullDistanceAnim.value
-                    if (currentPull >= thresholdPx) {
-                        snapAndSync()
-                    } else {
-                        retractToZero()
-                    }
-                }
+                handleRelease()
+                return Velocity.Zero
+            }
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                handleRelease()
                 return Velocity.Zero
             }
         }
@@ -266,30 +316,31 @@ fun ElasticFlamePullToRefreshBox(
     val currentOffset = pullDistanceAnim.value
     val stretchProgress = (currentOffset / thresholdPx).coerceIn(0f, 1.8f)
 
-    // Opacity for the Arabic text hint ("إسحب للمزامنة")
-    val textAlpha = ((stretchProgress - 0.16f) / 0.65f).coerceIn(0f, 1f)
+    // "أفلت للمزامنة" appears ONLY when user reaches/exceeds the threshold
+    val isPrimedForRelease = (stretchProgress >= 1.0f && refreshState == ElasticFlameRefreshState.PULLING)
+    val primedAlpha by animateFloatAsState(
+        targetValue = if (isPrimedForRelease) 1f else 0f,
+        animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
+        label = "primed_text_alpha"
+    )
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .nestedScroll(nestedScrollConnection)
-            // Dual-safety gesture listener: guarantees that when pointer touch is lifted
-            // below threshold, the flame ALWAYS animates back to 0f without getting stuck.
-            .pointerInput(thresholdPx) {
-                awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false)
-                    do {
-                        val event = awaitPointerEvent()
-                        val anyPressed = event.changes.any { it.pressed }
-                    } while (anyPressed)
-
-                    // All fingers lifted
-                    if (refreshState == ElasticFlameRefreshState.PULLING) {
-                        val currentPull = pullDistanceAnim.value
-                        if (currentPull >= thresholdPx) {
-                            snapAndSync()
-                        } else {
-                            retractToZero()
+            // Multi-pointer detection with PointerEventPass.Initial ensures immediate release detection
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val down = awaitFirstDown(requireUnconsumed = false, pass = androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                        val pointerId = down.id
+                        while (true) {
+                            val event = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                            val change = event.changes.firstOrNull { it.id == pointerId }
+                            if (change == null || !change.pressed) {
+                                handleRelease()
+                                break
+                            }
                         }
                     }
                 }
@@ -313,7 +364,8 @@ fun ElasticFlamePullToRefreshBox(
         }
 
         // Custom Elastic Flame Canvas pinned strictly at top center
-        if (currentOffset > 1.5f || refreshState == ElasticFlameRefreshState.SYNCING) {
+        // Only drawn when currentOffset > 1f, completely hidden when returned to 0
+        if (currentOffset > 1f) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -331,29 +383,15 @@ fun ElasticFlamePullToRefreshBox(
             }
         }
 
-        // Sleek Arabic Text Hint: "إسحب للمزامنة"
-        // Directly below the flame with opacity linked to stretch progress
-        if (textAlpha > 0.01f || refreshState == ElasticFlameRefreshState.SYNCING) {
-            val hintText = when {
-                refreshState == ElasticFlameRefreshState.SYNCING -> "جاري المزامنة..."
-                refreshState == ElasticFlameRefreshState.COMPLETED -> "تمت المزامنة بنجاح"
-                stretchProgress >= 1.0f -> "أفلت للمزامنة"
-                else -> "إسحب للمزامنة"
-            }
-
-            val textGlowColor = if (stretchProgress >= 1.0f) CyanPulse else Color(0xFFFF9100)
-
+        // Sleek Arabic Text Hint: ONLY "أفلت للمزامنة" when primed past the threshold
+        if (primedAlpha > 0.01f) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .graphicsLayer {
-                        val tipPos = if (refreshState == ElasticFlameRefreshState.SYNCING || refreshState == ElasticFlameRefreshState.COMPLETED) {
-                            restingSyncOffsetPx + with(density) { 14.dp.toPx() }
-                        } else {
-                            currentOffset + with(density) { 14.dp.toPx() }
-                        }
+                        val tipPos = currentOffset + with(density) { 14.dp.toPx() }
                         translationY = tipPos
-                        alpha = if (refreshState == ElasticFlameRefreshState.SYNCING || refreshState == ElasticFlameRefreshState.COMPLETED) 1f else textAlpha
+                        alpha = primedAlpha
                     }
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color(0xD9080D1A))
@@ -361,9 +399,9 @@ fun ElasticFlamePullToRefreshBox(
                         1.dp,
                         Brush.horizontalGradient(
                             colors = listOf(
-                                CyanPulse.copy(alpha = 0.45f * textAlpha),
-                                textGlowColor.copy(alpha = 0.65f * textAlpha),
-                                CyanPulse.copy(alpha = 0.45f * textAlpha)
+                                CyanPulse.copy(alpha = 0.5f * primedAlpha),
+                                Color(0xFFFF9100).copy(alpha = 0.7f * primedAlpha),
+                                CyanPulse.copy(alpha = 0.5f * primedAlpha)
                             )
                         ),
                         RoundedCornerShape(12.dp)
@@ -371,13 +409,13 @@ fun ElasticFlamePullToRefreshBox(
                     .padding(horizontal = 14.dp, vertical = 5.dp)
             ) {
                 Text(
-                    text = hintText,
+                    text = "أفلت للمزامنة",
                     color = Color(0xFFF1F8FF),
                     fontSize = 11.5.sp,
                     fontWeight = FontWeight.Bold,
                     style = TextStyle(
                         shadow = Shadow(
-                            color = textGlowColor.copy(alpha = 0.75f * textAlpha),
+                            color = CyanPulse.copy(alpha = 0.85f * primedAlpha),
                             offset = Offset(0f, 0f),
                             blurRadius = 12f
                         )
@@ -416,7 +454,7 @@ private fun ElasticFlameCanvas(
             // =========================================================================
             // ACTIVE SYNCING STATE: Upright Hovering Plasma Flame & Energy Vortex
             // =========================================================================
-            val restingY = currentOffsetPx.coerceAtLeast(50.dp.toPx())
+            val restingY = currentOffsetPx.coerceAtLeast(40.dp.toPx())
             val flameHeight = 46.dp.toPx() + 6.dp.toPx() * sin(phase * 2f)
             val flameBaseY = restingY
             val flameTipY = flameBaseY - flameHeight
