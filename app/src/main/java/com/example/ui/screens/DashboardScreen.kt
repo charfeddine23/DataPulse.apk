@@ -46,6 +46,7 @@ import com.example.model.SimCardInfo
 import com.example.ui.MainViewModel
 import com.example.ui.components.CircularQuotaProgressGauge
 import com.example.ui.components.DashboardHeader
+import com.example.ui.components.ElasticFlamePullToRefreshBox
 import com.example.ui.components.GlassContainer
 import com.example.ui.components.LiveSpeedCard
 import com.example.ui.components.QuotaProgressGauge
@@ -74,13 +75,19 @@ fun DashboardScreen(
     val selectedSimIndex by viewModel.selectedSimIndex.collectAsStateWithLifecycle()
     val hasUsagePerm by viewModel.hasUsagePermission.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isDashboardRefreshing.collectAsStateWithLifecycle()
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ElasticFlamePullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.refreshAll() },
+        modifier = modifier.fillMaxSize()
     ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
         // App Branding Header with external app icon and clean title
         item {
             DashboardHeader(
@@ -167,6 +174,7 @@ fun DashboardScreen(
         item {
             Spacer(modifier = Modifier.height(20.dp))
         }
+    }
     }
 }
 

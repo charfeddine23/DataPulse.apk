@@ -47,6 +47,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _usageSummary = MutableStateFlow(NetworkUsageSummary())
     val usageSummary: StateFlow<NetworkUsageSummary> = _usageSummary.asStateFlow()
 
+    private val _isDashboardRefreshing = MutableStateFlow(false)
+    val isDashboardRefreshing: StateFlow<Boolean> = _isDashboardRefreshing.asStateFlow()
+
     private val _rawAppUsageList = MutableStateFlow<List<AppUsageItem>>(emptyList())
     private val _isRefreshingApps = MutableStateFlow(false)
     val isRefreshingApps: StateFlow<Boolean> = _isRefreshingApps.asStateFlow()
@@ -150,10 +153,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _hasUsagePermission.value = perm
 
         viewModelScope.launch {
+            _isDashboardRefreshing.value = true
+            val startMs = System.currentTimeMillis()
             val summary = repository.fetchUsageSummary(preferences.billingCycleStartDay)
             _usageSummary.value = summary
             computeQuota(summary.mobileMonthBytes)
             loadAppUsage()
+            val elapsed = System.currentTimeMillis() - startMs
+            if (elapsed < 1100L) {
+                kotlinx.coroutines.delay(1100L - elapsed)
+            }
+            _isDashboardRefreshing.value = false
         }
     }
 
