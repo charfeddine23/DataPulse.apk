@@ -341,6 +341,7 @@ fun TimeRangeSelector(
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
     val trayShape = RoundedCornerShape(16.dp)
+    val haptics = com.example.ui.components.rememberAppHaptics()
 
     // Indented Neumorphic Tray
     Box(
@@ -412,7 +413,12 @@ fun TimeRangeSelector(
                             },
                             itemShape
                         )
-                        .clickable { onSelect(range) }
+                        .clickable {
+                            if (range != currentRange) {
+                                haptics.performSegmentSwitch()
+                                onSelect(range)
+                            }
+                        }
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {

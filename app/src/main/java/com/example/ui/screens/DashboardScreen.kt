@@ -304,6 +304,7 @@ fun LiquidGlassDualSimSlider(
 
     val progressAnim = remember { Animatable(selectedIndex.toFloat()) }
     var isDragging by remember { mutableStateOf(false) }
+    val haptics = com.example.ui.components.rememberAppHaptics()
 
     LaunchedEffect(selectedIndex) {
         if (!isDragging && kotlin.math.abs(progressAnim.value - selectedIndex.toFloat()) > 0.01f) {
@@ -358,11 +359,18 @@ fun LiquidGlassDualSimSlider(
                     val trackW = size.width.toFloat()
                     val pad = with(density) { 4.dp.toPx() }
                     val halfW = (trackW - pad * 2f) / 2f
+                    var crossedThreshold = selectedIndex > 0
                     detectHorizontalDragGestures(
-                        onDragStart = { isDragging = true },
+                        onDragStart = {
+                            isDragging = true
+                            crossedThreshold = progressAnim.value > 0.5f
+                        },
                         onDragEnd = {
                             isDragging = false
                             val target = if (progressAnim.value > 0.5f) 1 else 0
+                            if (target != selectedIndex) {
+                                haptics.performSegmentSwitch()
+                            }
                             scope.launch {
                                 progressAnim.animateTo(
                                     targetValue = target.toFloat(),
@@ -386,8 +394,13 @@ fun LiquidGlassDualSimSlider(
                         onHorizontalDrag = { change, dragAmount ->
                             change.consume()
                             val deltaProgress = dragAmount / halfW
+                            val nextProgress = (progressAnim.value + deltaProgress).coerceIn(-0.06f, 1.06f)
+                            val isAbove = nextProgress > 0.5f
+                            if (isAbove != crossedThreshold) {
+                                crossedThreshold = isAbove
+                                haptics.performSegmentSwitch()
+                            }
                             scope.launch {
-                                val nextProgress = (progressAnim.value + deltaProgress).coerceIn(-0.06f, 1.06f)
                                 progressAnim.snapTo(nextProgress)
                             }
                         }
@@ -397,6 +410,9 @@ fun LiquidGlassDualSimSlider(
                     val trackW = size.width.toFloat()
                     detectTapGestures { offset ->
                         val target = if (offset.x > trackW / 2f) 1 else 0
+                        if (target != selectedIndex) {
+                            haptics.performSegmentSwitch()
+                        }
                         scope.launch {
                             progressAnim.animateTo(
                                 targetValue = target.toFloat(),
