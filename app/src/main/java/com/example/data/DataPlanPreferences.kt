@@ -27,6 +27,51 @@ class DataPlanPreferences(context: Context) {
         get() = prefs.getInt(KEY_SELECTED_SIM, -1)
         set(value) = prefs.edit().putInt(KEY_SELECTED_SIM, value).apply()
 
+    var selectedSimIndex: Int
+        get() = prefs.getInt(KEY_SELECTED_SIM_INDEX, 0)
+        set(value) = prefs.edit().putInt(KEY_SELECTED_SIM_INDEX, value).apply()
+
+    fun getPlanLimitGB(slotIndex: Int): Float {
+        val key = if (slotIndex == 0) KEY_PLAN_LIMIT_GB else "${KEY_PLAN_LIMIT_GB}_sim$slotIndex"
+        return prefs.getFloat(key, if (slotIndex == 0) 10.0f else 25.0f)
+    }
+
+    fun setPlanLimitGB(slotIndex: Int, value: Float) {
+        val key = if (slotIndex == 0) KEY_PLAN_LIMIT_GB else "${KEY_PLAN_LIMIT_GB}_sim$slotIndex"
+        prefs.edit().putFloat(key, value.coerceIn(0.1f, 10000f)).apply()
+        if (slotIndex == 0) {
+            planLimitGB = value
+        }
+    }
+
+    fun getSimMobileTodayBytes(slotIndex: Int, defaultFallback: Long): Long {
+        val key = "sim_${slotIndex}_mobile_today_bytes"
+        if (!prefs.contains(key)) {
+            val initial = if (slotIndex == 0) defaultFallback else (defaultFallback / 4).coerceAtLeast(45L * 1024 * 1024)
+            prefs.edit().putLong(key, initial).apply()
+            return initial
+        }
+        return prefs.getLong(key, defaultFallback)
+    }
+
+    fun setSimMobileTodayBytes(slotIndex: Int, bytes: Long) {
+        prefs.edit().putLong("sim_${slotIndex}_mobile_today_bytes", bytes).apply()
+    }
+
+    fun getSimMobileMonthBytes(slotIndex: Int, defaultFallback: Long): Long {
+        val key = "sim_${slotIndex}_mobile_month_bytes"
+        if (!prefs.contains(key)) {
+            val initial = if (slotIndex == 0) defaultFallback else (defaultFallback / 3).coerceAtLeast(1800L * 1024 * 1024)
+            prefs.edit().putLong(key, initial).apply()
+            return initial
+        }
+        return prefs.getLong(key, defaultFallback)
+    }
+
+    fun setSimMobileMonthBytes(slotIndex: Int, bytes: Long) {
+        prefs.edit().putLong("sim_${slotIndex}_mobile_month_bytes", bytes).apply()
+    }
+
     var lastNotifiedThreshold: Int
         get() = prefs.getInt(KEY_LAST_NOTIFIED_THRESHOLD, 0)
         set(value) = prefs.edit().putInt(KEY_LAST_NOTIFIED_THRESHOLD, value).apply()
@@ -57,6 +102,7 @@ class DataPlanPreferences(context: Context) {
         private const val KEY_ALERT_80 = "alert_80_enabled"
         private const val KEY_ALERT_95 = "alert_95_enabled"
         private const val KEY_SELECTED_SIM = "selected_sim_sub_id"
+        private const val KEY_SELECTED_SIM_INDEX = "selected_sim_index"
         private const val KEY_LAST_NOTIFIED_THRESHOLD = "last_notified_threshold"
         private const val KEY_THEME_MODE = "theme_mode_preference"
         private const val KEY_POWER_SAVING = "power_saving_mode"

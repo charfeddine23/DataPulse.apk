@@ -190,7 +190,7 @@ fun LiquidGlassBottomNav(
                 // 1. DASHBOARD (النبض - أقصى اليسار / Far Left)
                 // 2. USAGE (الاستهلاك / Apps Usage)
                 // 3. SPEED (عداد السرعة)
-                // 4. FORECAST (التنبؤ الذكي / Forecast - أقصى اليمين / Far Right)
+                // 4. FORECAST (التحليل الذكي / Smart Analytics - أقصى اليمين / Far Right)
                 val navigationItems = listOf(
                     NavDestination.DASHBOARD,
                     NavDestination.USAGE,

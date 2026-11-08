@@ -66,8 +66,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _simCards = MutableStateFlow<List<SimCardInfo>>(emptyList())
     val simCards: StateFlow<List<SimCardInfo>> = _simCards.asStateFlow()
 
-    private val _selectedSimIndex = MutableStateFlow(0)
+    private val _selectedSimIndex = MutableStateFlow(preferences.selectedSimIndex)
     val selectedSimIndex: StateFlow<Int> = _selectedSimIndex.asStateFlow()
+
+    private var cachedSim1Summary = NetworkUsageSummary()
+    private var cachedSim2Summary = NetworkUsageSummary()
+    private var cachedSim1Quota = DataPlanQuota()
+    private var cachedSim2Quota = DataPlanQuota()
+    private var cachedSim1Forecast = com.example.model.SmartDataForecast()
+    private var cachedSim2Forecast = com.example.model.SmartDataForecast()
 
     private val _dataPlanQuota = MutableStateFlow(DataPlanQuota())
     val dataPlanQuota: StateFlow<DataPlanQuota> = _dataPlanQuota.asStateFlow()
@@ -156,9 +163,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _isDashboardRefreshing.value = true
             try {
                 val startMs = System.currentTimeMillis()
-                val summary = repository.fetchUsageSummary(preferences.billingCycleStartDay)
-                _usageSummary.value = summary
-                computeQuota(summary.mobileMonthBytes)
+
+                // 1. Fetch & compute stats for SIM 1 (Slot 0)
+                val summary1 = repository.fetchUsageSummary(preferences.billingCycleStartDay, slotIndex = 0)
+                cachedSim1Summary = summary1
+                cachedSim1Quota = computeQuotaForSim(slotIndex = 0, usedMobileBytes = summary1.mobileMonthBytes, mobileTodayBytes = summary1.mobileTodayBytes)
+                cachedSim1Forecast = com.example.model.DataForecastCalculator.calculate(
+                    usedMobileBytes = summary1.mobileMonthBytes,
+                    planLimitGB = preferences.getPlanLimitGB(0),
+                    billingCycleStartDay = preferences.billingCycleStartDay,
+                    daysRemainingInCycle = repository.getDaysRemainingInCycle(preferences.billingCycleStartDay),
+                    mobileTodayBytes = summary1.mobileTodayBytes
+                )
+
+                // 2. Fetch & compute stats for SIM 2 (Slot 1)
+                val summary2 = repository.fetchUsageSummary(preferences.billingCycleStartDay, slotIndex = 1)
+                cachedSim2Summary = summary2
+                cachedSim2Quota = computeQuotaForSim(slotIndex = 1, usedMobileBytes = summary2.mobileMonthBytes, mobileTodayBytes = summary2.mobileTodayBytes)
+                cachedSim2Forecast = com.example.model.DataForecastCalculator.calculate(
+                    usedMobileBytes = summary2.mobileMonthBytes,
+                    planLimitGB = preferences.getPlanLimitGB(1),
+                    billingCycleStartDay = preferences.billingCycleStartDay,
+                    daysRemainingInCycle = repository.getDaysRemainingInCycle(preferences.billingCycleStartDay),
+                    mobileTodayBytes = summary2.mobileTodayBytes
+                )
+
+                // 3. Apply active SIM data to public StateFlows
+                applyActiveSimStats(_selectedSimIndex.value)
+
                 loadAppUsage()
                 val elapsed = System.currentTimeMillis() - startMs
                 if (elapsed < 1100L) {
@@ -186,7 +218,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setSimIndex(index: Int) {
-        _selectedSimIndex.value = index
+        val validIndex = index.coerceIn(0, 1)
+        _selectedSimIndex.value = validIndex
+        preferences.selectedSimIndex = validIndex
+        applyActiveSimStats(validIndex)
+    }
+
+    private fun applyActiveSimStats(slotIndex: Int) {
+        if (slotIndex == 1) {
+            _usageSummary.value = cachedSim2Summary
+            _dataPlanQuota.value = cachedSim2Quota
+            _dataForecast.value = cachedSim2Forecast
+        } else {
+            _usageSummary.value = cachedSim1Summary
+            _dataPlanQuota.value = cachedSim1Quota
+            _dataForecast.value = cachedSim1Forecast
+        }
     }
 
     private val notifiedAppsToday = mutableSetOf<String>()
@@ -251,8 +298,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun computeQuota(usedMobileBytes: Long) {
-        val limitGB = preferences.planLimitGB
+    private fun computeQuotaForSim(slotIndex: Int, usedMobileBytes: Long, mobileTodayBytes: Long): DataPlanQuota {
+        val limitGB = preferences.getPlanLimitGB(slotIndex)
         val limitBytes = (limitGB * 1024L * 1024L * 1024L).toLong()
         val remainingBytes = (limitBytes - usedMobileBytes).coerceAtLeast(0L)
         val percent = if (limitBytes > 0) ((usedMobileBytes.toDouble() / limitBytes.toDouble()) * 100.0).toFloat() else 0f
@@ -265,7 +312,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             else -> QuotaStatus.SAFE
         }
 
-        _dataPlanQuota.value = DataPlanQuota(
+        if (slotIndex == _selectedSimIndex.value) {
+            triggerAlertIfNeeded(status, usedMobileBytes, limitBytes, percent)
+        }
+
+        return DataPlanQuota(
             planLimitGB = limitGB,
             billingCycleStartDay = preferences.billingCycleStartDay,
             alertThreshold80 = preferences.alert80Enabled,
@@ -276,19 +327,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             daysRemaining = daysRemaining,
             status = status
         )
-
-        // Compute predictive smart forecasting
-        val forecast = com.example.model.DataForecastCalculator.calculate(
-            usedMobileBytes = usedMobileBytes,
-            planLimitGB = limitGB,
-            billingCycleStartDay = preferences.billingCycleStartDay,
-            daysRemainingInCycle = daysRemaining,
-            mobileTodayBytes = _usageSummary.value.mobileTodayBytes
-        )
-        _dataForecast.value = forecast
-
-        // Check if smart alerts should fire
-        triggerAlertIfNeeded(status, usedMobileBytes, limitBytes, percent)
     }
 
     private fun triggerAlertIfNeeded(status: QuotaStatus, used: Long, limit: Long, percent: Float) {
@@ -305,8 +343,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updatePlanLimit(limitGB: Float) {
-        preferences.planLimitGB = limitGB.coerceIn(0.1f, 10000f)
-        computeQuota(_usageSummary.value.mobileMonthBytes)
+        val activeSlot = _selectedSimIndex.value
+        val clamped = limitGB.coerceIn(0.1f, 10000f)
+        preferences.setPlanLimitGB(activeSlot, clamped)
+        val currentSummary = if (activeSlot == 1) cachedSim2Summary else cachedSim1Summary
+        val updatedQuota = computeQuotaForSim(activeSlot, currentSummary.mobileMonthBytes, currentSummary.mobileTodayBytes)
+        val updatedForecast = com.example.model.DataForecastCalculator.calculate(
+            usedMobileBytes = currentSummary.mobileMonthBytes,
+            planLimitGB = clamped,
+            billingCycleStartDay = preferences.billingCycleStartDay,
+            daysRemainingInCycle = repository.getDaysRemainingInCycle(preferences.billingCycleStartDay),
+            mobileTodayBytes = currentSummary.mobileTodayBytes
+        )
+        if (activeSlot == 1) {
+            cachedSim2Quota = updatedQuota
+            cachedSim2Forecast = updatedForecast
+        } else {
+            cachedSim1Quota = updatedQuota
+            cachedSim1Forecast = updatedForecast
+        }
+        _dataPlanQuota.value = updatedQuota
+        _dataForecast.value = updatedForecast
     }
 
     fun setThemeMode(mode: com.example.model.ThemeMode) {

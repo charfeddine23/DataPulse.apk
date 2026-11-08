@@ -13,7 +13,7 @@ object AppStrings {
     fun navSettings(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الإعدادات" else "Settings"
 
     // Connection
-    fun wifiActive(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "واي فاي نشط" else "Wi-Fi Active"
+    fun wifiActive(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "واي فاي" else "Wi-Fi"
     fun cellular5g(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "شبكة 5G" else "5G Cellular"
     fun cellularGeneric(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "بيانات الجوال" else "Cellular"
     fun ethernet(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "إيثرنت" else "Ethernet"
@@ -150,9 +150,9 @@ object AppStrings {
     fun perAppLongPressHint(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "اضغط مطولاً لتخصيص الحد اليومي" else "Long-press to customize limit"
     fun perAppDefaultIndicator(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الافتراضي: 3 غيغابايت" else "Default: 3.0 GB"
 
-    // Smart Data Forecasting
-    fun navForecast(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التنبؤ الذكي" else "Forecast"
-    fun navSmartAnalytics(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التحليلات الذكية" else "Smart Analytics"
+    // Smart Data Forecasting / Analytics
+    fun navForecast(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التحليل الذكي" else "Smart Analytics"
+    fun navSmartAnalytics(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التحليل الذكي" else "Smart Analytics"
     fun smartForecastTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التنبؤ الذكي باستهلاك البيانات" else "Smart Data Forecasting"
     fun smartForecastSubtitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تحليل تنبؤي لمعدل الحرق وموعد نفاد الباقة الشهرية" else "Predictive burn rate & data depletion analysis"
     fun forecastBurnRate(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "معدل الحرق اليومي" else "Daily Burn Rate"
@@ -183,7 +183,7 @@ object AppStrings {
         "🚨 Data cap has been fully exhausted! Please recharge or extend your monthly plan."
 
     // Smart Analytics Screen Additional Strings
-    fun smartAnalyticsTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التحليلات الذكية والتنبؤ" else "Smart Analytics & Forecast"
+    fun smartAnalyticsTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التحليل الذكي" else "Smart Analytics"
     fun smartAnalyticsSubtitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "توقعات استهلاك الباقة ومعدل الحرق ومدرج البيانات" else "Predictive consumption runway, burn rate & depletion timeline"
     fun safeRunwayBudget(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الميزانية اليومية الآمنة" else "Safe Daily Runway"
     fun safeRunwayDesc(days: Int, lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "لإنهاء الـ $days يوماً المتبقية بأمان" else "To safely complete remaining $days days"
