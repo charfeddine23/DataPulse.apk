@@ -26,6 +26,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        handleNotificationIntent(intent)
 
         setContent {
             val appThemeMode by viewModel.appThemeMode.collectAsStateWithLifecycle()
@@ -53,6 +54,19 @@ class MainActivity : ComponentActivity() {
                     onOpenAppInfo = { openAppInfoSettings() }
                 )
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleNotificationIntent(intent)
+    }
+
+    private fun handleNotificationIntent(intent: Intent?) {
+        val dest = intent?.getStringExtra(com.example.util.SmartAlertNotifier.EXTRA_NAV_DESTINATION)
+        if (!dest.isNullOrBlank()) {
+            viewModel.setTargetNavDestination(dest)
         }
     }
 

@@ -524,6 +524,42 @@ fun SettingsScreen(
                         )
                     )
                 }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Test Heads-Up Notification Button
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(glassStyle.accentPrimary.copy(alpha = 0.12f))
+                        .border(1.dp, glassStyle.accentPrimary.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+                        .clickable { viewModel.sendTestNotification() }
+                        .padding(horizontal = 14.dp, vertical = 11.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (appLanguage == com.example.model.AppLanguage.ARABIC) "اختبار الإشعار العائم (Heads-Up)" else "Test Heads-Up Alert Banner",
+                            color = glassStyle.textPrimary,
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = if (appLanguage == com.example.model.AppLanguage.ARABIC) "إرسال إشعار فوري للتأكد من ظهور البانر العائم في أعلى الشاشة" else "Simulate a live floating push banner with interactive buttons",
+                            color = glassStyle.textTertiary,
+                            fontSize = 10.5.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.NotificationsActive,
+                        contentDescription = "Test Notification",
+                        tint = glassStyle.accentPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }

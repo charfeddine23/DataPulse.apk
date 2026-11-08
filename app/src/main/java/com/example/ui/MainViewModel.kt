@@ -79,6 +79,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _dataPlanQuota = MutableStateFlow(DataPlanQuota())
     val dataPlanQuota: StateFlow<DataPlanQuota> = _dataPlanQuota.asStateFlow()
 
+    private val _targetNavDestination = MutableStateFlow<String?>(null)
+    val targetNavDestination: StateFlow<String?> = _targetNavDestination.asStateFlow()
+
+    fun setTargetNavDestination(destination: String?) {
+        _targetNavDestination.value = destination
+    }
+
     private val _dataForecast = MutableStateFlow(com.example.model.SmartDataForecast())
     val dataForecast: StateFlow<com.example.model.SmartDataForecast> = _dataForecast.asStateFlow()
 
@@ -225,16 +232,41 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         applyActiveSimStats(validIndex)
     }
 
-    private fun applyActiveSimStats(slotIndex: Int) {
-        if (slotIndex == 1) {
-            _usageSummary.value = cachedSim2Summary
-            _dataPlanQuota.value = cachedSim2Quota
-            _dataForecast.value = cachedSim2Forecast
-        } else {
-            _usageSummary.value = cachedSim1Summary
-            _dataPlanQuota.value = cachedSim1Quota
-            _dataForecast.value = cachedSim1Forecast
+    private var lastForecastNotifiedTimeMs = 0L
+
+    private fun checkForecastAlert(forecast: com.example.model.SmartDataForecast) {
+        val now = System.currentTimeMillis()
+        // Alert at most once every 6 hours for critical burn rate depletion
+        if (now - lastForecastNotifiedTimeMs < 6 * 60 * 60 * 1000L) return
+
+        if (forecast.willDepleteBeforeCycleEnd && forecast.predictedDaysRemaining in 1..3) {
+            lastForecastNotifiedTimeMs = now
+            val isArabic = _appLanguage.value == com.example.model.AppLanguage.ARABIC
+            alertNotifier.notifySmartDepletionWarning(
+                daysRemaining = forecast.predictedDaysRemaining,
+                planLimitGB = forecast.planLimitGB,
+                burnRateFormatted = forecast.dailyBurnRateFormatted,
+                isArabic = isArabic
+            )
         }
+    }
+
+    private fun applyActiveSimStats(slotIndex: Int) {
+        val (summary, quota, forecast) = if (slotIndex == 1) {
+            Triple(cachedSim2Summary, cachedSim2Quota, cachedSim2Forecast)
+        } else {
+            Triple(cachedSim1Summary, cachedSim1Quota, cachedSim1Forecast)
+        }
+        _usageSummary.value = summary
+        _dataPlanQuota.value = quota
+        _dataForecast.value = forecast
+
+        checkForecastAlert(forecast)
+    }
+
+    fun sendTestNotification() {
+        val isArabic = _appLanguage.value == com.example.model.AppLanguage.ARABIC
+        alertNotifier.sendTestHeadsUpNotification(isArabic)
     }
 
     private val notifiedAppsToday = mutableSetOf<String>()

@@ -84,6 +84,45 @@ fun DataPulseApp(
     var currentDestination by remember { mutableStateOf(NavDestination.DASHBOARD) }
     var previousDestination by remember { mutableStateOf(NavDestination.DASHBOARD) }
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+    val targetNavDestination by viewModel.targetNavDestination.collectAsStateWithLifecycle()
+
+    androidx.compose.runtime.LaunchedEffect(targetNavDestination) {
+        targetNavDestination?.let { destString ->
+            when (destString.uppercase()) {
+                "FORECAST" -> {
+                    if (currentDestination != NavDestination.FORECAST) {
+                        previousDestination = currentDestination
+                        currentDestination = NavDestination.FORECAST
+                    }
+                }
+                "USAGE" -> {
+                    if (currentDestination != NavDestination.USAGE) {
+                        previousDestination = currentDestination
+                        currentDestination = NavDestination.USAGE
+                    }
+                }
+                "DASHBOARD" -> {
+                    if (currentDestination != NavDestination.DASHBOARD) {
+                        previousDestination = currentDestination
+                        currentDestination = NavDestination.DASHBOARD
+                    }
+                }
+                "SPEED" -> {
+                    if (currentDestination != NavDestination.SPEED) {
+                        previousDestination = currentDestination
+                        currentDestination = NavDestination.SPEED
+                    }
+                }
+                "SETTINGS" -> {
+                    if (currentDestination != NavDestination.SETTINGS) {
+                        previousDestination = currentDestination
+                        currentDestination = NavDestination.SETTINGS
+                    }
+                }
+            }
+            viewModel.setTargetNavDestination(null)
+        }
+    }
 
     fun navigateTo(dest: NavDestination) {
         if (dest != currentDestination) {
