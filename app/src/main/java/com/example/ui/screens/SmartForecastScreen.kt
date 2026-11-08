@@ -371,10 +371,15 @@ private fun CycleRunwayCard(
                 )
 
                 // Current Burn Pace Box
+                val burnSubtext = if (appLanguage == AppLanguage.ARABIC) {
+                    if (forecast.willDepleteBeforeCycleEnd) "يتجاوز المعدل الآمن" else "ضمن المعدل الآمن"
+                } else {
+                    if (forecast.willDepleteBeforeCycleEnd) "Exceeds safe runway" else "Healthy pace"
+                }
                 RunwaySubMetricBox(
                     label = AppStrings.forecastBurnRate(appLanguage),
                     value = forecast.dailyBurnRateFormatted,
-                    subtext = if (forecast.willDepleteBeforeCycleEnd) "Exceeds safe runway" else "Healthy pace",
+                    subtext = burnSubtext,
                     accentColor = if (forecast.willDepleteBeforeCycleEnd) AmberAlert else CyanPulse,
                     modifier = Modifier.weight(1f)
                 )

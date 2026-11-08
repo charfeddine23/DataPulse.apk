@@ -1,10 +1,13 @@
 package com.example.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Dns
@@ -40,6 +44,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,6 +76,24 @@ fun SpeedMeterScreen(
     val scrollState = rememberScrollState()
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
     val dimensions = com.example.ui.theme.LocalAppDimensions.current
+    val context = LocalContext.current
+
+    val openSpeedTest: () -> Unit = {
+        val speedTestUrl = "https://fast.com"
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(speedTestUrl)).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        try {
+            context.startActivity(intent)
+        } catch (_: Exception) {
+            try {
+                val fallbackIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=speedtest")).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(fallbackIntent)
+            } catch (_: Exception) {}
+        }
+    }
 
     val isOffline = (speedSample.connectionType == com.example.model.NetworkType.OFFLINE)
     val peakPrefix = if (appLanguage == com.example.model.AppLanguage.ARABIC) "الذروة: " else "Peak: "
@@ -114,6 +139,7 @@ fun SpeedMeterScreen(
                         currentSpeedBps = speedSample.downloadBps,
                         formattedSpeed = speedSample.downloadFormatted,
                         appLanguage = appLanguage,
+                        onOpenSpeedTest = openSpeedTest,
                         modifier = Modifier.size(dimensions.speedometerDialSize)
                     )
                 }
@@ -155,6 +181,7 @@ fun SpeedMeterScreen(
                 currentSpeedBps = speedSample.downloadBps,
                 formattedSpeed = speedSample.downloadFormatted,
                 appLanguage = appLanguage,
+                onOpenSpeedTest = openSpeedTest,
                 modifier = Modifier.size(dimensions.speedometerDialSize)
             )
 
@@ -285,7 +312,8 @@ fun SpeedometerDial(
     currentSpeedBps: Double,
     formattedSpeed: String,
     appLanguage: com.example.model.AppLanguage,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenSpeedTest: () -> Unit = {}
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
     val dimensions = com.example.ui.theme.LocalAppDimensions.current
@@ -346,7 +374,8 @@ fun SpeedometerDial(
             )
         }
 
-        // Center Speed Readout sitting on soft Neumorphic circular well
+        // Center Speed Readout sitting on soft Neumorphic circular well - clickable to launch speed test
+        val speedTestLabel = if (appLanguage == com.example.model.AppLanguage.ARABIC) "قياس سرعة الإنترنت" else "Test Internet Speed"
         Box(
             modifier = Modifier
                 .size(dimensions.speedometerInnerWell)
@@ -357,6 +386,12 @@ fun SpeedometerDial(
                     offsetDp = 4.dp
                 )
                 .clip(CircleShape)
+                .clickable(
+                    role = Role.Button,
+                    onClickLabel = speedTestLabel,
+                    onClick = onOpenSpeedTest
+                )
+                .testTag("speedometer_open_speed_test")
                 .background(
                     Brush.linearGradient(
                         listOf(glassStyle.neumorphicSurface, glassStyle.neumorphicBase)
@@ -369,25 +404,41 @@ fun SpeedometerDial(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(6.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Speed,
-                    contentDescription = null,
+                    contentDescription = speedTestLabel,
                     tint = glassStyle.accentPrimary,
                     modifier = Modifier.size(24.dp)
                 )
-                Spacer(modifier = Modifier.height(3.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = formattedSpeed,
                     color = glassStyle.textPrimary,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
-                Text(
-                    text = com.example.model.AppStrings.liveBandwidth(appLanguage),
-                    color = glassStyle.textTertiary,
-                    fontSize = 10.sp
-                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = com.example.model.AppStrings.liveBandwidth(appLanguage),
+                        color = glassStyle.textTertiary,
+                        fontSize = 10.sp
+                    )
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                        contentDescription = speedTestLabel,
+                        tint = glassStyle.accentPrimary.copy(alpha = 0.85f),
+                        modifier = Modifier.size(10.dp)
+                    )
+                }
             }
         }
     }

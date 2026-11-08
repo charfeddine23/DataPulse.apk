@@ -251,7 +251,7 @@ fun SmartDataForecastingCard(
                 ForecastMetricChip(
                     title = AppStrings.forecastBurnRate(appLanguage),
                     value = FormatUtils.formatBytes(forecast.dailyBurnRateBytes),
-                    unit = if (appLanguage == AppLanguage.ARABIC) "/ يوم" else "/ day",
+                    unit = if (appLanguage == AppLanguage.ARABIC) "/يوم" else "/day",
                     icon = Icons.Default.LocalFireDepartment,
                     accentColor = AmberAlert,
                     modifier = Modifier.weight(1f)
@@ -428,20 +428,25 @@ private fun ForecastMetricChip(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     text = value,
                     color = glassStyle.textPrimary,
-                    fontSize = 13.5.sp,
+                    fontSize = 12.5.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
                 )
                 if (unit.isNotEmpty()) {
+                    Spacer(modifier = Modifier.width(3.dp))
                     Text(
                         text = unit,
                         color = glassStyle.textSecondary,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Normal
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1
                     )
                 }
             }

@@ -2,6 +2,7 @@ package com.example.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.example.model.TimeRange
 
 class DataPlanPreferences(context: Context) {
     private val prefs: SharedPreferences =
@@ -96,6 +97,15 @@ class DataPlanPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_DAILY_APP_ALERT_ENABLED, true)
         set(value) = prefs.edit().putBoolean(KEY_DAILY_APP_ALERT_ENABLED, value).apply()
 
+    var savedTimeRange: TimeRange
+        get() = try {
+            val saved = prefs.getString(KEY_SAVED_TIME_RANGE, TimeRange.MONTH.name) ?: TimeRange.MONTH.name
+            TimeRange.valueOf(saved)
+        } catch (_: Exception) {
+            TimeRange.MONTH
+        }
+        set(value) = prefs.edit().putString(KEY_SAVED_TIME_RANGE, value.name).apply()
+
     companion object {
         private const val KEY_PLAN_LIMIT_GB = "plan_limit_gb"
         private const val KEY_BILLING_CYCLE_DAY = "billing_cycle_day"
@@ -109,5 +119,6 @@ class DataPlanPreferences(context: Context) {
         private const val KEY_APP_LANGUAGE = "app_language_preference"
         private const val KEY_DAILY_APP_QUOTA_GB = "daily_app_quota_gb"
         private const val KEY_DAILY_APP_ALERT_ENABLED = "daily_app_alert_enabled"
+        private const val KEY_SAVED_TIME_RANGE = "saved_time_range_filter"
     }
 }

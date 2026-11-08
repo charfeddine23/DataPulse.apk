@@ -54,7 +54,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isRefreshingApps = MutableStateFlow(false)
     val isRefreshingApps: StateFlow<Boolean> = _isRefreshingApps.asStateFlow()
 
-    private val _selectedTimeRange = MutableStateFlow(TimeRange.MONTH)
+    private val _selectedTimeRange = MutableStateFlow(preferences.savedTimeRange)
     val selectedTimeRange: StateFlow<TimeRange> = _selectedTimeRange.asStateFlow()
 
     private val _selectedInterface = MutableStateFlow(InterfaceFilter.ALL)
@@ -206,6 +206,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setTimeRange(range: TimeRange) {
         _selectedTimeRange.value = range
+        preferences.savedTimeRange = range
         loadAppUsage()
     }
 
