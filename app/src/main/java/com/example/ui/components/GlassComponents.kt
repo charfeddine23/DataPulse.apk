@@ -562,20 +562,10 @@ fun CircularQuotaProgressGauge(
         QuotaStatus.CRITICAL, QuotaStatus.EXCEEDED -> RedAlert
     }
 
-    val isArabic = (appLanguage == AppLanguage.ARABIC)
-    val tierState = remember(percentage, isArabic) {
-        PulseEngineCalculator.calculate(percentage, isArabic)
-    }
-
-    val animatedTierColor by animateColorAsState(
-        targetValue = tierState.primaryColor,
+    val animatedStatusColor by animateColorAsState(
+        targetValue = statusColor,
         animationSpec = tween(durationMillis = 500),
-        label = "gauge_tier_primary_color"
-    )
-    val animatedTierSecondaryColor by animateColorAsState(
-        targetValue = tierState.secondaryColor,
-        animationSpec = tween(durationMillis = 500),
-        label = "gauge_tier_secondary_color"
+        label = "gauge_status_color"
     )
 
     // Dynamic Live Color Shifting in Background (Cycles continuously through Neon Cyan, Electric Blue, Violet, Rose Magenta, and Emerald)
@@ -625,7 +615,7 @@ fun CircularQuotaProgressGauge(
 
     GlassContainer(
         modifier = modifier.fillMaxWidth(),
-        borderColor = animatedTierColor.copy(alpha = 0.45f)
+        borderColor = animatedStatusColor.copy(alpha = 0.45f)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -650,7 +640,7 @@ fun CircularQuotaProgressGauge(
                         Icon(
                             imageVector = Icons.Default.WarningAmber,
                             contentDescription = "Warning",
-                            tint = animatedTierColor,
+                            tint = animatedStatusColor,
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -665,7 +655,7 @@ fun CircularQuotaProgressGauge(
                 ) {
                     Text(
                         text = AppStrings.editCap(appLanguage),
-                        color = animatedTierColor,
+                        color = animatedStatusColor,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -674,7 +664,7 @@ fun CircularQuotaProgressGauge(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Central Circular Progress Gauge with 30-Level Pulse Engine
+            // Central Circular Progress Gauge with Organic Pulse Heart
             Box(
                 modifier = Modifier.size(dimensions.circularGaugeSize),
                 contentAlignment = Alignment.Center
@@ -696,13 +686,13 @@ fun CircularQuotaProgressGauge(
                         style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                     )
 
-                    // 2. Active Arc with 30-Level Dynamic Color Infusion
+                    // 2. Active Arc with Status Color
                     val sweepAngle = 360f * animatedSweep
                     drawArc(
                         brush = Brush.sweepGradient(
                             0.0f to dynamicLiveColors[0],
-                            0.35f to animatedTierSecondaryColor,
-                            1.0f to animatedTierColor
+                            0.5f to dynamicLiveColors[1],
+                            1.0f to animatedStatusColor
                         ),
                         startAngle = -90f,
                         sweepAngle = sweepAngle,
@@ -713,25 +703,24 @@ fun CircularQuotaProgressGauge(
                     )
                 }
 
-                // Heartbeat Center Content Powered by 30-Level Engine
+                // Heartbeat Center Content
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    LivingPulseHeart(
-                        percentage = percentage,
+                    PulseHeart(
+                        statusColor = animatedStatusColor,
                         isInternetConnected = isInternetConnected,
-                        appLanguage = appLanguage,
                         heartSize = if (dimensions.isTablet) 34.dp else 28.dp,
                         auraSize = if (dimensions.isTablet) 98.dp else 80.dp,
-                        showTierBadge = true
+                        showTitle = true
                     )
 
                     Spacer(modifier = Modifier.height(3.dp))
 
                     Text(
                         text = "%.1f%%".format(percentage),
-                        color = animatedTierColor,
+                        color = animatedStatusColor,
                         fontSize = dimensions.textMetricValue,
                         fontWeight = FontWeight.Bold
                     )
@@ -750,13 +739,13 @@ fun CircularQuotaProgressGauge(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(animatedTierColor.copy(alpha = 0.10f))
-                    .border(1.dp, animatedTierColor.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                    .background(animatedStatusColor.copy(alpha = 0.10f))
+                    .border(1.dp, animatedStatusColor.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
                     text = AppStrings.daysRemaining(daysRemaining, appLanguage),
-                    color = animatedTierColor,
+                    color = animatedStatusColor,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold
                 )
