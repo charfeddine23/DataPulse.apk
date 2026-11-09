@@ -1,6 +1,7 @@
 package com.example.ui.components
 
 import android.os.Build
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -560,53 +561,24 @@ fun CircularQuotaProgressGauge(
         QuotaStatus.CRITICAL, QuotaStatus.EXCEEDED -> RedAlert
     }
 
-    // High-fidelity Realistic Dual-Systole Cardiac Heartbeat Animation
-    val infiniteTransition = rememberInfiniteTransition(label = "realistic_heartbeat")
-    
-    // Scale animation simulating ventricular contraction: Atrial systole -> Ventricular systole (lub-dub) -> Diastolic relaxation
-    val animatedHeartbeatScale by infiniteTransition.animateFloat(
-        initialValue = 1.0f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = keyframes {
-                durationMillis = 1150
-                1.00f at 0
-                1.16f at 130 using FastOutSlowInEasing // "Lub" first contraction
-                1.03f at 240 using FastOutSlowInEasing
-                1.25f at 370 using FastOutSlowInEasing // "Dub" second contraction (stronger ventricular ejection)
-                1.10f at 480 using FastOutSlowInEasing // Elastic recoil
-                1.00f at 650 using FastOutSlowInEasing // Diastolic filling
-                1.00f at 1150 // Resting pause before next beat
-            },
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "heartbeat_scale"
-    )
+    val isArabic = (appLanguage == AppLanguage.ARABIC)
+    val tierState = remember(percentage, isArabic) {
+        PulseEngineCalculator.calculate(percentage, isArabic)
+    }
 
-    // Pulsing glow aura opacity that spikes with each contraction
-    val animatedHeartbeatGlowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.25f,
-        targetValue = 0.25f,
-        animationSpec = infiniteRepeatable(
-            animation = keyframes {
-                durationMillis = 1150
-                0.20f at 0
-                0.60f at 130 using FastOutSlowInEasing
-                0.35f at 240 using FastOutSlowInEasing
-                0.85f at 370 using FastOutSlowInEasing // Peak luminous burst
-                0.30f at 600 using FastOutSlowInEasing
-                0.15f at 1150
-            },
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "heartbeat_glow"
+    val animatedTierColor by animateColorAsState(
+        targetValue = tierState.primaryColor,
+        animationSpec = tween(durationMillis = 500),
+        label = "gauge_tier_primary_color"
     )
-
-    // When internet is disconnected/stopped, the heart stops beating (flatline resting state: scale = 1.0f, subtle static glow)
-    val heartbeatScale = if (isInternetConnected) animatedHeartbeatScale else 1.0f
-    val heartbeatGlowAlpha = if (isInternetConnected) animatedHeartbeatGlowAlpha else 0.12f
+    val animatedTierSecondaryColor by animateColorAsState(
+        targetValue = tierState.secondaryColor,
+        animationSpec = tween(durationMillis = 500),
+        label = "gauge_tier_secondary_color"
+    )
 
     // Dynamic Live Color Shifting in Background (Cycles continuously through Neon Cyan, Electric Blue, Violet, Rose Magenta, and Emerald)
+    val infiniteTransition = rememberInfiniteTransition(label = "live_color_shift_transition")
     val colorShiftAngle by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
@@ -652,7 +624,7 @@ fun CircularQuotaProgressGauge(
 
     GlassContainer(
         modifier = modifier.fillMaxWidth(),
-        borderColor = statusColor.copy(alpha = 0.4f)
+        borderColor = animatedTierColor.copy(alpha = 0.45f)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -677,7 +649,7 @@ fun CircularQuotaProgressGauge(
                         Icon(
                             imageVector = Icons.Default.WarningAmber,
                             contentDescription = "Warning",
-                            tint = statusColor,
+                            tint = animatedTierColor,
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -692,7 +664,7 @@ fun CircularQuotaProgressGauge(
                 ) {
                     Text(
                         text = AppStrings.editCap(appLanguage),
-                        color = glassStyle.accentPrimary,
+                        color = animatedTierColor,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -701,36 +673,18 @@ fun CircularQuotaProgressGauge(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Central Circular Progress Gauge with Realistic Heartbeat & Dynamic Live Colors
+            // Central Circular Progress Gauge with 30-Level Pulse Engine
             Box(
                 modifier = Modifier.size(dimensions.circularGaugeSize),
                 contentAlignment = Alignment.Center
             ) {
-                // Dynamic Live Colors Background Aura Canvas
+                // Background Track and Active Sweep Arc
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val strokeWidth = dimensions.circularGaugeStroke.toPx()
                     val arcSize = size.width - strokeWidth * 2
                     val topLeft = Offset(strokeWidth, strokeWidth)
-                    val centerOffset = Offset(size.width / 2f, size.height / 2f)
 
-                    // 1. Dynamic Live Gradient Inner Glow Aura behind the Heart
-                    val auraRadius = (size.width / 2.7f) * heartbeatScale
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                dynamicLiveColors[0].copy(alpha = heartbeatGlowAlpha * 0.7f),
-                                dynamicLiveColors[1].copy(alpha = heartbeatGlowAlpha * 0.45f),
-                                dynamicLiveColors[2].copy(alpha = heartbeatGlowAlpha * 0.15f),
-                                Color.Transparent
-                            ),
-                            center = centerOffset,
-                            radius = auraRadius
-                        ),
-                        radius = auraRadius,
-                        center = centerOffset
-                    )
-
-                    // 2. Track Background Circle
+                    // 1. Track Background Circle
                     drawArc(
                         color = if (glassStyle.isDark) Color(0xFF131D30) else Color(0xFFE2E8F0),
                         startAngle = -90f,
@@ -741,14 +695,13 @@ fun CircularQuotaProgressGauge(
                         style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                     )
 
-                    // 3. Active Arc with Live Color Infusion
+                    // 2. Active Arc with 30-Level Dynamic Color Infusion
                     val sweepAngle = 360f * animatedSweep
                     drawArc(
                         brush = Brush.sweepGradient(
                             0.0f to dynamicLiveColors[0],
-                            0.35f to dynamicLiveColors[1],
-                            0.70f to dynamicLiveColors[2],
-                            1.0f to statusColor
+                            0.35f to animatedTierSecondaryColor,
+                            1.0f to animatedTierColor
                         ),
                         startAngle = -90f,
                         sweepAngle = sweepAngle,
@@ -759,100 +712,25 @@ fun CircularQuotaProgressGauge(
                     )
                 }
 
-                // Heartbeat Center Content
+                // Heartbeat Center Content Powered by 30-Level Engine
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    // Realistic Beating Heart Container
-                    Box(
-                        modifier = Modifier
-                            .graphicsLayer {
-                                scaleX = heartbeatScale
-                                scaleY = heartbeatScale
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // Ambient luminous backplate
-                        Box(
-                            modifier = Modifier
-                                .size(if (dimensions.isTablet) 92.dp else 76.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    Brush.radialGradient(
-                                        colors = listOf(
-                                            dynamicLiveColors[0].copy(alpha = heartbeatGlowAlpha * 0.5f),
-                                            dynamicLiveColors[1].copy(alpha = heartbeatGlowAlpha * 0.25f),
-                                            Color.Transparent
-                                        )
-                                    )
-                                )
-                        )
+                    LivingPulseHeart(
+                        percentage = percentage,
+                        isInternetConnected = isInternetConnected,
+                        appLanguage = appLanguage,
+                        heartSize = if (dimensions.isTablet) 34.dp else 28.dp,
+                        auraSize = if (dimensions.isTablet) 98.dp else 80.dp,
+                        showTierBadge = true
+                    )
 
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            // Pulsing Heart Drawn with Smooth Bezier Curves
-                            Canvas(modifier = Modifier.size(if (dimensions.isTablet) 32.dp else 26.dp)) {
-                                val heartColor = Color(
-                                    red = 0.98f,
-                                    green = (0.15f + 0.20f * (heartbeatScale - 1f)).coerceIn(0f, 1f),
-                                    blue = (0.35f + 0.30f * (heartbeatScale - 1f)).coerceIn(0f, 1f)
-                                )
-                                val path = Path().apply {
-                                    val width = size.width
-                                    val height = size.height
-                                    moveTo(width / 2f, height * 0.85f)
-                                    // Left lobe
-                                    cubicTo(
-                                        width * 0.12f, height * 0.55f,
-                                        width * -0.05f, height * 0.22f,
-                                        width * 0.25f, height * 0.08f
-                                    )
-                                    cubicTo(
-                                        width * 0.42f, height * 0.02f,
-                                        width * 0.50f, height * 0.25f,
-                                        width * 0.50f, height * 0.28f
-                                    )
-                                    // Right lobe
-                                    cubicTo(
-                                        width * 0.50f, height * 0.25f,
-                                        width * 0.58f, height * 0.02f,
-                                        width * 0.75f, height * 0.08f
-                                    )
-                                    cubicTo(
-                                        width * 1.05f, height * 0.22f,
-                                        width * 0.88f, height * 0.55f,
-                                        width / 2f, height * 0.85f
-                                    )
-                                    close()
-                                }
-                                drawPath(
-                                    path = path,
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(
-                                            heartColor,
-                                            heartColor.copy(alpha = 0.85f)
-                                        )
-                                    )
-                                )
-                            }
-                            
-                            Spacer(modifier = Modifier.height(2.dp))
-
-                            Text(
-                                text = "Pulse",
-                                color = glassStyle.textPrimary,
-                                fontSize = dimensions.textDisplayHero,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.sp
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
 
                     Text(
                         text = "%.1f%%".format(percentage),
-                        color = glassStyle.textPrimary,
+                        color = animatedTierColor,
                         fontSize = dimensions.textMetricValue,
                         fontWeight = FontWeight.Bold
                     )
@@ -871,14 +749,15 @@ fun CircularQuotaProgressGauge(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(glassStyle.cardSubtleBg)
+                    .background(animatedTierColor.copy(alpha = 0.10f))
+                    .border(1.dp, animatedTierColor.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
                     text = AppStrings.daysRemaining(daysRemaining, appLanguage),
-                    color = glassStyle.textSecondary,
+                    color = animatedTierColor,
                     fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
