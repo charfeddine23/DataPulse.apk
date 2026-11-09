@@ -55,6 +55,9 @@ jobs:
           KEY_PASS: ${{ secrets.KEY_PASSWORD }}
         run: |
           KEYSTORE_DEST="${{ github.workspace }}/my-upload-key.jks"
+          STORE_PASS_RESOLVED="${STORE_PASS:-android}"
+          KEY_PASS_RESOLVED="${KEY_PASS:-android}"
+
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "Decoding Keystore from GitHub Secrets..."
             echo "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_DEST"
@@ -63,19 +66,16 @@ jobs:
           else
             echo "::warning::KEYSTORE_BASE64 secret is not set and no keystore found. Generating fallback self-signed keystore for build testing..."
             rm -f "$KEYSTORE_DEST"
-            keytool -genkeypair -v -keystore "$KEYSTORE_DEST" -storepass "${STORE_PASS:-android}" \
-              -alias upload -keypass "${KEY_PASS:-android}" -keyalg RSA -keysize 2048 -validity 10000 \
+            keytool -genkeypair -v -keystore "$KEYSTORE_DEST" -storepass "$STORE_PASS_RESOLVED" \
+              -alias upload -keypass "$KEY_PASS_RESOLVED" -keyalg RSA -keysize 2048 -validity 10000 \
               -dname "CN=DataPulse, OU=Mobile, O=CharfeddineKa, L=Tunis, C=TN" -noprompt
           fi
+
           echo "KEYSTORE_PATH=$KEYSTORE_DEST" >> $GITHUB_ENV
-          echo "STORE_PASSWORD=${STORE_PASS:-android}" >> $GITHUB_ENV
-          echo "KEY_PASSWORD=${KEY_PASS:-android}" >> $GITHUB_ENV
+          echo "STORE_PASSWORD=$STORE_PASS_RESOLVED" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=$KEY_PASS_RESOLVED" >> $GITHUB_ENV
 
       - name: Build Signed Release APK
-        env:
-          KEYSTORE_PATH: ${{ env.KEYSTORE_PATH || format('{0}/my-upload-key.jks', github.workspace) }}
-          STORE_PASSWORD: ${{ env.STORE_PASSWORD || secrets.STORE_PASSWORD || 'android' }}
-          KEY_PASSWORD: ${{ env.KEY_PASSWORD || secrets.KEY_PASSWORD || 'android' }}
         run: |
           if [ ! -f "./gradlew" ]; then
             echo "gradlew not found, ensuring wrapper is ready..."
@@ -83,8 +83,13 @@ jobs:
           fi
           chmod +x ./gradlew
 
+          KEYSTORE_FILE="${KEYSTORE_PATH:-${{ github.workspace }}/my-upload-key.jks}"
+          export KEYSTORE_PATH="$KEYSTORE_FILE"
+          export STORE_PASSWORD="${STORE_PASSWORD:-android}"
+          export KEY_PASSWORD="${KEY_PASSWORD:-android}"
+
           if [ ! -f "$KEYSTORE_PATH" ]; then
-            echo "Keystore file missing at $KEYSTORE_PATH, creating fallback upload keystore..."
+            echo "Keystore file missing at $KEYSTORE_PATH, creating upload keystore..."
             rm -f "$KEYSTORE_PATH"
             keytool -genkeypair -v -keystore "$KEYSTORE_PATH" \
               -storepass "$STORE_PASSWORD" -alias upload \
