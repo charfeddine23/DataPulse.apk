@@ -199,8 +199,7 @@ fun DashboardScreen(
                             }
                             DataBreakdownGrid(
                                 usageSummary = usageSummary,
-                                appLanguage = appLanguage,
-                                onViewFullAnalytics = onNavigateToAnalytics
+                                appLanguage = appLanguage
                             )
                         }
                     }
@@ -261,8 +260,7 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     DataBreakdownGrid(
                         usageSummary = usageSummary,
-                        appLanguage = appLanguage,
-                        onViewFullAnalytics = onNavigateToAnalytics
+                        appLanguage = appLanguage
                     )
                 }
             }
@@ -618,8 +616,8 @@ fun DualSimSelector(
 fun DataBreakdownGrid(
     usageSummary: com.example.model.NetworkUsageSummary,
     appLanguage: com.example.model.AppLanguage,
-    onViewFullAnalytics: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onViewFullAnalytics: (() -> Unit)? = null
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
 
@@ -662,57 +660,6 @@ fun DataBreakdownGrid(
                 tint = glassStyle.accentPrimary,
                 modifier = Modifier.weight(1f)
             )
-        }
-
-        // View App-by-App Analytics Button Card
-        GlassContainer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onViewFullAnalytics() },
-            borderColor = glassStyle.accentPrimary.copy(alpha = 0.35f)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(34.dp)
-                            .clip(CircleShape)
-                            .background(glassStyle.accentPrimary.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.GraphicEq,
-                            contentDescription = com.example.model.AppStrings.viewAppAnalytics(appLanguage),
-                            tint = glassStyle.accentPrimary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = com.example.model.AppStrings.viewAppAnalytics(appLanguage),
-                            color = glassStyle.textPrimary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = com.example.model.AppStrings.viewAppAnalyticsSub(appLanguage),
-                            color = glassStyle.textSecondary,
-                            fontSize = 11.sp
-                        )
-                    }
-                }
-                Text(
-                    text = com.example.model.AppStrings.explore(appLanguage),
-                    color = glassStyle.accentPrimary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
         }
     }
 }
