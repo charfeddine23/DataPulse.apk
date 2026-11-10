@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Settings
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import com.example.ui.MainViewModel
 import com.example.ui.screens.AnalyticsScreen
 import com.example.ui.screens.DashboardScreen
+import com.example.ui.screens.RankScreen
 import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.SmartForecastScreen
 import com.example.ui.screens.SpeedMeterScreen
@@ -63,7 +65,8 @@ enum class NavDestination(val icon: ImageVector, val tag: String) {
     USAGE(Icons.Default.Equalizer, "nav_usage"),
     SPEED(Icons.Default.Speed, "nav_speed"),
     FORECAST(Icons.Default.AutoAwesome, "nav_forecast"),
-    SETTINGS(Icons.Default.Settings, "nav_settings")
+    SETTINGS(Icons.Default.Settings, "nav_settings"),
+    RANK(Icons.Default.EmojiEvents, "nav_rank")
 }
 
 fun NavDestination.getLabel(lang: AppLanguage): String = when (this) {
@@ -72,6 +75,7 @@ fun NavDestination.getLabel(lang: AppLanguage): String = when (this) {
     NavDestination.SPEED -> AppStrings.navSpeed(lang)
     NavDestination.FORECAST -> AppStrings.navForecast(lang)
     NavDestination.SETTINGS -> AppStrings.navSettings(lang)
+    NavDestination.RANK -> AppStrings.navRank(lang)
 }
 
 @Composable
@@ -117,6 +121,12 @@ fun DataPulseApp(
                     if (currentDestination != NavDestination.SETTINGS) {
                         previousDestination = currentDestination
                         currentDestination = NavDestination.SETTINGS
+                    }
+                }
+                "RANK" -> {
+                    if (currentDestination != NavDestination.RANK) {
+                        previousDestination = currentDestination
+                        currentDestination = NavDestination.RANK
                     }
                 }
             }
@@ -180,6 +190,11 @@ fun DataPulseApp(
                         onOpenAppInfo = onOpenAppInfo,
                         onNavigateBack = { navigateBack() }
                     )
+                    NavDestination.RANK -> RankScreen(
+                        viewModel = viewModel,
+                        onRequestUsagePermission = onRequestUsagePermission,
+                        onOpenAppInfo = onOpenAppInfo
+                    )
                 }
             }
         }
@@ -229,12 +244,14 @@ fun LiquidGlassBottomNav(
                 // 1. DASHBOARD (النبض - أقصى اليسار / Far Left)
                 // 2. USAGE (الاستهلاك / Apps Usage)
                 // 3. SPEED (عداد السرعة)
-                // 4. FORECAST (التحليل الذكي / Smart Analytics - أقصى اليمين / Far Right)
+                // 4. FORECAST (التحليل الذكي / Smart Analytics)
+                // 5. RANK (الرتبة / Rank - أقصى اليمين / Far Right)
                 val navigationItems = listOf(
                     NavDestination.DASHBOARD,
                     NavDestination.USAGE,
                     NavDestination.SPEED,
-                    NavDestination.FORECAST
+                    NavDestination.FORECAST,
+                    NavDestination.RANK
                 )
 
             navigationItems.forEach { destination ->

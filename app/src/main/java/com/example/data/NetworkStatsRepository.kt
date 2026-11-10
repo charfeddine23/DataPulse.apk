@@ -244,6 +244,72 @@ class NetworkStatsRepository(private val context: Context) {
         }
     }
 
+    /**
+     * Queries all-time historical network consumption combining Cellular and Wi-Fi data
+     * for the all-time ranking competition.
+     */
+    suspend fun fetchAllTimeRankedAppUsage(): List<AppUsageItem> = withContext(Dispatchers.IO) {
+        if (!hasUsageStatsPermission()) {
+            return@withContext emptyList()
+        }
+
+        val now = System.currentTimeMillis()
+        // Query from epoch (0L) to capture all historical recorded usage on the device
+        val startTime = 0L
+
+        val installedApps = try {
+            packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+        } catch (_: Exception) {
+            emptyList<ApplicationInfo>()
+        }
+
+        val items = mutableListOf<AppUsageItem>()
+        var grandTotalBytes = 0L
+        val uidToApps = installedApps.groupBy { it.uid }
+
+        for ((uid, apps) in uidToApps) {
+            val primaryApp = apps.firstOrNull { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 } ?: apps.first()
+
+            val mobileBytes = queryAppBytes(ConnectivityManager.TYPE_MOBILE, uid, startTime, now)
+            val wifiBytes = queryAppBytes(ConnectivityManager.TYPE_WIFI, uid, startTime, now)
+            val totalCombined = mobileBytes + wifiBytes
+
+            if (totalCombined > 0L) {
+                val name = try {
+                    packageManager.getApplicationLabel(primaryApp).toString()
+                } catch (_: Exception) {
+                    primaryApp.packageName
+                }
+
+                val icon = try {
+                    packageManager.getApplicationIcon(primaryApp)
+                } catch (_: Exception) {
+                    null
+                }
+
+                grandTotalBytes += totalCombined
+                items.add(
+                    AppUsageItem(
+                        packageName = primaryApp.packageName,
+                        appName = name,
+                        icon = icon,
+                        mobileBytes = mobileBytes,
+                        wifiBytes = wifiBytes,
+                        totalBytes = totalCombined
+                    )
+                )
+            }
+        }
+
+        // Strict descending sort by total combined (Cellular + Wi-Fi)
+        val sorted = items.sortedByDescending { it.totalBytes }
+        val finalTotal = if (grandTotalBytes > 0L) grandTotalBytes else 1L
+
+        sorted.map { item ->
+            item.copy(percentageOfTotal = (item.totalBytes.toFloat() / finalTotal.toFloat()).coerceIn(0f, 1f))
+        }
+    }
+
     private fun queryBytes(networkType: Int, startTime: Long, endTime: Long): Long {
         return try {
             val bucket = networkStatsManager.querySummaryForDevice(networkType, null, startTime, endTime)

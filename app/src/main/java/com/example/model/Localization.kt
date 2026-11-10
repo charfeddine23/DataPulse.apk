@@ -10,7 +10,20 @@ object AppStrings {
     fun navPulse(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "النبض" else "Pulse"
     fun navUsage(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الاستهلاك" else "Usage"
     fun navSpeed(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "عداد السرعة" else "Speed Meter"
+    fun navForecast(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التحليل الذكي" else "Smart Forecast"
+    fun navRank(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الرتبة" else "Rank"
     fun navSettings(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الإعدادات" else "Settings"
+
+    // Rank / Competition
+    fun rankTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الرتبة" else "Rank"
+    fun rankSubtitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "مسابقة أكبر تطبيق استهلاكاً للبيانات على مر التاريخ" else "All-Time Data Consumption Leaderboard"
+    fun rankPodiumTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "منصة أبطال الاستهلاك" else "Champions Podium"
+    fun rankFirst(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الرتبة الأولى" else "1st Place"
+    fun rankSecond(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الرتبة الثانية" else "2nd Place"
+    fun rankThird(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الرتبة الثالثة" else "3rd Place"
+    fun rankRemaining(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "باقي التطبيقات" else "Other Applications"
+    fun rankTotalCombined(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "مجموع استهلاك البيانات والواي فاي" else "Combined Cellular & Wi-Fi Data"
+    fun rankAllTimeBadge(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "على مر التاريخ" else "All-Time Record"
 
     // Connection
     fun wifiActive(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "واي فاي" else "Wi-Fi"
@@ -151,7 +164,6 @@ object AppStrings {
     fun perAppDefaultIndicator(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الافتراضي: 3 غيغابايت" else "Default: 3.0 GB"
 
     // Smart Data Forecasting / Analytics
-    fun navForecast(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التحليل الذكي" else "Smart Analytics"
     fun navSmartAnalytics(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التحليل الذكي" else "Smart Analytics"
     fun smartForecastTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التنبؤ الذكي باستهلاك البيانات" else "Smart Data Forecasting"
     fun smartForecastSubtitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تحليل تنبؤي لمعدل الحرق وموعد نفاد الباقة الشهرية" else "Predictive burn rate & data depletion analysis"

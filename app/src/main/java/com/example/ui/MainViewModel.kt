@@ -89,6 +89,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _dataForecast = MutableStateFlow(com.example.model.SmartDataForecast())
     val dataForecast: StateFlow<com.example.model.SmartDataForecast> = _dataForecast.asStateFlow()
 
+    private val _allTimeRankedApps = MutableStateFlow<List<AppUsageItem>>(emptyList())
+    val allTimeRankedApps: StateFlow<List<AppUsageItem>> = _allTimeRankedApps.asStateFlow()
+
+    private val _isRankRefreshing = MutableStateFlow(false)
+    val isRankRefreshing: StateFlow<Boolean> = _isRankRefreshing.asStateFlow()
+
     private val _hasUsagePermission = MutableStateFlow(repository.hasUsageStatsPermission())
     val hasUsagePermission: StateFlow<Boolean> = _hasUsagePermission.asStateFlow()
 
@@ -199,6 +205,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 applyActiveSimStats(_selectedSimIndex.value)
 
                 loadAppUsage()
+                refreshRankings()
                 val elapsed = System.currentTimeMillis() - startMs
                 if (elapsed < 1100L) {
                     kotlinx.coroutines.delay(1100L - elapsed)
@@ -280,6 +287,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             // Check if any app exceeded 3 GB today
             checkAndAlertDailyAppQuota(apps)
+        }
+    }
+
+    fun refreshRankings() {
+        viewModelScope.launch {
+            _isRankRefreshing.value = true
+            try {
+                val ranked = repository.fetchAllTimeRankedAppUsage()
+                _allTimeRankedApps.value = ranked
+            } catch (_: Exception) {
+            } finally {
+                _isRankRefreshing.value = false
+            }
         }
     }
 
