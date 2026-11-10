@@ -427,6 +427,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setAppThemeMode(themeMode: com.example.model.AppThemeMode) {
         viewModelScope.launch {
             themePreferences.setThemeMode(themeMode)
+            val legacy = if (themeMode == com.example.model.AppThemeMode.LIGHT_MODE) {
+                com.example.model.ThemeMode.LIGHT
+            } else {
+                com.example.model.ThemeMode.DARK
+            }
+            preferences.themeMode = legacy.name
+            _themeMode.value = legacy
         }
     }
 

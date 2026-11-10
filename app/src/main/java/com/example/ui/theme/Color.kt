@@ -4,6 +4,30 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 // =========================================================================
+// 0. LIGHT_MODE Palette (Luminous Crisp Daylight Glass)
+// Background: Clean luminous daylight slate-50 (#F8FAFC)
+// Surface: Crystalline pure white (#FFFFFF)
+// SurfaceTranslucent: Frosted white glass (#F2FFFFFF)
+// Primary: High-vibrancy Royal Blue (#0066FF)
+// Accent: Vibrant Electric Violet (#7C3AED)
+// Border: Refined crystalline glass rim (#1F0F172A)
+// CardBg: Pure White (#FFFFFF)
+// CardSubtleBg: Soft Pearl / Slate 100 (#F1F5F9)
+// =========================================================================
+val LightModeBackground = Color(0xFFF8FAFC)
+val LightModeSurface = Color(0xFFFFFFFF)
+val LightModeSurfaceTranslucent = Color(0xF2FFFFFF)
+val LightModePrimary = Color(0xFF0066FF)
+val LightModeAccent = Color(0xFF7C3AED)
+val LightModeBorder = Color(0x1F0F172A)
+val LightModeCardBg = Color(0xFFFFFFFF)
+val LightModeCardSubtleBg = Color(0xFFF1F5F9)
+
+val LightModeTextPrimary = Color(0xFF0F172A)
+val LightModeTextSecondary = Color(0xFF475569)
+val LightModeTextTertiary = Color(0xFF94A3B8)
+
+// =========================================================================
 // 1. NEUMORPHIC_DARK_DEFAULT Palette (Base #0F1423)
 // Background: Sleek dark neumorphic slate (#0F1423)
 // Surface: Soft tactile dark surface (#141C2E)

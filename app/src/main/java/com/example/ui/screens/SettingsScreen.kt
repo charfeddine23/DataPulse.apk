@@ -76,6 +76,7 @@ import com.example.model.AppStrings
 import com.example.model.ThemeMode
 import com.example.ui.MainViewModel
 import com.example.ui.components.GlassContainer
+import com.example.ui.components.rememberAppHaptics
 import com.example.ui.theme.AmberAlert
 import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.LocalAppDimensions
@@ -103,6 +104,7 @@ fun SettingsScreen(
     val scrollState = rememberScrollState()
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
     val dimensions = LocalAppDimensions.current
+    val appHaptics = rememberAppHaptics()
 
     var customLimitInput by remember(quota.planLimitGB) {
         mutableStateOf(if (quota.planLimitGB % 1f == 0f) quota.planLimitGB.toInt().toString() else "%.1f".format(quota.planLimitGB))
@@ -157,62 +159,158 @@ fun SettingsScreen(
         }
     }
 
-    // 2. Comprehensive Liquid Glass Theme Engine (3 Themes)
-    val themeEngineCard: @Composable () -> Unit = {
+    // 2. Multi-Theme Engine Section (4 Themes: Light Mode, Liquid Glass, Neon Cyan, AMOLED Black)
+    val multiThemeEngineCard: @Composable () -> Unit = {
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Palette,
-                        contentDescription = "Theme",
-                        tint = glassStyle.accentPrimary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (appLanguage == AppLanguage.ARABIC) "محرك المظهر والألوان (Liquid Glass)" else "Theme Engine (Liquid Glass)",
-                        color = glassStyle.textPrimary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // 1. LIQUID_GLASS_DEFAULT
-                    ThemeOptionButton(
-                        title = com.example.model.AppThemeMode.LIQUID_GLASS_DEFAULT.getDisplayName(appLanguage),
-                        subtitle = if (appLanguage == AppLanguage.ARABIC) "أزرق وبنفسجي" else "Blue & Violet",
-                        icon = Icons.Default.DarkMode,
-                        isSelected = appThemeMode == com.example.model.AppThemeMode.LIQUID_GLASS_DEFAULT,
-                        onClick = { viewModel.setAppThemeMode(com.example.model.AppThemeMode.LIQUID_GLASS_DEFAULT) },
-                        modifier = Modifier.weight(1f)
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Palette,
+                                contentDescription = "Theme",
+                                tint = glassStyle.accentPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "Multi-Theme Engine",
+                                color = glassStyle.textPrimary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            )
+                            Text(
+                                text = AppStrings.multiThemeEngineSection(appLanguage),
+                                color = glassStyle.textSecondary,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
 
-                    // 2. LIQUID_NEON_CYAN
-                    ThemeOptionButton(
-                        title = com.example.model.AppThemeMode.LIQUID_NEON_CYAN.getDisplayName(appLanguage),
-                        subtitle = if (appLanguage == AppLanguage.ARABIC) "سيان وزمردي" else "Cyan & Teal",
-                        icon = Icons.Default.BrightnessAuto,
-                        isSelected = appThemeMode == com.example.model.AppThemeMode.LIQUID_NEON_CYAN,
-                        onClick = { viewModel.setAppThemeMode(com.example.model.AppThemeMode.LIQUID_NEON_CYAN) },
-                        modifier = Modifier.weight(1f)
-                    )
+                    // Active badge
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(glassStyle.cardSubtleBg)
+                            .border(1.dp, glassStyle.borderColor, RoundedCornerShape(12.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = appThemeMode.getDisplayName(appLanguage),
+                            color = glassStyle.accentPrimary,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
 
-                    // 3. AMOLED_PITCH_BLACK
-                    ThemeOptionButton(
-                        title = com.example.model.AppThemeMode.AMOLED_PITCH_BLACK.getDisplayName(appLanguage),
-                        subtitle = if (appLanguage == AppLanguage.ARABIC) "توفير بطارية" else "#000000 OLED",
-                        icon = Icons.Default.Eco,
-                        isSelected = appThemeMode == com.example.model.AppThemeMode.AMOLED_PITCH_BLACK,
-                        onClick = { viewModel.setAppThemeMode(com.example.model.AppThemeMode.AMOLED_PITCH_BLACK) },
-                        modifier = Modifier.weight(1f)
-                    )
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = AppStrings.multiThemeEngineSubtitle(appLanguage),
+                    color = glassStyle.textTertiary,
+                    fontSize = 11.sp
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // 2x2 Grid of all 4 themes
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Row 1: Light Mode (الوضع النهاري) & Liquid Glass Dark (الزجاج السائل)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        MultiThemeOptionCard(
+                            themeMode = com.example.model.AppThemeMode.LIGHT_MODE,
+                            appLanguage = appLanguage,
+                            isSelected = appThemeMode == com.example.model.AppThemeMode.LIGHT_MODE,
+                            icon = Icons.Default.LightMode,
+                            colorPreviews = listOf(
+                                com.example.ui.theme.LightModeBackground,
+                                com.example.ui.theme.LightModePrimary,
+                                com.example.ui.theme.LightModeAccent
+                            ),
+                            onClick = {
+                                appHaptics.performSegmentSwitch()
+                                viewModel.setAppThemeMode(com.example.model.AppThemeMode.LIGHT_MODE)
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        MultiThemeOptionCard(
+                            themeMode = com.example.model.AppThemeMode.LIQUID_GLASS_DEFAULT,
+                            appLanguage = appLanguage,
+                            isSelected = appThemeMode == com.example.model.AppThemeMode.LIQUID_GLASS_DEFAULT,
+                            icon = Icons.Default.DarkMode,
+                            colorPreviews = listOf(
+                                com.example.ui.theme.LiquidGlassDefaultBackground,
+                                com.example.ui.theme.LiquidGlassDefaultPrimary,
+                                com.example.ui.theme.LiquidGlassDefaultAccent
+                            ),
+                            onClick = {
+                                appHaptics.performSegmentSwitch()
+                                viewModel.setAppThemeMode(com.example.model.AppThemeMode.LIQUID_GLASS_DEFAULT)
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    // Row 2: Neon Cyan (نيون سيان) & AMOLED Black (سواد نقي)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        MultiThemeOptionCard(
+                            themeMode = com.example.model.AppThemeMode.LIQUID_NEON_CYAN,
+                            appLanguage = appLanguage,
+                            isSelected = appThemeMode == com.example.model.AppThemeMode.LIQUID_NEON_CYAN,
+                            icon = Icons.Default.BrightnessAuto,
+                            colorPreviews = listOf(
+                                com.example.ui.theme.LiquidNeonCyanBackground,
+                                com.example.ui.theme.LiquidNeonCyanPrimary,
+                                com.example.ui.theme.LiquidNeonCyanAccent
+                            ),
+                            onClick = {
+                                appHaptics.performSegmentSwitch()
+                                viewModel.setAppThemeMode(com.example.model.AppThemeMode.LIQUID_NEON_CYAN)
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        MultiThemeOptionCard(
+                            themeMode = com.example.model.AppThemeMode.AMOLED_PITCH_BLACK,
+                            appLanguage = appLanguage,
+                            isSelected = appThemeMode == com.example.model.AppThemeMode.AMOLED_PITCH_BLACK,
+                            icon = Icons.Default.Eco,
+                            colorPreviews = listOf(
+                                com.example.ui.theme.AmoledPitchBlackBackground,
+                                com.example.ui.theme.AmoledPitchBlackPrimary,
+                                com.example.ui.theme.AmoledPitchBlackAccent
+                            ),
+                            onClick = {
+                                appHaptics.performSegmentSwitch()
+                                viewModel.setAppThemeMode(com.example.model.AppThemeMode.AMOLED_PITCH_BLACK)
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         }
@@ -846,7 +944,7 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(dimensions.sectionSpacing)
                 ) {
                     languageCard()
-                    themeEngineCard()
+                    multiThemeEngineCard()
                     planLimitCard()
                 }
                 Column(
@@ -866,7 +964,7 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(dimensions.sectionSpacing)
             ) {
                 languageCard()
-                themeEngineCard()
+                multiThemeEngineCard()
                 planLimitCard()
                 billingCycleCard()
                 smartAlertsCard()
@@ -922,6 +1020,106 @@ fun ThemeOptionButton(
                 text = subtitle,
                 color = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
                 fontSize = 9.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun MultiThemeOptionCard(
+    themeMode: com.example.model.AppThemeMode,
+    appLanguage: AppLanguage,
+    isSelected: Boolean,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    colorPreviews: List<Color>,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                if (isSelected) {
+                    glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.16f else 0.10f)
+                } else {
+                    glassStyle.cardSubtleBg
+                }
+            )
+            .border(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = if (isSelected) glassStyle.accentPrimary else glassStyle.borderColor,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable { onClick() }
+            .padding(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Icon pill
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isSelected) glassStyle.accentPrimary else glassStyle.cardBackground
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = themeMode.getDisplayName(appLanguage),
+                        tint = if (isSelected) Color.White else glassStyle.textSecondary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                // Selected Checkmark or Color Swatches
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Selected",
+                        tint = glassStyle.accentPrimary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                } else {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        colorPreviews.forEach { dotColor ->
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .clip(CircleShape)
+                                    .background(dotColor)
+                                    .border(0.5.dp, Color.White.copy(alpha = 0.35f), CircleShape)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = themeMode.getDisplayName(appLanguage),
+                color = if (isSelected) glassStyle.textPrimary else glassStyle.textSecondary,
+                fontSize = 13.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            Text(
+                text = themeMode.getDescription(appLanguage),
+                color = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
+                fontSize = 10.sp,
+                maxLines = 1
             )
         }
     }

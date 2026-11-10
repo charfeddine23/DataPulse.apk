@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -54,6 +55,28 @@ val LocalLiquidGlass = staticCompositionLocalOf {
  * Creates Material 3 darkColorScheme corresponding to each AppThemeMode
  */
 fun createAppColorScheme(mode: AppThemeMode): ColorScheme = when (mode) {
+    AppThemeMode.LIGHT_MODE -> lightColorScheme(
+        primary = LightModePrimary,
+        onPrimary = Color.White,
+        primaryContainer = Color(0xFFDBEAFE),
+        onPrimaryContainer = Color(0xFF1E40AF),
+        secondary = LightModeAccent,
+        onSecondary = Color.White,
+        secondaryContainer = Color(0xFFEDE9FE),
+        onSecondaryContainer = Color(0xFF5B21B6),
+        tertiary = CyanPulse,
+        onTertiary = Color(0xFF00382E),
+        background = LightModeBackground,
+        onBackground = LightModeTextPrimary,
+        surface = LightModeSurface,
+        onSurface = LightModeTextPrimary,
+        surfaceVariant = LightModeCardSubtleBg,
+        onSurfaceVariant = LightModeTextSecondary,
+        outline = LightModeBorder,
+        error = RedAlert,
+        onError = Color.White
+    )
+
     AppThemeMode.LIQUID_GLASS_DEFAULT -> darkColorScheme(
         primary = LiquidGlassDefaultPrimary,
         onPrimary = Color.White,
@@ -125,6 +148,33 @@ fun createAppColorScheme(mode: AppThemeMode): ColorScheme = when (mode) {
  * Creates custom LiquidGlassStyle tokens corresponding to each AppThemeMode
  */
 fun createLiquidGlassStyle(mode: AppThemeMode): LiquidGlassStyle = when (mode) {
+    AppThemeMode.LIGHT_MODE -> LiquidGlassStyle(
+        surfaceColor = LightModeSurface,
+        surfaceTranslucent = LightModeSurfaceTranslucent,
+        borderColor = LightModeBorder,
+        textPrimary = LightModeTextPrimary,
+        textSecondary = LightModeTextSecondary,
+        textTertiary = LightModeTextTertiary,
+        accentPrimary = LightModePrimary,
+        accentSecondary = LightModeAccent,
+        cardBackground = LightModeCardBg,
+        cardSubtleBg = LightModeCardSubtleBg,
+        rimLightBrush = Brush.linearGradient(
+            listOf(Color(0x330066FF), Color(0x66FFFFFF), Color(0x337C3AED))
+        ),
+        backdropBrush = Brush.verticalGradient(
+            listOf(Color(0xFFFFFFFF), Color(0xFFF1F5F9))
+        ),
+        blurRadius = 16.dp,
+        isDark = false,
+        neumorphicBase = LightModeBackground,
+        neumorphicSurface = LightModeSurface,
+        neumorphicHighlight = Color(0x99FFFFFF),
+        neumorphicShadow = Color(0x1A0F172A),
+        neumorphicBorderLight = Color(0x66FFFFFF),
+        neumorphicBorderDark = Color(0x140F172A)
+    )
+
     AppThemeMode.LIQUID_GLASS_DEFAULT -> LiquidGlassStyle(
         surfaceColor = LiquidGlassDefaultSurface,
         surfaceTranslucent = LiquidGlassDefaultSurfaceTranslucent,
@@ -225,8 +275,9 @@ fun DataPulseTheme(
             if (window != null) {
                 window.statusBarColor = colorScheme.background.toArgb()
                 window.navigationBarColor = colorScheme.background.toArgb()
-                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
-                WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
+                val insetsController = WindowCompat.getInsetsController(window, view)
+                insetsController.isAppearanceLightStatusBars = !liquidGlassStyle.isDark
+                insetsController.isAppearanceLightNavigationBars = !liquidGlassStyle.isDark
             }
         }
     }

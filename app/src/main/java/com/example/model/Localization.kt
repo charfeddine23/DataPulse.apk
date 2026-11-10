@@ -97,6 +97,8 @@ object AppStrings {
     fun settingsSubtitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تخصيص اللغة والمظهر، وحدود باقة البيانات حتى 1000 غيغابايت، والتنبيهات" else "Customize language, theme, limits up to 1000GB, and smart alerts"
     fun appLanguageSection(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "لغة التطبيق" else "APP LANGUAGE"
     fun themeSection(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "المظهر والسمة" else "THEME & APPEARANCE"
+    fun multiThemeEngineSection(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "محرك المظاهر المتعددة (Multi-Theme Engine)" else "Multi-Theme Engine"
+    fun multiThemeEngineSubtitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "٤ أنماط جمالية متكاملة (النهاري، والداكن الزجاجي، ونيون سيان، وAMOLED)" else "4 Distinct Aesthetics (Light, Liquid Dark, Neon Cyan & AMOLED)"
     fun themeSystem(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "اتبع الهاتف" else "System"
     fun themeSystemSub(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تلقائي" else "Follow System"
     fun themeLight(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الوضع النهاري" else "Light"

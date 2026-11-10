@@ -86,4 +86,31 @@ class ExampleRobolectricTest {
     assertEquals("pkg.c", sorted[2].packageName)
     assertEquals(200L, sorted[2].totalBytes)
   }
+
+  @Test
+  fun `verify multi theme engine and light mode configuration`() {
+    // 1. Verify 4 distinct theme modes
+    val modes = com.example.model.AppThemeMode.values()
+    assertEquals(4, modes.size)
+    assertTrue(modes.contains(com.example.model.AppThemeMode.LIGHT_MODE))
+    assertTrue(modes.contains(com.example.model.AppThemeMode.LIQUID_GLASS_DEFAULT))
+    assertTrue(modes.contains(com.example.model.AppThemeMode.LIQUID_NEON_CYAN))
+    assertTrue(modes.contains(com.example.model.AppThemeMode.AMOLED_PITCH_BLACK))
+
+    // 2. Verify Light Mode properties
+    val light = com.example.model.AppThemeMode.LIGHT_MODE
+    assertEquals(false, light.isDark)
+    assertEquals("الوضع النهاري", light.getDisplayName(com.example.model.AppLanguage.ARABIC))
+    assertEquals("Light Mode", light.getDisplayName(com.example.model.AppLanguage.ENGLISH))
+
+    // 3. Verify LiquidGlassStyle tokens for Light Mode
+    val lightStyle = com.example.ui.theme.createLiquidGlassStyle(com.example.model.AppThemeMode.LIGHT_MODE)
+    assertEquals(false, lightStyle.isDark)
+    assertEquals(com.example.ui.theme.LightModeBackground, lightStyle.neumorphicBase)
+    assertEquals(com.example.ui.theme.LightModeTextPrimary, lightStyle.textPrimary)
+
+    // 4. Verify Localized Strings
+    assertEquals("Multi-Theme Engine", com.example.model.AppStrings.multiThemeEngineSection(com.example.model.AppLanguage.ENGLISH))
+    assertTrue(com.example.model.AppStrings.multiThemeEngineSection(com.example.model.AppLanguage.ARABIC).contains("Multi-Theme Engine"))
+  }
 }
