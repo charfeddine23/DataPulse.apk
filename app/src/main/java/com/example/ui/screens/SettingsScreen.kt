@@ -227,12 +227,32 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // 2x2 Grid of all 4 themes
+                // 1. Follow System (Dynamic Auto-Switch) Card
+                MultiThemeOptionCard(
+                    themeMode = com.example.model.AppThemeMode.SYSTEM,
+                    appLanguage = appLanguage,
+                    isSelected = appThemeMode == com.example.model.AppThemeMode.SYSTEM,
+                    icon = Icons.Default.BrightnessAuto,
+                    colorPreviews = listOf(
+                        com.example.ui.theme.LightModeBackground,
+                        com.example.ui.theme.LiquidGlassDefaultBackground,
+                        com.example.ui.theme.LightModePrimary
+                    ),
+                    onClick = {
+                        appHaptics.performSegmentSwitch()
+                        viewModel.setAppThemeMode(com.example.model.AppThemeMode.SYSTEM)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // 2x2 Grid of all 4 visual themes
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Row 1: Light Mode (الوضع النهاري) & Liquid Glass Dark (الزجاج السائل)
+                    // Row 1: Light Mode (Pearl & Platinum) & Liquid Glass Dark (الزجاج السائل)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -281,7 +301,7 @@ fun SettingsScreen(
                             themeMode = com.example.model.AppThemeMode.LIQUID_NEON_CYAN,
                             appLanguage = appLanguage,
                             isSelected = appThemeMode == com.example.model.AppThemeMode.LIQUID_NEON_CYAN,
-                            icon = Icons.Default.BrightnessAuto,
+                            icon = Icons.Default.Palette,
                             colorPreviews = listOf(
                                 com.example.ui.theme.LiquidNeonCyanBackground,
                                 com.example.ui.theme.LiquidNeonCyanPrimary,

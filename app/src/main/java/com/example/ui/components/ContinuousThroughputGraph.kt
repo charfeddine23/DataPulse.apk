@@ -89,17 +89,17 @@ fun ContinuousThroughputGraph(
     // Low speed -> Vibrant Green / Teal
     // High speed -> Vibrant Red / Orange
     val targetPrimaryColor = when {
-        isOffline -> Color(0xFFE0F7FA) // Icy frost white
-        speedRatio > 0.5f -> Color(0xFFFF3B30) // High speed -> Vibrant Red
-        speedRatio > 0.2f -> Color(0xFFFF9500) // Medium speed -> Vibrant Orange
-        else -> Color(0xFF00E676) // Low speed -> Vibrant Green/Teal
+        isOffline -> if (glassStyle.isDark) Color(0xFFE0F7FA) else Color(0xFF0284C7)
+        speedRatio > 0.5f -> if (glassStyle.isDark) Color(0xFFFF3B30) else Color(0xFFDC2626)
+        speedRatio > 0.2f -> if (glassStyle.isDark) Color(0xFFFF9500) else Color(0xFFD97706)
+        else -> if (glassStyle.isDark) Color(0xFF00E676) else Color(0xFF0D9488)
     }
 
     val targetSecondaryColor = when {
-        isOffline -> Color(0xFF80DEEA) // Frost Cyan
-        speedRatio > 0.5f -> Color(0xFFFF9100) // Orange accent
-        speedRatio > 0.2f -> Color(0xFFFFD600) // Warm gold
-        else -> Color(0xFF00B4D8) // Electric teal/cyan
+        isOffline -> if (glassStyle.isDark) Color(0xFF80DEEA) else Color(0xFF0284C7)
+        speedRatio > 0.5f -> if (glassStyle.isDark) Color(0xFFFF9100) else Color(0xFFEA580C)
+        speedRatio > 0.2f -> if (glassStyle.isDark) Color(0xFFFFD600) else Color(0xFFD97706)
+        else -> if (glassStyle.isDark) Color(0xFF00B4D8) else Color(0xFF0284C7)
     }
 
     val animatedPrimaryColor by animateColorAsState(
@@ -167,14 +167,20 @@ fun ContinuousThroughputGraph(
     }
 
     // Liquid Glass Container with dynamic frosted glow borders
-    val containerBorderBrush = remember(isOffline, animatedPrimaryColor, animatedSecondaryColor) {
+    val containerBorderBrush = remember(isOffline, glassStyle.isDark, animatedPrimaryColor, animatedSecondaryColor) {
         if (isOffline) {
-            Brush.linearGradient(
-                listOf(Color(0xFFE0F7FA).copy(alpha = 0.6f), Color(0xFF80DEEA).copy(alpha = 0.3f), Color(0xFFFFFFFF).copy(alpha = 0.4f))
-            )
+            if (glassStyle.isDark) {
+                Brush.linearGradient(
+                    listOf(Color(0xFFE0F7FA).copy(alpha = 0.6f), Color(0xFF80DEEA).copy(alpha = 0.3f), Color(0xFFFFFFFF).copy(alpha = 0.4f))
+                )
+            } else {
+                Brush.linearGradient(
+                    listOf(Color(0xFFBAE6FD).copy(alpha = 0.9f), Color(0xFF7DD3FC).copy(alpha = 0.6f), Color(0xFF38BDF8).copy(alpha = 0.4f))
+                )
+            }
         } else {
             Brush.linearGradient(
-                listOf(animatedPrimaryColor.copy(alpha = 0.5f), Color(0x1FFFFFFF), animatedSecondaryColor.copy(alpha = 0.5f))
+                listOf(animatedPrimaryColor.copy(alpha = if (glassStyle.isDark) 0.5f else 0.35f), Color(0x1FFFFFFF), animatedSecondaryColor.copy(alpha = if (glassStyle.isDark) 0.5f else 0.35f))
             )
         }
     }
@@ -185,7 +191,11 @@ fun ContinuousThroughputGraph(
             .fillMaxWidth()
             .neumorphicDepth(
                 shape = graphShape,
-                lightColor = if (isOffline) Color(0x3380DEEA) else glassStyle.neumorphicHighlight.copy(alpha = 0.5f),
+                lightColor = if (isOffline) {
+                    if (glassStyle.isDark) Color(0x3380DEEA) else Color(0x33BAE6FD)
+                } else {
+                    glassStyle.neumorphicHighlight.copy(alpha = if (glassStyle.isDark) 0.5f else 0.8f)
+                },
                 darkColor = glassStyle.neumorphicShadow,
                 offsetDp = 4.dp
             )
@@ -193,9 +203,17 @@ fun ContinuousThroughputGraph(
             .background(
                 brush = Brush.linearGradient(
                     colors = if (isOffline) {
-                        listOf(Color(0xFF0F1E29), Color(0xFF08121A)) // Frosty dark ice
+                        if (glassStyle.isDark) {
+                            listOf(Color(0xFF0F1E29), Color(0xFF08121A)) // Frosty dark ice
+                        } else {
+                            listOf(Color(0xFFF0F9FF), Color(0xFFE0F2FE)) // Frosty pearl ice
+                        }
                     } else {
-                        listOf(glassStyle.neumorphicSurface, glassStyle.neumorphicBase)
+                        if (glassStyle.isDark) {
+                            listOf(glassStyle.neumorphicSurface, glassStyle.neumorphicBase)
+                        } else {
+                            listOf(glassStyle.cardBackground, glassStyle.cardSubtleBg)
+                        }
                     }
                 )
             )
@@ -321,7 +339,7 @@ fun ContinuousThroughputGraph(
 
                         // Frozen line
                         drawLine(
-                            color = Color(0xFFE0F7FA),
+                            color = if (glassStyle.isDark) Color(0xFFE0F7FA) else Color(0xFF0284C7),
                             start = Offset(0f, flatY),
                             end = Offset(canvasWidth, flatY),
                             strokeWidth = 2.5.dp.toPx(),
@@ -336,7 +354,7 @@ fun ContinuousThroughputGraph(
                             val flakeX = (flake.initialXRatio * canvasWidth + swayOffset).coerceIn(0f, canvasWidth)
 
                             drawCircle(
-                                color = Color.White.copy(alpha = flake.alpha),
+                                color = if (glassStyle.isDark) Color.White.copy(alpha = flake.alpha) else Color(0xFF0284C7).copy(alpha = flake.alpha * 0.35f),
                                 radius = flake.radiusDp.dp.toPx(),
                                 center = Offset(flakeX, flakeY)
                             )

@@ -4,28 +4,65 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 // =========================================================================
-// 0. LIGHT_MODE Palette (Luminous Crisp Daylight Glass)
-// Background: Clean luminous daylight slate-50 (#F8FAFC)
+// 0. LUXURIOUS PEARL & PLATINUM LIGHT PALETTE (Flagship Luxury Aesthetic)
+// Background: Soft, warm pearl/platinum off-white (#F4F6F9 to #E9ECEF)
 // Surface: Crystalline pure white (#FFFFFF)
-// SurfaceTranslucent: Frosted white glass (#F2FFFFFF)
-// Primary: High-vibrancy Royal Blue (#0066FF)
-// Accent: Vibrant Electric Violet (#7C3AED)
-// Border: Refined crystalline glass rim (#1F0F172A)
+// SurfaceTranslucent: Frosted white glass (#F8FFFFFF with ultra-fine blur)
+// Primary: High-end Royal Electric Azure (#0066FF)
+// Accent: Refined Royal Violet (#7C3AED)
+// Border: Ultra-fine frosted glass rim (#14111827 ~ 8% opacity)
+// BorderSubtle: Soft ambient border (#0A111827 ~ 4% opacity)
 // CardBg: Pure White (#FFFFFF)
-// CardSubtleBg: Soft Pearl / Slate 100 (#F1F5F9)
+// CardSubtleBg: Soft Pearl / Platinum (#F0F3F8)
+//
+// Typography: Razor-sharp high contrast without eye strain
+// Primary: Deep obsidian/charcoal (#111827)
+// Secondary: Refined slate (#4B5563)
+// Tertiary: Muted neutral slate (#6B7280)
+//
+// Accents & Pulse Glows (Refined for light surfaces):
+// Ocean Cyan: #0284C7 (Crisp and vivid on light backgrounds)
+// Amber Alert: #D97706 (Amber 600, warm and saturated)
+// Orange Accent: #EA580C (Orange 600)
+// Coral Red: #DC2626 (Red 600)
+// Crimson Limit: #991B1B (Deep rich ruby red)
 // =========================================================================
-val LightModeBackground = Color(0xFFF8FAFC)
-val LightModeSurface = Color(0xFFFFFFFF)
-val LightModeSurfaceTranslucent = Color(0xF2FFFFFF)
-val LightModePrimary = Color(0xFF0066FF)
-val LightModeAccent = Color(0xFF7C3AED)
-val LightModeBorder = Color(0x1F0F172A)
-val LightModeCardBg = Color(0xFFFFFFFF)
-val LightModeCardSubtleBg = Color(0xFFF1F5F9)
+val PearlPlatinumLightBase = Color(0xFFF4F6F9)
+val PearlPlatinumLightEnd = Color(0xFFE9ECEF)
+val PearlPlatinumSurface = Color(0xFFFFFFFF)
+val PearlPlatinumSurfaceTranslucent = Color(0xF8FFFFFF)
+val PearlPlatinumPrimary = Color(0xFF0066FF)
+val PearlPlatinumAccent = Color(0xFF7C3AED)
+val PearlPlatinumBorder = Color(0x14111827)        // Ultra-fine frosted border (~8%)
+val PearlPlatinumBorderSubtle = Color(0x0A111827)  // Soft ambient border (~4%)
+val PearlPlatinumCardBg = Color(0xFFFFFFFF)
+val PearlPlatinumCardSubtleBg = Color(0xFFF0F3F8)
 
-val LightModeTextPrimary = Color(0xFF0F172A)
-val LightModeTextSecondary = Color(0xFF475569)
-val LightModeTextTertiary = Color(0xFF94A3B8)
+val PearlPlatinumTextPrimary = Color(0xFF111827)   // Deep obsidian/charcoal #111827
+val PearlPlatinumTextSecondary = Color(0xFF4B5563) // Refined slate #4B5563
+val PearlPlatinumTextTertiary = Color(0xFF6B7280)  // Muted neutral slate #6B7280
+
+// Light Mode Pulse Accents (Refined contrast for light surfaces)
+val LightPulseOceanCyan = Color(0xFF0284C7)
+val LightPulseTeal = Color(0xFF0D9488)
+val LightPulseAmber = Color(0xFFD97706)
+val LightPulseOrange = Color(0xFFEA580C)
+val LightPulseCoralRed = Color(0xFFDC2626)
+val LightPulseCrimson = Color(0xFF991B1B)
+val LightPulseIceSlate = Color(0xFF64748B)
+
+// Aliases mapped to the new Pearl & Platinum tokens
+val LightModeBackground = PearlPlatinumLightBase
+val LightModeSurface = PearlPlatinumSurface
+val LightModeSurfaceTranslucent = PearlPlatinumSurfaceTranslucent
+val LightModePrimary = PearlPlatinumPrimary
+val LightModeAccent = PearlPlatinumAccent
+val LightModeBorder = PearlPlatinumBorder
+val LightModeCardBg = PearlPlatinumCardBg
+val LightModeCardSubtleBg = PearlPlatinumCardSubtleBg
+val LightModeTextPrimary = PearlPlatinumTextPrimary
+val LightModeTextSecondary = PearlPlatinumTextSecondary
+val LightModeTextTertiary = PearlPlatinumTextTertiary
 
 // =========================================================================
 // 1. NEUMORPHIC_DARK_DEFAULT Palette (Base #0F1423)

@@ -54,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -105,7 +106,18 @@ fun GlassContainer(
     val effectiveBorder = borderColor ?: glassStyle.borderColor
 
     Box(
-        modifier = modifier.clip(shape)
+        modifier = modifier
+            .then(
+                if (!glassStyle.isDark) {
+                    Modifier.shadow(
+                        elevation = 4.dp,
+                        shape = shape,
+                        spotColor = Color(0x140F172A),
+                        ambientColor = Color(0x0A0F172A)
+                    )
+                } else Modifier
+            )
+            .clip(shape)
     ) {
         // Frosted Blur Layer (on Android 12+)
         if (enableBlur && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -113,7 +125,7 @@ fun GlassContainer(
                 modifier = Modifier
                     .matchParentSize()
                     .blur(glassStyle.blurRadius)
-                    .background(if (glassStyle.isDark) Color(0x550B1222) else Color(0x33CBD5E1))
+                    .background(if (glassStyle.isDark) Color(0x550B1222) else Color(0x1AFFFFFF))
             )
         }
 
@@ -122,22 +134,41 @@ fun GlassContainer(
             modifier = Modifier
                 .matchParentSize()
                 .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            effectiveBg,
-                            effectiveBg.copy(alpha = if (glassStyle.isDark) 0.85f else 0.95f)
+                    brush = if (glassStyle.isDark) {
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                effectiveBg,
+                                effectiveBg.copy(alpha = 0.85f)
+                            )
                         )
-                    )
+                    } else {
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFFFFFFF),
+                                Color(0xFFFAFBFC)
+                            )
+                        )
+                    }
                 )
                 .border(
                     width = 1.dp,
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            effectiveBorder,
-                            effectiveBorder.copy(alpha = 0.2f),
-                            effectiveBorder.copy(alpha = 0.45f)
+                    brush = if (glassStyle.isDark) {
+                        Brush.linearGradient(
+                            colors = listOf(
+                                effectiveBorder,
+                                effectiveBorder.copy(alpha = 0.2f),
+                                effectiveBorder.copy(alpha = 0.45f)
+                            )
                         )
-                    ),
+                    } else {
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color(0x66FFFFFF),
+                                effectiveBorder,
+                                Color(0x40FFFFFF)
+                            )
+                        )
+                    },
                     shape = shape
                 )
         )

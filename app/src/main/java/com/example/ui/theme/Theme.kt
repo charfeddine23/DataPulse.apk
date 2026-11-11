@@ -52,27 +52,34 @@ val LocalLiquidGlass = staticCompositionLocalOf {
 }
 
 /**
- * Creates Material 3 darkColorScheme corresponding to each AppThemeMode
+ * Creates Material 3 colorScheme corresponding to each AppThemeMode,
+ * seamlessly resolving SYSTEM based on the device's isSystemInDarkTheme() setting.
  */
-fun createAppColorScheme(mode: AppThemeMode): ColorScheme = when (mode) {
+fun createAppColorScheme(mode: AppThemeMode, isSystemDark: Boolean = false): ColorScheme = when (mode) {
+    AppThemeMode.SYSTEM -> {
+        if (isSystemDark) createAppColorScheme(AppThemeMode.LIQUID_GLASS_DEFAULT, true)
+        else createAppColorScheme(AppThemeMode.LIGHT_MODE, false)
+    }
+
     AppThemeMode.LIGHT_MODE -> lightColorScheme(
-        primary = LightModePrimary,
+        primary = PearlPlatinumPrimary,
         onPrimary = Color.White,
         primaryContainer = Color(0xFFDBEAFE),
-        onPrimaryContainer = Color(0xFF1E40AF),
-        secondary = LightModeAccent,
+        onPrimaryContainer = Color(0xFF1E3A8A),
+        secondary = PearlPlatinumAccent,
         onSecondary = Color.White,
         secondaryContainer = Color(0xFFEDE9FE),
-        onSecondaryContainer = Color(0xFF5B21B6),
-        tertiary = CyanPulse,
-        onTertiary = Color(0xFF00382E),
-        background = LightModeBackground,
-        onBackground = LightModeTextPrimary,
-        surface = LightModeSurface,
-        onSurface = LightModeTextPrimary,
-        surfaceVariant = LightModeCardSubtleBg,
-        onSurfaceVariant = LightModeTextSecondary,
-        outline = LightModeBorder,
+        onSecondaryContainer = Color(0xFF4C1D95),
+        tertiary = LightPulseOceanCyan,
+        onTertiary = Color.White,
+        background = PearlPlatinumLightBase,
+        onBackground = PearlPlatinumTextPrimary,
+        surface = PearlPlatinumSurface,
+        onSurface = PearlPlatinumTextPrimary,
+        surfaceVariant = PearlPlatinumCardSubtleBg,
+        onSurfaceVariant = PearlPlatinumTextSecondary,
+        outline = PearlPlatinumBorder,
+        outlineVariant = PearlPlatinumBorderSubtle,
         error = RedAlert,
         onError = Color.White
     )
@@ -147,32 +154,45 @@ fun createAppColorScheme(mode: AppThemeMode): ColorScheme = when (mode) {
 /**
  * Creates custom LiquidGlassStyle tokens corresponding to each AppThemeMode
  */
-fun createLiquidGlassStyle(mode: AppThemeMode): LiquidGlassStyle = when (mode) {
+fun createLiquidGlassStyle(mode: AppThemeMode, isSystemDark: Boolean = false): LiquidGlassStyle = when (mode) {
+    AppThemeMode.SYSTEM -> {
+        if (isSystemDark) createLiquidGlassStyle(AppThemeMode.LIQUID_GLASS_DEFAULT, true)
+        else createLiquidGlassStyle(AppThemeMode.LIGHT_MODE, false)
+    }
+
     AppThemeMode.LIGHT_MODE -> LiquidGlassStyle(
-        surfaceColor = LightModeSurface,
-        surfaceTranslucent = LightModeSurfaceTranslucent,
-        borderColor = LightModeBorder,
-        textPrimary = LightModeTextPrimary,
-        textSecondary = LightModeTextSecondary,
-        textTertiary = LightModeTextTertiary,
-        accentPrimary = LightModePrimary,
-        accentSecondary = LightModeAccent,
-        cardBackground = LightModeCardBg,
-        cardSubtleBg = LightModeCardSubtleBg,
+        surfaceColor = PearlPlatinumSurface,
+        surfaceTranslucent = PearlPlatinumSurfaceTranslucent,
+        borderColor = PearlPlatinumBorder,
+        textPrimary = PearlPlatinumTextPrimary,
+        textSecondary = PearlPlatinumTextSecondary,
+        textTertiary = PearlPlatinumTextTertiary,
+        accentPrimary = PearlPlatinumPrimary,
+        accentSecondary = PearlPlatinumAccent,
+        cardBackground = PearlPlatinumCardBg,
+        cardSubtleBg = PearlPlatinumCardSubtleBg,
         rimLightBrush = Brush.linearGradient(
-            listOf(Color(0x330066FF), Color(0x66FFFFFF), Color(0x337C3AED))
+            listOf(
+                Color(0x80FFFFFF),
+                Color(0x1F0066FF),
+                Color(0x40FFFFFF)
+            )
         ),
         backdropBrush = Brush.verticalGradient(
-            listOf(Color(0xFFFFFFFF), Color(0xFFF1F5F9))
+            listOf(
+                Color(0xFFFBFBFD),
+                Color(0xFFF4F6F9),
+                Color(0xFFE9ECEF)
+            )
         ),
-        blurRadius = 16.dp,
+        blurRadius = 20.dp,
         isDark = false,
-        neumorphicBase = LightModeBackground,
-        neumorphicSurface = LightModeSurface,
-        neumorphicHighlight = Color(0x99FFFFFF),
-        neumorphicShadow = Color(0x1A0F172A),
-        neumorphicBorderLight = Color(0x66FFFFFF),
-        neumorphicBorderDark = Color(0x140F172A)
+        neumorphicBase = PearlPlatinumLightBase,
+        neumorphicSurface = PearlPlatinumSurface,
+        neumorphicHighlight = Color(0xCCFFFFFF),
+        neumorphicShadow = Color(0x0F0F172A),
+        neumorphicBorderLight = Color(0x80FFFFFF),
+        neumorphicBorderDark = Color(0x0D0F172A)
     )
 
     AppThemeMode.LIQUID_GLASS_DEFAULT -> LiquidGlassStyle(
@@ -265,8 +285,9 @@ fun DataPulseTheme(
     appThemeMode: AppThemeMode = AppThemeMode.LIQUID_GLASS_DEFAULT,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = createAppColorScheme(appThemeMode)
-    val liquidGlassStyle = createLiquidGlassStyle(appThemeMode)
+    val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val colorScheme = createAppColorScheme(appThemeMode, isSystemDark)
+    val liquidGlassStyle = createLiquidGlassStyle(appThemeMode, isSystemDark)
 
     val view = LocalView.current
     if (!view.isInEditMode) {

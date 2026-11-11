@@ -14,11 +14,18 @@ enum class AppThemeMode(
     val descAr: String,
     val isDark: Boolean = true
 ) {
+    SYSTEM(
+        titleEn = "Follow System",
+        titleAr = "اتبع الهاتف",
+        descEn = "Dynamic Auto Switch",
+        descAr = "تبديل تلقائي نهاري وليلي",
+        isDark = false
+    ),
     LIGHT_MODE(
-        titleEn = "Light Mode",
-        titleAr = "الوضع النهاري",
-        descEn = "Crisp Daylight & Pure Glass",
-        descAr = "إضاءة نهارية وزجاج ناصع",
+        titleEn = "Pearl & Platinum",
+        titleAr = "الوضع النهاري الفاخر",
+        descEn = "Warm Pearl Glass & Obsidian",
+        descAr = "زجاج لؤلؤي دافئ ونصوص فحمية",
         isDark = false
     ),
     LIQUID_GLASS_DEFAULT(

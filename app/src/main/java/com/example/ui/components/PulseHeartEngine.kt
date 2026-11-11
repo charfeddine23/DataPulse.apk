@@ -78,16 +78,31 @@ data class BiologicalHeartParams(
  * Maps monthly data usage percentage (0% to 100%) into 30 levels and 3 biological states.
  */
 object BiologicalHeartCalculator {
-    private val COLOR_PURE_WHITE = Color(0xFFFFFFFF)
-    private val COLOR_NEON_CYAN = Color(0xFF00F5D4)
-    private val COLOR_SOFT_AMBER = Color(0xFFFFB703)
-    private val COLOR_VIBRANT_ORANGE = Color(0xFFFF7A00)
-    private val COLOR_CORAL_RED = Color(0xFFFF3366)
-    private val COLOR_FROST_CRIMSON = Color(0xFF4A0E17)
-    private val COLOR_FROST_CYAN = Color(0xFFB2EBF2)
-    private val COLOR_ICE_GRAY = Color(0xFF90A4AE)
+    // Dark Mode Palette
+    private val DARK_PURE_WHITE = Color(0xFFFFFFFF)
+    private val DARK_NEON_CYAN = Color(0xFF00F5D4)
+    private val DARK_SOFT_AMBER = Color(0xFFFFB703)
+    private val DARK_VIBRANT_ORANGE = Color(0xFFFF7A00)
+    private val DARK_CORAL_RED = Color(0xFFFF3366)
+    private val DARK_FROST_CRIMSON = Color(0xFF4A0E17)
+    private val DARK_FROST_CYAN = Color(0xFFB2EBF2)
+    private val DARK_ICE_GRAY = Color(0xFF90A4AE)
 
-    fun calculate(percentage: Float, isArabic: Boolean = false): BiologicalHeartParams {
+    // Light Mode Palette (Pearl & Platinum - high contrast and vivid)
+    private val LIGHT_OCEAN_CYAN = Color(0xFF0284C7)
+    private val LIGHT_TEAL = Color(0xFF0D9488)
+    private val LIGHT_AMBER = Color(0xFFD97706)
+    private val LIGHT_ORANGE = Color(0xFFEA580C)
+    private val LIGHT_CORAL_RED = Color(0xFFDC2626)
+    private val LIGHT_CRIMSON = Color(0xFF7F1D1D)
+    private val LIGHT_FROST_ICE = Color(0xFF0284C7)
+    private val LIGHT_ICE_GRAY = Color(0xFF475569)
+
+    fun calculate(
+        percentage: Float,
+        isArabic: Boolean = false,
+        isDark: Boolean = true
+    ): BiologicalHeartParams {
         val clamped = percentage.coerceIn(0f, 100f)
         val fraction = clamped / 100f
         val levelFloat = (1f + fraction * 29f).coerceIn(1f, 30f)
@@ -99,34 +114,43 @@ object BiologicalHeartCalculator {
             else -> BiologicalHeartState.FROZEN
         }
 
+        val colStart = if (isDark) DARK_PURE_WHITE else LIGHT_OCEAN_CYAN
+        val colCyan = if (isDark) DARK_NEON_CYAN else LIGHT_TEAL
+        val colAmber = if (isDark) DARK_SOFT_AMBER else LIGHT_AMBER
+        val colOrange = if (isDark) DARK_VIBRANT_ORANGE else LIGHT_ORANGE
+        val colCoral = if (isDark) DARK_CORAL_RED else LIGHT_CORAL_RED
+        val colCrimson = if (isDark) DARK_FROST_CRIMSON else LIGHT_CRIMSON
+        val colIceGray = if (isDark) DARK_ICE_GRAY else LIGHT_ICE_GRAY
+        val colFrostCyan = if (isDark) DARK_FROST_CYAN else LIGHT_FROST_ICE
+
         // Smooth continuous color interpolation across the 30-tier gradient
         val primaryColor = when {
             levelFloat <= 5f -> {
                 val t = (levelFloat - 1f) / 4f
-                lerp(COLOR_PURE_WHITE, COLOR_NEON_CYAN, t.coerceIn(0f, 1f))
+                lerp(colStart, colCyan, t.coerceIn(0f, 1f))
             }
             levelFloat <= 15f -> {
                 val t = (levelFloat - 5f) / 10f
-                lerp(COLOR_NEON_CYAN, COLOR_SOFT_AMBER, t.coerceIn(0f, 1f))
+                lerp(colCyan, colAmber, t.coerceIn(0f, 1f))
             }
             levelFloat <= 22f -> {
                 val t = (levelFloat - 15f) / 7f
-                lerp(COLOR_SOFT_AMBER, COLOR_VIBRANT_ORANGE, t.coerceIn(0f, 1f))
+                lerp(colAmber, colOrange, t.coerceIn(0f, 1f))
             }
             levelFloat <= 27f -> {
                 val t = (levelFloat - 22f) / 5f
-                lerp(COLOR_VIBRANT_ORANGE, COLOR_CORAL_RED, t.coerceIn(0f, 1f))
+                lerp(colOrange, colCoral, t.coerceIn(0f, 1f))
             }
             else -> {
                 val t = (levelFloat - 27f) / 3f
-                lerp(COLOR_CORAL_RED, COLOR_FROST_CRIMSON, t.coerceIn(0f, 1f))
+                lerp(colCoral, colCrimson, t.coerceIn(0f, 1f))
             }
         }
 
         val secondaryColor = when (biologicalState) {
-            BiologicalHeartState.LIVING -> lerp(primaryColor, COLOR_NEON_CYAN, 0.40f)
-            BiologicalHeartState.STRAINING -> lerp(primaryColor, COLOR_CORAL_RED, 0.45f)
-            BiologicalHeartState.FROZEN -> COLOR_ICE_GRAY
+            BiologicalHeartState.LIVING -> lerp(primaryColor, colCyan, 0.40f)
+            BiologicalHeartState.STRAINING -> lerp(primaryColor, colCoral, 0.45f)
+            BiologicalHeartState.FROZEN -> colIceGray
         }
 
         // Freeze factor: 0.0 at <27.5, ramping smoothly to 1.0 at level 30
@@ -161,10 +185,18 @@ object BiologicalHeartCalculator {
             BiologicalHeartState.FROZEN -> 10000 // Infinite flatline
         }
 
+        val auraBaseAlpha = if (isDark) 0.45f else 0.22f
         val auraColor = when (biologicalState) {
-            BiologicalHeartState.LIVING -> primaryColor.copy(alpha = 0.45f)
-            BiologicalHeartState.STRAINING -> primaryColor.copy(alpha = (0.38f - strainFactor * 0.18f).coerceAtLeast(0.12f))
-            BiologicalHeartState.FROZEN -> COLOR_FROST_CYAN.copy(alpha = (0.12f * (1f - freezeFactor)).coerceAtLeast(0.02f))
+            BiologicalHeartState.LIVING -> primaryColor.copy(alpha = auraBaseAlpha)
+            BiologicalHeartState.STRAINING -> {
+                val maxAlpha = if (isDark) 0.38f else 0.20f
+                val minAlpha = if (isDark) 0.12f else 0.06f
+                primaryColor.copy(alpha = (maxAlpha - strainFactor * 0.16f).coerceAtLeast(minAlpha))
+            }
+            BiologicalHeartState.FROZEN -> {
+                val maxAlpha = if (isDark) 0.12f else 0.08f
+                colFrostCyan.copy(alpha = (maxAlpha * (1f - freezeFactor)).coerceAtLeast(0.02f))
+            }
         }
 
         val stateTitle = if (isArabic) {
@@ -416,8 +448,9 @@ fun BiologicallyLivingAndFreezingHeart(
     showTitle: Boolean = true
 ) {
     val isArabic = (appLanguage == AppLanguage.ARABIC)
-    val heartParams = remember(percentage, isArabic) {
-        BiologicalHeartCalculator.calculate(percentage, isArabic)
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val heartParams = remember(percentage, isArabic, glassStyle.isDark) {
+        BiologicalHeartCalculator.calculate(percentage, isArabic, glassStyle.isDark)
     }
 
     // Color transitions across consumption levels
@@ -653,7 +686,8 @@ fun BiologicallyLivingAndFreezingHeart(
 
                 // 3. Central "Pulse" Title with Dynamic Glow / Frost Glass Style
                 val titleColor = if (heartParams.freezeFactor > 0.6f) {
-                    lerp(animatedPrimaryColor, Color(0xFFCFD8DC), heartParams.freezeFactor)
+                    val frostTitleColor = if (glassStyle.isDark) Color(0xFFCFD8DC) else Color(0xFF475569)
+                    lerp(animatedPrimaryColor, frostTitleColor, heartParams.freezeFactor)
                 } else {
                     animatedPrimaryColor
                 }

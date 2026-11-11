@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -146,10 +147,13 @@ fun DataPulseApp(
     }
 
     val dimensions = com.example.ui.theme.LocalAppDimensions.current
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
+        modifier = modifier
+            .fillMaxSize()
+            .background(brush = glassStyle.backdropBrush),
+        containerColor = Color.Transparent,
         bottomBar = {
             LiquidGlassBottomNav(
                 currentDestination = currentDestination,
@@ -225,11 +229,21 @@ fun LiquidGlassBottomNav(
             modifier = Modifier
                 .fillMaxWidth()
                 .widthIn(max = dimensions.bottomNavMaxWidth)
+                .then(
+                    if (!glassStyle.isDark) {
+                        Modifier.shadow(
+                            elevation = 8.dp,
+                            shape = RoundedCornerShape(24.dp),
+                            spotColor = Color(0x140F172A),
+                            ambientColor = Color(0x0A0F172A)
+                        )
+                    } else Modifier
+                )
                 .clip(RoundedCornerShape(24.dp))
                 .background(brush = glassStyle.backdropBrush)
                 .border(
                     1.dp,
-                    glassStyle.rimLightBrush,
+                    if (glassStyle.isDark) glassStyle.rimLightBrush else Brush.linearGradient(listOf(Color(0x80FFFFFF), glassStyle.borderColor, Color(0x40FFFFFF))),
                     RoundedCornerShape(24.dp)
                 )
                 .padding(horizontal = 10.dp, vertical = 6.dp)
@@ -261,7 +275,16 @@ fun LiquidGlassBottomNav(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (isSelected) glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f) else Color.Transparent)
+                        .background(
+                            if (isSelected) {
+                                glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f)
+                            } else Color.Transparent
+                        )
+                        .border(
+                            width = if (isSelected && !glassStyle.isDark) 0.8.dp else 0.dp,
+                            color = if (isSelected && !glassStyle.isDark) glassStyle.accentPrimary.copy(alpha = 0.35f) else Color.Transparent,
+                            shape = RoundedCornerShape(16.dp)
+                        )
                         .clickable { onSelectDestination(destination) }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                         .testTag(destination.tag),
