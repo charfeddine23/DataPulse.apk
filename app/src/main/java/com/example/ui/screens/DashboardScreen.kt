@@ -19,16 +19,32 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CellTower
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.SimCard
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -99,8 +115,22 @@ fun DashboardScreen(
     val hasUsagePerm by viewModel.hasUsagePermission.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isDashboardRefreshing.collectAsStateWithLifecycle()
+    var showEditCapDialog by remember { mutableStateOf(false) }
 
     val dimensions = com.example.ui.theme.LocalAppDimensions.current
+
+    if (showEditCapDialog) {
+        EditDataCapDialog(
+            currentLimitGB = quota.planLimitGB,
+            usedBytes = quota.usedBytes,
+            appLanguage = appLanguage,
+            onDismiss = { showEditCapDialog = false },
+            onSaveLimit = { newLimit ->
+                viewModel.updatePlanLimit(newLimit)
+                showEditCapDialog = false
+            }
+        )
+    }
 
     ElasticFlamePullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -155,7 +185,7 @@ fun DashboardScreen(
                                 daysRemaining = quota.daysRemaining,
                                 appLanguage = appLanguage,
                                 isInternetConnected = isInternetConnected,
-                                onConfigureClick = onNavigateToSettings
+                                onConfigureClick = { showEditCapDialog = true }
                             )
 
                             if (simCards.isNotEmpty()) {
@@ -227,7 +257,7 @@ fun DashboardScreen(
                         daysRemaining = quota.daysRemaining,
                         appLanguage = appLanguage,
                         isInternetConnected = isInternetConnected,
-                        onConfigureClick = onNavigateToSettings
+                        onConfigureClick = { showEditCapDialog = true }
                     )
                 }
 
@@ -705,6 +735,299 @@ fun BreakdownMetricCard(
                 fontSize = dimensions.textMetricValue,
                 fontWeight = FontWeight.Bold
             )
+        }
+    }
+}
+
+@Composable
+fun EditDataCapDialog(
+    currentLimitGB: Float,
+    usedBytes: Long,
+    appLanguage: com.example.model.AppLanguage,
+    onDismiss: () -> Unit,
+    onSaveLimit: (Float) -> Unit
+) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val appHaptics = com.example.ui.components.rememberAppHaptics()
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+
+    var limitValue by remember(currentLimitGB) { mutableStateOf(currentLimitGB.coerceIn(1f, 1000f)) }
+    var textInput by remember(currentLimitGB) {
+        mutableStateOf(if (currentLimitGB % 1f == 0f) currentLimitGB.toInt().toString() else "%.1f".format(currentLimitGB))
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.55f))
+                .clickable { onDismiss() }
+                .padding(20.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 440.dp)
+                    .clickable(enabled = false) { }
+            ) {
+                GlassContainer(
+                    modifier = Modifier.fillMaxWidth(),
+                    borderColor = glassStyle.accentPrimary.copy(alpha = 0.55f)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp, vertical = 2.dp)
+                    ) {
+                        // Header
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.20f else 0.12f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PieChart,
+                                        contentDescription = "Edit Cap",
+                                        tint = glassStyle.accentPrimary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = com.example.model.AppStrings.editCap(appLanguage),
+                                        color = glassStyle.textPrimary,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = com.example.model.AppStrings.planLimitSection(appLanguage),
+                                        color = glassStyle.textSecondary,
+                                        fontSize = 11.sp
+                                    )
+                                }
+                            }
+
+                            IconButton(
+                                onClick = onDismiss,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close",
+                                    tint = glassStyle.textTertiary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Current Usage vs Cap banner
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(glassStyle.cardSubtleBg)
+                                .border(0.8.dp, glassStyle.borderColor, RoundedCornerShape(12.dp))
+                                .padding(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = if (appLanguage == com.example.model.AppLanguage.ARABIC) "المستهلك حالياً" else "Currently Used",
+                                        color = glassStyle.textSecondary,
+                                        fontSize = 11.sp
+                                    )
+                                    Text(
+                                        text = FormatUtils.formatBytes(usedBytes),
+                                        color = glassStyle.textPrimary,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        text = com.example.model.AppStrings.planCapLabel(appLanguage),
+                                        color = glassStyle.textSecondary,
+                                        fontSize = 11.sp
+                                    )
+                                    Text(
+                                        text = "%.1f GB".format(limitValue),
+                                        color = glassStyle.accentPrimary,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Custom Input Field
+                        OutlinedTextField(
+                            value = textInput,
+                            onValueChange = { newVal ->
+                                if (newVal.all { it.isDigit() || it == '.' }) {
+                                    textInput = newVal
+                                    val parsed = newVal.toFloatOrNull()
+                                    if (parsed != null && parsed in 0.1f..10000f) {
+                                        limitValue = parsed.coerceIn(1f, 1000f)
+                                    }
+                                }
+                            },
+                            label = { Text(com.example.model.AppStrings.customLimitLabel(appLanguage), color = glassStyle.textTertiary, fontSize = 11.sp) },
+                            trailingIcon = {
+                                Text(
+                                    text = "GB",
+                                    color = glassStyle.accentPrimary,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(end = 12.dp)
+                                )
+                            },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = glassStyle.accentPrimary,
+                                unfocusedBorderColor = glassStyle.borderColor,
+                                focusedContainerColor = glassStyle.cardBackground,
+                                unfocusedContainerColor = glassStyle.cardBackground,
+                                focusedTextColor = glassStyle.textPrimary,
+                                unfocusedTextColor = glassStyle.textPrimary
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("custom_quota_input")
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Interactive Slider
+                        Slider(
+                            value = limitValue.coerceIn(1f, 1000f),
+                            onValueChange = {
+                                limitValue = it
+                                textInput = if (it % 1f == 0f) it.toInt().toString() else "%.1f".format(it)
+                            },
+                            valueRange = 1f..1000f,
+                            colors = SliderDefaults.colors(
+                                thumbColor = glassStyle.accentPrimary,
+                                activeTrackColor = glassStyle.accentPrimary,
+                                inactiveTrackColor = if (glassStyle.isDark) Color(0xFF162238) else Color(0xFFE2E8F0)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("quota_slider")
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Quick Presets chips: 10GB, 50GB, 100GB, 250GB, 500GB, 1000GB
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            listOf(10f, 50f, 100f, 250f, 500f, 1000f).forEach { preset ->
+                                val isSelected = (limitValue.toInt() == preset.toInt())
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isSelected) glassStyle.accentPrimary else glassStyle.cardBackground)
+                                        .border(
+                                            0.8.dp,
+                                            if (isSelected) glassStyle.accentPrimary else glassStyle.borderColor,
+                                            RoundedCornerShape(8.dp)
+                                        )
+                                        .clickable {
+                                            appHaptics.performSegmentSwitch()
+                                            limitValue = preset
+                                            textInput = preset.toInt().toString()
+                                        }
+                                        .padding(vertical = 7.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "${preset.toInt()}G",
+                                        color = if (isSelected) (if (glassStyle.isDark) Color.Black else Color.White) else glassStyle.textSecondary,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(18.dp))
+
+                        // Action Buttons: Cancel & Save
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            TextButton(
+                                onClick = onDismiss,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text(
+                                    text = if (appLanguage == com.example.model.AppLanguage.ARABIC) "إلغاء" else "Cancel",
+                                    color = glassStyle.textSecondary,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+
+                            Button(
+                                onClick = {
+                                    appHaptics.performConfirm()
+                                    val parsed = textInput.toFloatOrNull() ?: limitValue
+                                    onSaveLimit(parsed.coerceIn(0.1f, 10000f))
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = glassStyle.accentPrimary),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier
+                                    .weight(1.4f)
+                                    .height(44.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = if (glassStyle.isDark) Color.Black else Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (appLanguage == com.example.model.AppLanguage.ARABIC) "حفظ السقف" else "Save Cap",
+                                    color = if (glassStyle.isDark) Color.Black else Color.White,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

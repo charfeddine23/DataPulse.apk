@@ -106,10 +106,6 @@ fun SettingsScreen(
     val dimensions = LocalAppDimensions.current
     val appHaptics = rememberAppHaptics()
 
-    var customLimitInput by remember(quota.planLimitGB) {
-        mutableStateOf(if (quota.planLimitGB % 1f == 0f) quota.planLimitGB.toInt().toString() else "%.1f".format(quota.planLimitGB))
-    }
-
     // 1. Language Selection Card
     val languageCard: @Composable () -> Unit = {
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
@@ -119,23 +115,23 @@ fun SettingsScreen(
                         imageVector = Icons.Default.Language,
                         contentDescription = "Language",
                         tint = glassStyle.accentPrimary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(15.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = AppStrings.appLanguageSection(appLanguage),
                         color = glassStyle.textPrimary,
-                        fontSize = 13.sp,
+                        fontSize = 12.5.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     ThemeOptionButton(
                         title = "العربية",
@@ -159,7 +155,7 @@ fun SettingsScreen(
         }
     }
 
-    // 2. Multi-Theme Engine Section (4 Themes: Light Mode, Liquid Glass, Neon Cyan, AMOLED Black)
+    // 2. Multi-Theme Engine Section (Ultra-Compact: Follow System, Light Mode, Liquid Glass, Neon Cyan, AMOLED Black)
     val multiThemeEngineCard: @Composable () -> Unit = {
         GlassContainer(modifier = Modifier.fillMaxWidth()) {
             Column {
@@ -171,8 +167,8 @@ fun SettingsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(34.dp)
-                                .clip(RoundedCornerShape(10.dp))
+                                .size(24.dp)
+                                .clip(RoundedCornerShape(6.dp))
                                 .background(glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f)),
                             contentAlignment = Alignment.Center
                         ) {
@@ -180,22 +176,22 @@ fun SettingsScreen(
                                 imageVector = Icons.Default.Palette,
                                 contentDescription = "Theme",
                                 tint = glassStyle.accentPrimary,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(13.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Column {
                             Text(
                                 text = "Multi-Theme Engine",
                                 color = glassStyle.textPrimary,
-                                fontSize = 14.sp,
+                                fontSize = 12.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.5.sp
                             )
                             Text(
                                 text = AppStrings.multiThemeEngineSection(appLanguage),
                                 color = glassStyle.textSecondary,
-                                fontSize = 11.sp
+                                fontSize = 9.5.sp
                             )
                         }
                     }
@@ -203,59 +199,42 @@ fun SettingsScreen(
                     // Active badge
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(8.dp))
                             .background(glassStyle.cardSubtleBg)
-                            .border(1.dp, glassStyle.borderColor, RoundedCornerShape(12.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .border(0.8.dp, glassStyle.borderColor, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text = appThemeMode.getDisplayName(appLanguage),
                             color = glassStyle.accentPrimary,
-                            fontSize = 11.sp,
+                            fontSize = 9.5.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = AppStrings.multiThemeEngineSubtitle(appLanguage),
-                    color = glassStyle.textTertiary,
-                    fontSize = 11.sp
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // 1. Follow System (Dynamic Auto-Switch) Card
-                MultiThemeOptionCard(
-                    themeMode = com.example.model.AppThemeMode.SYSTEM,
+                // Compact Horizontal System Auto-Switch Row
+                CompactSystemThemeRow(
                     appLanguage = appLanguage,
                     isSelected = appThemeMode == com.example.model.AppThemeMode.SYSTEM,
-                    icon = Icons.Default.BrightnessAuto,
-                    colorPreviews = listOf(
-                        com.example.ui.theme.LightModeBackground,
-                        com.example.ui.theme.LiquidGlassDefaultBackground,
-                        com.example.ui.theme.LightModePrimary
-                    ),
                     onClick = {
                         appHaptics.performSegmentSwitch()
                         viewModel.setAppThemeMode(com.example.model.AppThemeMode.SYSTEM)
-                    },
-                    modifier = Modifier.fillMaxWidth()
+                    }
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
-                // 2x2 Grid of all 4 visual themes
+                // 2x2 Grid of 4 Compact Theme Cards
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Row 1: Light Mode (Pearl & Platinum) & Liquid Glass Dark (الزجاج السائل)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         MultiThemeOptionCard(
                             themeMode = com.example.model.AppThemeMode.LIGHT_MODE,
@@ -292,10 +271,9 @@ fun SettingsScreen(
                         )
                     }
 
-                    // Row 2: Neon Cyan (نيون سيان) & AMOLED Black (سواد نقي)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         MultiThemeOptionCard(
                             themeMode = com.example.model.AppThemeMode.LIQUID_NEON_CYAN,
@@ -330,166 +308,6 @@ fun SettingsScreen(
                             },
                             modifier = Modifier.weight(1f)
                         )
-                    }
-                }
-            }
-        }
-    }
-
-    // 3. Monthly Data Plan Limit Card (Freeform up to 1000GB)
-    val planLimitCard: @Composable () -> Unit = {
-        GlassContainer(modifier = Modifier.fillMaxWidth()) {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.PieChart,
-                        contentDescription = "Plan Quota",
-                        tint = glassStyle.accentPrimary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = AppStrings.planLimitSection(appLanguage),
-                        color = glassStyle.textPrimary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = AppStrings.planCapLabel(appLanguage),
-                        color = glassStyle.textSecondary,
-                        fontSize = 13.sp
-                    )
-                    Text(
-                        text = "%.1f GB".format(quota.planLimitGB),
-                        color = glassStyle.accentPrimary,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Freeform input for custom GB limits
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = customLimitInput,
-                        onValueChange = { newVal ->
-                            if (newVal.all { it.isDigit() || it == '.' }) {
-                                customLimitInput = newVal
-                                val parsed = newVal.toFloatOrNull()
-                                if (parsed != null && parsed in 0.1f..10000f) {
-                                    viewModel.updatePlanLimit(parsed)
-                                }
-                            }
-                        },
-                        label = { Text(AppStrings.customLimitLabel(appLanguage), color = glassStyle.textTertiary, fontSize = 11.sp) },
-                        trailingIcon = {
-                            Text(
-                                text = "GB",
-                                color = glassStyle.accentPrimary,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(end = 12.dp)
-                            )
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                        singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = glassStyle.accentPrimary,
-                            unfocusedBorderColor = glassStyle.borderColor,
-                            focusedContainerColor = glassStyle.cardBackground,
-                            unfocusedContainerColor = glassStyle.cardBackground,
-                            focusedTextColor = glassStyle.textPrimary,
-                            unfocusedTextColor = glassStyle.textPrimary
-                        ),
-                        modifier = Modifier
-                            .weight(1f)
-                            .testTag("custom_quota_input")
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Button(
-                        onClick = {
-                            focusManager.clearFocus()
-                            val parsed = customLimitInput.toFloatOrNull()
-                            if (parsed != null && parsed > 0) {
-                                viewModel.updatePlanLimit(parsed.coerceIn(0.1f, 10000f))
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = glassStyle.accentPrimary),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.height(52.dp)
-                    ) {
-                        Text(AppStrings.set(appLanguage), color = if (glassStyle.isDark) Color.Black else Color.White, fontWeight = FontWeight.Bold)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Dynamic Slider spanning up to 1000 GB
-                Slider(
-                    value = quota.planLimitGB.coerceIn(1f, 1000f),
-                    onValueChange = {
-                        viewModel.updatePlanLimit(it)
-                        customLimitInput = if (it % 1f == 0f) it.toInt().toString() else "%.1f".format(it)
-                    },
-                    valueRange = 1f..1000f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = glassStyle.accentPrimary,
-                        activeTrackColor = glassStyle.accentPrimary,
-                        inactiveTrackColor = if (glassStyle.isDark) Color(0xFF162238) else Color(0xFFE2E8F0)
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("quota_slider")
-                )
-
-                // Quick Presets including high caps (10GB, 50GB, 100GB, 250GB, 500GB, 1000GB)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf(10f, 50f, 100f, 250f, 500f, 1000f).forEach { preset ->
-                        val isSelected = (quota.planLimitGB == preset)
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) glassStyle.accentPrimary else glassStyle.cardBackground)
-                                .border(
-                                    1.dp,
-                                    if (isSelected) glassStyle.accentPrimary else glassStyle.borderColor,
-                                    RoundedCornerShape(10.dp)
-                                )
-                                .clickable {
-                                    viewModel.updatePlanLimit(preset)
-                                    customLimitInput = preset.toInt().toString()
-                                }
-                                .padding(vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "${preset.toInt()}G",
-                                color = if (isSelected) (if (glassStyle.isDark) Color.Black else Color.White) else glassStyle.textSecondary,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
                     }
                 }
             }
@@ -965,7 +783,6 @@ fun SettingsScreen(
                 ) {
                     languageCard()
                     multiThemeEngineCard()
-                    planLimitCard()
                 }
                 Column(
                     modifier = Modifier.weight(1f),
@@ -985,7 +802,6 @@ fun SettingsScreen(
             ) {
                 languageCard()
                 multiThemeEngineCard()
-                planLimitCard()
                 billingCycleCard()
                 smartAlertsCard()
                 powerSavingCard()
@@ -1011,36 +827,135 @@ fun ThemeOptionButton(
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(if (isSelected) glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f) else glassStyle.cardBackground)
             .border(
                 1.dp,
                 if (isSelected) glassStyle.accentPrimary else glassStyle.borderColor,
-                RoundedCornerShape(14.dp)
+                RoundedCornerShape(12.dp)
             )
             .clickable { onClick() }
-            .padding(vertical = 10.dp, horizontal = 6.dp),
+            .padding(vertical = 7.dp, horizontal = 6.dp),
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
             Icon(
                 imageVector = icon,
                 contentDescription = title,
                 tint = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(13.dp)
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = title,
-                color = if (isSelected) glassStyle.textPrimary else glassStyle.textSecondary,
-                fontSize = 12.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+            Spacer(modifier = Modifier.width(6.dp))
+            Column(horizontalAlignment = Alignment.Start) {
+                Text(
+                    text = title,
+                    color = if (isSelected) glassStyle.textPrimary else glassStyle.textSecondary,
+                    fontSize = 11.5.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                )
+                Text(
+                    text = subtitle,
+                    color = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
+                    fontSize = 8.5.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CompactSystemThemeRow(
+    appLanguage: AppLanguage,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(
+                if (isSelected) {
+                    glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.16f else 0.10f)
+                } else {
+                    glassStyle.cardSubtleBg
+                }
             )
-            Text(
-                text = subtitle,
-                color = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
-                fontSize = 9.sp
+            .border(
+                width = if (isSelected) 1.2.dp else 0.8.dp,
+                color = if (isSelected) glassStyle.accentPrimary else glassStyle.borderColor,
+                shape = RoundedCornerShape(10.dp)
             )
+            .clickable { onClick() }
+            .padding(horizontal = 8.dp, vertical = 6.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(22.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isSelected) glassStyle.accentPrimary else glassStyle.cardBackground
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.BrightnessAuto,
+                        contentDescription = "Follow System",
+                        tint = if (isSelected) Color.White else glassStyle.textSecondary,
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+                Column {
+                    Text(
+                        text = com.example.model.AppThemeMode.SYSTEM.getDisplayName(appLanguage),
+                        color = if (isSelected) glassStyle.textPrimary else glassStyle.textSecondary,
+                        fontSize = 11.5.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                    )
+                    Text(
+                        text = com.example.model.AppThemeMode.SYSTEM.getDescription(appLanguage),
+                        color = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
+                        fontSize = 8.5.sp
+                    )
+                }
+            }
+
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Selected",
+                    tint = glassStyle.accentPrimary,
+                    modifier = Modifier.size(14.dp)
+                )
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    listOf(
+                        com.example.ui.theme.LightModeBackground,
+                        com.example.ui.theme.LiquidGlassDefaultBackground,
+                        com.example.ui.theme.LightModePrimary
+                    ).forEach { dotColor ->
+                        Box(
+                            modifier = Modifier
+                                .size(7.dp)
+                                .clip(CircleShape)
+                                .background(dotColor)
+                                .border(0.5.dp, Color.White.copy(alpha = 0.35f), CircleShape)
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -1059,7 +974,7 @@ fun MultiThemeOptionCard(
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(
                 if (isSelected) {
                     glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.16f else 0.10f)
@@ -1068,12 +983,12 @@ fun MultiThemeOptionCard(
                 }
             )
             .border(
-                width = if (isSelected) 1.5.dp else 1.dp,
+                width = if (isSelected) 1.2.dp else 0.8.dp,
                 color = if (isSelected) glassStyle.accentPrimary else glassStyle.borderColor,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(10.dp)
             )
             .clickable { onClick() }
-            .padding(12.dp)
+            .padding(horizontal = 8.dp, vertical = 6.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -1086,7 +1001,7 @@ fun MultiThemeOptionCard(
                 // Icon pill
                 Box(
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(22.dp)
                         .clip(CircleShape)
                         .background(
                             if (isSelected) glassStyle.accentPrimary else glassStyle.cardBackground
@@ -1097,7 +1012,7 @@ fun MultiThemeOptionCard(
                         imageVector = icon,
                         contentDescription = themeMode.getDisplayName(appLanguage),
                         tint = if (isSelected) Color.White else glassStyle.textSecondary,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(12.dp)
                     )
                 }
 
@@ -1107,14 +1022,14 @@ fun MultiThemeOptionCard(
                         imageVector = Icons.Default.CheckCircle,
                         contentDescription = "Selected",
                         tint = glassStyle.accentPrimary,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(14.dp)
                     )
                 } else {
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         colorPreviews.forEach { dotColor ->
                             Box(
                                 modifier = Modifier
-                                    .size(10.dp)
+                                    .size(7.dp)
                                     .clip(CircleShape)
                                     .background(dotColor)
                                     .border(0.5.dp, Color.White.copy(alpha = 0.35f), CircleShape)
@@ -1124,21 +1039,20 @@ fun MultiThemeOptionCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Text(
                 text = themeMode.getDisplayName(appLanguage),
                 color = if (isSelected) glassStyle.textPrimary else glassStyle.textSecondary,
-                fontSize = 13.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
+                fontSize = 11.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                maxLines = 1
             )
-
-            Spacer(modifier = Modifier.height(2.dp))
 
             Text(
                 text = themeMode.getDescription(appLanguage),
                 color = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
-                fontSize = 10.sp,
+                fontSize = 8.5.sp,
                 maxLines = 1
             )
         }

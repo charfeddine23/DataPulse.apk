@@ -120,4 +120,12 @@ class ExampleRobolectricTest {
     assertEquals("Multi-Theme Engine", com.example.model.AppStrings.multiThemeEngineSection(com.example.model.AppLanguage.ENGLISH))
     assertTrue(com.example.model.AppStrings.multiThemeEngineSection(com.example.model.AppLanguage.ARABIC).contains("Multi-Theme Engine"))
   }
+
+  @Test
+  fun `verify monthly data plan limit and edit cap strings`() {
+    assertEquals("تعديل الحد", com.example.model.AppStrings.editCap(com.example.model.AppLanguage.ARABIC))
+    assertEquals("Edit Cap", com.example.model.AppStrings.editCap(com.example.model.AppLanguage.ENGLISH))
+    assertEquals("حد باقة البيانات الشهرية", com.example.model.AppStrings.planLimitSection(com.example.model.AppLanguage.ARABIC))
+    assertEquals("MONTHLY DATA PLAN LIMIT", com.example.model.AppStrings.planLimitSection(com.example.model.AppLanguage.ENGLISH))
+  }
 }

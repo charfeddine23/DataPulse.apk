@@ -30,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.OpenInNew
@@ -686,15 +687,25 @@ fun CircularQuotaProgressGauge(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
                         .background(glassStyle.cardSubtleBg)
+                        .border(0.8.dp, animatedEngineColor.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
                         .clickable { onConfigureClick() }
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
                 ) {
-                    Text(
-                        text = AppStrings.editCap(appLanguage),
-                        color = animatedEngineColor,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = AppStrings.editCap(appLanguage),
+                            tint = animatedEngineColor,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = AppStrings.editCap(appLanguage),
+                            color = animatedEngineColor,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
 
