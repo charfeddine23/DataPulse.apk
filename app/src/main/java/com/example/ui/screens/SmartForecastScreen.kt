@@ -73,7 +73,6 @@ fun SmartForecastScreen(
     modifier: Modifier = Modifier
 ) {
     val dataForecast by viewModel.dataForecast.collectAsStateWithLifecycle()
-    val usageSummary by viewModel.usageSummary.collectAsStateWithLifecycle()
     val speedSample by viewModel.speedSample.collectAsStateWithLifecycle()
     val quota by viewModel.dataPlanQuota.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
@@ -150,7 +149,7 @@ fun SmartForecastScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(dimensions.gridSpacing)
                 ) {
-                    // Left Column (50%): Primary Forecast & Tips
+                    // Left Column (50%): Smart Data Forecasting Card
                     Column(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(dimensions.gridSpacing)
@@ -160,14 +159,9 @@ fun SmartForecastScreen(
                             appLanguage = appLanguage,
                             onConfigurePlanClick = onNavigateToSettings
                         )
-
-                        SmartRunwayTipsCard(
-                            forecast = dataForecast,
-                            appLanguage = appLanguage
-                        )
                     }
 
-                    // Right Column (50%): Runway Velocity & Daily Consumption Breakdown
+                    // Right Column (50%): Runway Velocity & Tips
                     Column(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(dimensions.gridSpacing)
@@ -177,9 +171,8 @@ fun SmartForecastScreen(
                             appLanguage = appLanguage
                         )
 
-                        DailyConsumptionBreakdownCard(
+                        SmartRunwayTipsCard(
                             forecast = dataForecast,
-                            usageSummary = usageSummary,
                             appLanguage = appLanguage
                         )
                     }
@@ -198,14 +191,6 @@ fun SmartForecastScreen(
             item {
                 CycleRunwayCard(
                     forecast = dataForecast,
-                    appLanguage = appLanguage
-                )
-            }
-
-            item {
-                DailyConsumptionBreakdownCard(
-                    forecast = dataForecast,
-                    usageSummary = usageSummary,
                     appLanguage = appLanguage
                 )
             }
@@ -436,144 +421,7 @@ private fun RunwaySubMetricBox(
     }
 }
 
-/**
- * Breakdown of consumption metrics: Cellular, Wi-Fi, and today's burn rate.
- * Symmetrical 68.dp row chips with circular icon badges.
- */
-@Composable
-private fun DailyConsumptionBreakdownCard(
-    forecast: SmartDataForecast,
-    usageSummary: com.example.model.NetworkUsageSummary,
-    appLanguage: AppLanguage,
-    modifier: Modifier = Modifier
-) {
-    val glassStyle = LocalLiquidGlass.current
 
-    GlassContainer(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        backgroundColor = glassStyle.cardBackground,
-        borderColor = glassStyle.borderColor
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = AppStrings.dataBreakdownTitle(appLanguage),
-                color = glassStyle.textSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                BreakdownRowChip(
-                    title = AppStrings.todayCellular(appLanguage),
-                    value = FormatUtils.formatBytes(usageSummary.mobileTodayBytes),
-                    icon = Icons.Default.SignalCellularAlt,
-                    tint = glassStyle.accentPrimary,
-                    modifier = Modifier.weight(1f)
-                )
-
-                BreakdownRowChip(
-                    title = AppStrings.todayWifi(appLanguage),
-                    value = FormatUtils.formatBytes(usageSummary.wifiTodayBytes),
-                    icon = Icons.Default.Wifi,
-                    tint = ElectricBlue,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                BreakdownRowChip(
-                    title = AppStrings.monthlyCellular(appLanguage),
-                    value = FormatUtils.formatBytes(usageSummary.mobileMonthBytes),
-                    icon = Icons.Default.CellTower,
-                    tint = glassStyle.accentSecondary,
-                    modifier = Modifier.weight(1f)
-                )
-
-                BreakdownRowChip(
-                    title = AppStrings.monthlyWifi(appLanguage),
-                    value = FormatUtils.formatBytes(usageSummary.wifiMonthBytes),
-                    icon = Icons.Default.TrendingUp,
-                    tint = CyanPulse,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun BreakdownRowChip(
-    title: String,
-    value: String,
-    icon: ImageVector,
-    tint: Color,
-    modifier: Modifier = Modifier
-) {
-    val glassStyle = LocalLiquidGlass.current
-
-    Box(
-        modifier = modifier
-            .heightIn(min = 68.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(glassStyle.cardSubtleBg)
-            .border(1.dp, glassStyle.borderColor, RoundedCornerShape(14.dp))
-            .padding(11.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(tint.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = title,
-                    tint = tint,
-                    modifier = Modifier.size(17.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    color = glassStyle.textTertiary,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = value,
-                    color = glassStyle.textPrimary,
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1
-                )
-            }
-        }
-    }
-}
 
 /**
  * Actionable tips card adapting dynamically to user's forecast status.

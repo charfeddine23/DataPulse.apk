@@ -87,9 +87,9 @@ fun ElasticFlamePullToRefreshBox(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
-    refreshThreshold: Dp = 88.dp,
-    maxDragDistance: Dp = 150.dp,
-    restingSyncOffset: Dp = 68.dp,
+    refreshThreshold: Dp = 124.dp,
+    maxDragDistance: Dp = 180.dp,
+    restingSyncOffset: Dp = 72.dp,
     content: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
@@ -250,16 +250,22 @@ fun ElasticFlamePullToRefreshBox(
                 available: Offset,
                 source: NestedScrollSource
             ): Offset {
-                // When dragging down at top of scrollable content (available.y > 0)
-                if (available.y > 0f && refreshState != ElasticFlameRefreshState.SYNCING) {
+                // Only respond to deliberate direct user finger drag down at top of scrollable content
+                if (source == NestedScrollSource.UserInput && available.y > 0f && refreshState != ElasticFlameRefreshState.SYNCING) {
+                    rawDragDistance += available.y
+
+                    // Ignore casual micro-touches / minor jitter: require at least 28px of drag
+                    if (rawDragDistance < 28f && pullDistanceAnim.value <= 0.5f) {
+                        return Offset.Zero
+                    }
+
                     refreshState = ElasticFlameRefreshState.PULLING
 
-                    // Calculate high-tension rubber-band resistance curve (~0.5s tension feel)
+                    // Calculate high-tension rubber-band resistance curve to prevent accidental over-extension
                     val dragFraction = (pullDistanceAnim.value / maxDragPx).coerceIn(0f, 1f)
-                    val resistanceMultiplier = 0.55f * (1f - dragFraction).pow(1.8f).coerceAtLeast(0.12f)
+                    val resistanceMultiplier = 0.38f * (1f - dragFraction).pow(2.2f).coerceAtLeast(0.08f)
                     val incrementalPull = available.y * resistanceMultiplier
 
-                    rawDragDistance += available.y
                     val newDistance = (pullDistanceAnim.value + incrementalPull).coerceAtMost(maxDragPx)
 
                     // Trigger haptic tick as soon as threshold is crossed
