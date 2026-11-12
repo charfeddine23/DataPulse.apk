@@ -294,8 +294,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _isRankRefreshing.value = true
             try {
+                val startMs = System.currentTimeMillis()
                 val ranked = repository.fetchAllTimeRankedAppUsage()
                 _allTimeRankedApps.value = ranked
+                val elapsed = System.currentTimeMillis() - startMs
+                if (elapsed < 1100L) {
+                    kotlinx.coroutines.delay(1100L - elapsed)
+                }
             } catch (_: Exception) {
             } finally {
                 _isRankRefreshing.value = false

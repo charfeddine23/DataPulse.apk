@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -87,9 +88,9 @@ fun ElasticFlamePullToRefreshBox(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
-    refreshThreshold: Dp = 124.dp,
-    maxDragDistance: Dp = 180.dp,
-    restingSyncOffset: Dp = 72.dp,
+    refreshThreshold: Dp = 80.dp,
+    maxDragDistance: Dp = 145.dp,
+    restingSyncOffset: Dp = 64.dp,
     content: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
@@ -104,6 +105,7 @@ fun ElasticFlamePullToRefreshBox(
     val pullDistanceAnim = remember { Animatable(0f) }
     var rawDragDistance by remember { mutableFloatStateOf(0f) }
     var hasTriggeredHaptic by remember { mutableStateOf(false) }
+    var syncStartedAt by remember { mutableLongStateOf(0L) }
 
     // Unified release handler: handles finger release gracefully
     fun handleRelease() {
@@ -136,8 +138,10 @@ fun ElasticFlamePullToRefreshBox(
         }
 
         if (currentPull >= thresholdPx) {
-            // Reached or exceeded threshold: transition to SYNCING and trigger refresh
+            // Reached or exceeded threshold: transition to SYNCING and ignite flame
             refreshState = ElasticFlameRefreshState.SYNCING
+            syncStartedAt = System.currentTimeMillis()
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
             coroutineScope.launch {
                 pullDistanceAnim.animateTo(
                     targetValue = restingSyncOffsetPx,
@@ -172,9 +176,16 @@ fun ElasticFlamePullToRefreshBox(
                 refreshState == ElasticFlameRefreshState.SNAP_RELEASED ||
                 pullDistanceAnim.value > 0.5f
             ) {
+                // Ensure the flame stays lit / burning for a distinct, satisfying duration ("تشعل شوية")
+                val elapsed = System.currentTimeMillis() - syncStartedAt
+                val minBurnDurationMs = 1200L
+                if (elapsed < minBurnDurationMs) {
+                    delay(minBurnDurationMs - elapsed)
+                }
+
                 refreshState = ElasticFlameRefreshState.COMPLETED
-                // Brief 100ms completion flare, then smoothly retract to 0f
-                delay(100)
+                // Brief completion flare, then smoothly retract to 0f and disappear ("ومن بعد تختفي")
+                delay(120)
                 pullDistanceAnim.animateTo(
                     targetValue = 0f,
                     animationSpec = spring(
@@ -190,6 +201,7 @@ fun ElasticFlamePullToRefreshBox(
             // If isRefreshing became true and user actually pulled the flame
             if (refreshState != ElasticFlameRefreshState.SYNCING && pullDistanceAnim.value > 10f) {
                 refreshState = ElasticFlameRefreshState.SYNCING
+                syncStartedAt = System.currentTimeMillis()
                 pullDistanceAnim.animateTo(
                     targetValue = restingSyncOffsetPx,
                     animationSpec = spring(
@@ -254,16 +266,11 @@ fun ElasticFlamePullToRefreshBox(
                 if (source == NestedScrollSource.UserInput && available.y > 0f && refreshState != ElasticFlameRefreshState.SYNCING) {
                     rawDragDistance += available.y
 
-                    // Ignore casual micro-touches / minor jitter: require at least 28px of drag
-                    if (rawDragDistance < 28f && pullDistanceAnim.value <= 0.5f) {
-                        return Offset.Zero
-                    }
-
                     refreshState = ElasticFlameRefreshState.PULLING
 
-                    // Calculate high-tension rubber-band resistance curve to prevent accidental over-extension
+                    // Natural rubber-band resistance curve
                     val dragFraction = (pullDistanceAnim.value / maxDragPx).coerceIn(0f, 1f)
-                    val resistanceMultiplier = 0.38f * (1f - dragFraction).pow(2.2f).coerceAtLeast(0.08f)
+                    val resistanceMultiplier = 0.52f * (1f - dragFraction).pow(1.2f).coerceAtLeast(0.18f)
                     val incrementalPull = available.y * resistanceMultiplier
 
                     val newDistance = (pullDistanceAnim.value + incrementalPull).coerceAtMost(maxDragPx)
