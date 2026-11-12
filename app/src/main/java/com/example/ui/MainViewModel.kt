@@ -10,6 +10,7 @@ import com.example.model.DataPlanQuota
 import com.example.model.InterfaceFilter
 import com.example.model.LiveSpeedSample
 import com.example.model.NetworkUsageSummary
+import com.example.model.PrivateDnsPreset
 import com.example.model.QuotaStatus
 import com.example.model.SimCardInfo
 import com.example.model.TimeRange
@@ -128,6 +129,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (preferences.appLanguage == "EN") com.example.model.AppLanguage.ENGLISH else com.example.model.AppLanguage.ARABIC
     )
     val appLanguage: StateFlow<com.example.model.AppLanguage> = _appLanguage.asStateFlow()
+
+    private val _privateDnsPreset = MutableStateFlow(
+        try {
+            PrivateDnsPreset.valueOf(preferences.privateDnsPreset)
+        } catch (_: Exception) {
+            PrivateDnsPreset.OFF
+        }
+    )
+    val privateDnsPreset: StateFlow<PrivateDnsPreset> = _privateDnsPreset.asStateFlow()
+
+    private val _privateDnsCustomHostname = MutableStateFlow(preferences.privateDnsCustomHostname)
+    val privateDnsCustomHostname: StateFlow<String> = _privateDnsCustomHostname.asStateFlow()
 
     // Filtered app usage list based on interface & search
     val filteredAppUsage: StateFlow<List<AppUsageItem>> = combine(
@@ -482,5 +495,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setAppLanguage(lang: com.example.model.AppLanguage) {
         preferences.appLanguage = lang.code
         _appLanguage.value = lang
+    }
+
+    fun setPrivateDnsPreset(preset: PrivateDnsPreset) {
+        preferences.privateDnsPreset = preset.name
+        _privateDnsPreset.value = preset
+    }
+
+    fun setPrivateDnsCustomHostname(hostname: String) {
+        val trimmed = hostname.trim()
+        preferences.privateDnsCustomHostname = trimmed
+        _privateDnsCustomHostname.value = trimmed
     }
 }

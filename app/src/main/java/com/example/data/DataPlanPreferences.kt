@@ -106,6 +106,14 @@ class DataPlanPreferences(context: Context) {
         }
         set(value) = prefs.edit().putString(KEY_SAVED_TIME_RANGE, value.name).apply()
 
+    var privateDnsPreset: String
+        get() = prefs.getString(KEY_PRIVATE_DNS_PRESET, "OFF") ?: "OFF"
+        set(value) = prefs.edit().putString(KEY_PRIVATE_DNS_PRESET, value).apply()
+
+    var privateDnsCustomHostname: String
+        get() = prefs.getString(KEY_PRIVATE_DNS_CUSTOM, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_PRIVATE_DNS_CUSTOM, value).apply()
+
     companion object {
         private const val KEY_PLAN_LIMIT_GB = "plan_limit_gb"
         private const val KEY_BILLING_CYCLE_DAY = "billing_cycle_day"
@@ -120,5 +128,7 @@ class DataPlanPreferences(context: Context) {
         private const val KEY_DAILY_APP_QUOTA_GB = "daily_app_quota_gb"
         private const val KEY_DAILY_APP_ALERT_ENABLED = "daily_app_alert_enabled"
         private const val KEY_SAVED_TIME_RANGE = "saved_time_range_filter"
+        private const val KEY_PRIVATE_DNS_PRESET = "private_dns_preset"
+        private const val KEY_PRIVATE_DNS_CUSTOM = "private_dns_custom_hostname"
     }
 }

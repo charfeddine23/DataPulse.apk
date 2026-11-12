@@ -128,4 +128,29 @@ class ExampleRobolectricTest {
     assertEquals("حد باقة البيانات الشهرية", com.example.model.AppStrings.planLimitSection(com.example.model.AppLanguage.ARABIC))
     assertEquals("MONTHLY DATA PLAN LIMIT", com.example.model.AppStrings.planLimitSection(com.example.model.AppLanguage.ENGLISH))
   }
+
+  @Test
+  fun `verify private dns presets including adguard recommendation`() {
+    val presets = com.example.model.PrivateDnsPreset.values()
+    assertEquals(4, presets.size)
+
+    val adguard = com.example.model.PrivateDnsPreset.ADGUARD
+    assertEquals("dns.adguard.com", adguard.hostname)
+    assertTrue(adguard.isRecommended)
+    assertEquals("AdGuard DNS", adguard.getDisplayName(com.example.model.AppLanguage.ENGLISH))
+    assertEquals("AdGuard DNS", adguard.getDisplayName(com.example.model.AppLanguage.ARABIC))
+
+    val cloudflare = com.example.model.PrivateDnsPreset.CLOUDFLARE
+    assertEquals("one.one.one.one", cloudflare.hostname)
+    assertEquals(false, cloudflare.isRecommended)
+
+    val off = com.example.model.PrivateDnsPreset.OFF
+    assertEquals(null, off.hostname)
+
+    val custom = com.example.model.PrivateDnsPreset.CUSTOM
+    assertEquals(null, custom.hostname)
+
+    assertTrue(com.example.model.AppStrings.privateDnsAdGuardBadge(com.example.model.AppLanguage.ARABIC).contains("موصى به"))
+    assertTrue(com.example.model.AppStrings.privateDnsAdGuardBadge(com.example.model.AppLanguage.ENGLISH).contains("RECOMMENDED"))
+  }
 }

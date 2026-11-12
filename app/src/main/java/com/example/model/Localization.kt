@@ -212,6 +212,25 @@ object AppStrings {
     fun recSafe(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "ممتاز! استهلاكك منضبط وضمن المسار الآمن حتى موعد التجديد القادم." else "Optimal! Your mobile consumption is comfortably on track to finish with data to spare."
     fun openSettingsMenu(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الإعدادات العامة" else "Open Settings"
     fun backToPrevious(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "رجوع" else "Back"
+
+    // Private DNS (DoT)
+    fun privateDnsTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "نظام أسماء النطاقات الخاص (Private DNS)" else "Private DNS (DoT)"
+    fun privateDnsSubtitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تشفير حركة البيانات وحظر الإعلانات والتعقب على مستوى النظام" else "System-wide DNS encryption, ad-blocking & tracker prevention"
+    fun privateDnsActive(hostname: String, lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الوضع النشط: $hostname" else "Active: $hostname"
+    fun privateDnsOff(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "افتراضي النظام (معطل)" else "System Default (Off)"
+    fun privateDnsAdGuard(lang: AppLanguage) = "AdGuard DNS"
+    fun privateDnsCloudflare(lang: AppLanguage) = "Cloudflare (1.1.1.1)"
+    fun privateDnsCustom(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "مضيف مخصص" else "Custom Hostname"
+    fun privateDnsAdGuardBadge(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "★ موصى به • حظر الإعلانات" else "★ RECOMMENDED • BLOCKS ADS"
+    fun privateDnsAdGuardDesc(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "يحظر الإعلانات وأدوات التعقب الضارة ويوفر استهلاك الباقة (dns.adguard.com)" else "Blocks ads, trackers & saves cellular quota (dns.adguard.com)"
+    fun privateDnsCloudflareDesc(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "استجابة سريعة جداً وحماية الخصوصية وتشفير DoT (one.one.one.one)" else "Ultra-fast response with privacy DoT encryption (one.one.one.one)"
+    fun privateDnsOffDesc(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "استخدام DNS الافتراضي التلقائي لشبكة الاتصال دون تشفير مخصص" else "Use network default DNS assigned by mobile carrier / Wi-Fi"
+    fun privateDnsCustomDesc(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "إدخال اسم مضيف DoT مخصص من اختيارك" else "Enter your custom TLS DNS provider hostname"
+    fun privateDnsCopiedNotice(hostname: String, lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تم نسخ «$hostname» إلى الحافظة!" else "Copied \"$hostname\" to clipboard!"
+    fun privateDnsGuide(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "افتح إعدادات أندرويد ➔ الشبكة والإنترنت ➔ نظام DNS الخاص ➔ اختر «اسم مضيف موفر DNS الخاص» والصق الرابط" else "Open Android Settings ➔ Network & internet ➔ Private DNS ➔ Select 'Private DNS provider hostname' and paste"
+    fun privateDnsOpenSettingsBtn(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تطبيق في إعدادات أندرويد" else "Apply in Android Settings"
+    fun privateDnsCustomPlaceholder(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "مثال: dns.quad9.net" else "e.g. dns.quad9.net"
+    fun privateDnsApplyBtn(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تطبيق" else "Apply"
 }
 
 
