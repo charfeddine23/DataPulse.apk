@@ -14,6 +14,7 @@ jobs:
   build-and-release:
     name: Build & Release Signed APK
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]')
 
     steps:
       - name: Checkout Code
@@ -30,24 +31,103 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Extract Version Info from build.gradle.kts
-        id: extract_version
+      - name: Auto-Increment Version & Extract App Name
+        id: bump_version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
-          VERSION_NAME=$(grep -o 'versionName = "[^"]*"' app/build.gradle.kts | head -n 1 | cut -d'"' -f2)
-          VERSION_CODE=$(grep -o 'versionCode = [0-9]*' app/build.gradle.kts | head -n 1 | awk '{print $3}')
-          if [ -z "$VERSION_NAME" ]; then VERSION_NAME="1.0.0"; fi
-          if [ -z "$VERSION_CODE" ]; then VERSION_CODE="1"; fi
+          python3 - << 'PY'
+          import json, os, re, subprocess
 
-          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
-          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
+          gradle_path = "app/build.gradle.kts"
+          with open(gradle_path, "r", encoding="utf-8") as f:
+              gradle_text = f.read()
 
-          # Check if tag already exists to prevent duplicate tag failure
-          if git rev-parse "v${VERSION_NAME}" >/dev/null 2>&1; then
-            echo "TAG_NAME=v${VERSION_NAME}-build${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
-          else
-            echo "TAG_NAME=v${VERSION_NAME}" >> $GITHUB_ENV
-          fi
-          echo "Version extracted: v$VERSION_NAME (code: $VERSION_CODE)"
+          m_code = re.search(r"versionCode\s*=\s*(\d+)", gradle_text)
+          m_name = re.search(r'versionName\s*=\s*"([^"]+)"', gradle_text)
+
+          gradle_code = int(m_code.group(1)) if m_code else 1
+          gradle_ver_str = m_name.group(1) if m_name else "1.0.1"
+
+          def parse_ver(v):
+              m = re.search(r"(\d+)\.(\d+)\.(\d+)", v)
+              if m:
+                  return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+              m2 = re.search(r"(\d+)\.(\d+)", v)
+              if m2:
+                  return (int(m2.group(1)), int(m2.group(2)), 0)
+              return (1, 0, 1)
+
+          max_ver = parse_ver(gradle_ver_str)
+          max_code = gradle_code
+
+          # Also check existing GitHub Releases so version always advances even if gradle wasn't synced back
+          try:
+              out = subprocess.check_output(
+                  ["gh", "api", "--paginate", f"repos/{os.environ['REPO']}/releases?per_page=100"],
+                  text=True
+              )
+              dec = json.JSONDecoder()
+              s = out.lstrip()
+              idx = 0
+              while idx < len(s):
+                  chunk, next_idx = dec.raw_decode(s, idx)
+                  if isinstance(chunk, list):
+                      for rel in chunk:
+                          for field in (rel.get("tag_name", ""), rel.get("name", "")):
+                              if re.search(r"\d+\.\d+\.\d+", field):
+                                  v = parse_ver(field)
+                                  if v > max_ver:
+                                      max_ver = v
+                          body = rel.get("body") or ""
+                          mc = re.search(r"\*\*Version Code:\*\*\s*`(\d+)`", body)
+                          if mc:
+                              max_code = max(max_code, int(mc.group(1)))
+                  idx = next_idx
+                  while idx < len(s) and s[idx].isspace():
+                      idx += 1
+          except Exception as e:
+              print(f"Note: skipping remote release lookup ({e})")
+
+          major, minor, patch = max_ver
+          if major < 1:
+              major = 1
+          if patch >= 9:
+              minor += 1
+              patch = 0
+          else:
+              patch += 1
+
+          new_ver = f"{major}.{minor}.{patch}"
+          new_code = max_code + 1
+
+          # Update app/build.gradle.kts with the new versionCode & versionName
+          gradle_text = re.sub(r"(versionCode\s*=\s*)\d+", rf"\g<1>{new_code}", gradle_text, count=1)
+          gradle_text = re.sub(r'(versionName\s*=\s*")[^"]+(")', rf'\g<1>{new_ver}\g<2>', gradle_text, count=1)
+          with open(gradle_path, "w", encoding="utf-8") as f:
+              f.write(gradle_text)
+
+          # Extract app name from res/values/strings.xml
+          app_name = "Data Pulse"
+          strings_path = "app/src/main/res/values/strings.xml"
+          if os.path.exists(strings_path):
+              with open(strings_path, "r", encoding="utf-8") as sf:
+                  sm = re.search(r'<string\s+name="app_name">([^<]+)</string>', sf.read())
+                  if sm:
+                      app_name = sm.group(1).strip()
+
+          apk_prefix = re.sub(r"\s+", ".", app_name)
+
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as ef:
+              ef.write(f"APP_NAME={app_name}\n")
+              ef.write(f"APK_PREFIX={apk_prefix}\n")
+              ef.write(f"VERSION_NAME={new_ver}\n")
+              ef.write(f"VERSION_CODE={new_code}\n")
+              ef.write(f"TAG_NAME=v{new_ver}\n")
+
+          print(f"Auto-bumped version to v{new_ver} (versionCode={new_code}) for {app_name}")
+          PY
 
       - name: Restore Keystore from Secrets
         env:
@@ -110,7 +190,7 @@ jobs:
             exit 1
           fi
 
-          FINAL_APK_NAME="DataPulse-v${{ env.VERSION_NAME }}.apk"
+          FINAL_APK_NAME="${{ env.APK_PREFIX }}.v${{ env.VERSION_NAME }}.apk"
           cp "$APK_SRC" "./$FINAL_APK_NAME"
           sha256sum "./$FINAL_APK_NAME" > "./${FINAL_APK_NAME}.sha256"
 
@@ -122,9 +202,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG_NAME }}
-          name: "Data Pulse ${{ env.TAG_NAME }}"
+          name: "${{ env.APP_NAME }}.v${{ env.VERSION_NAME }}.apk"
           body: |
-            ### 🚀 Data Pulse - Release ${{ env.TAG_NAME }}
+            ### 🚀 ${{ env.APP_NAME }} - Release v${{ env.VERSION_NAME }}
             
             **Developer:** Charfeddine Ka
             **Version Name:** `${{ env.VERSION_NAME }}`
@@ -133,15 +213,16 @@ jobs:
             **Commit:** `${{ github.sha }}`
             
             #### 🌟 Highlights & Features in this Release:
-            - **Modern Liquid Glass UI**: Dark mode aesthetic with translucent glass cards, neon pulse indicators, and responsive charts.
+            - **Modern Liquid Glass UI**: Pearl & Platinum Light Mode + Multi-Theme Dark Glass aesthetics.
             - **Live Speed Meter**: Real-time download/upload monitoring (Kbps/Mbps) and continuous waveform sparkline.
             - **Data Tracking & Analytics**: Comprehensive breakdown for Mobile Data (Cellular) and Wi-Fi (Today & Monthly).
-            - **App-by-App Usage**: Identify high-consumption applications with custom search and interface filtering.
+            - **App-by-App Usage**: Identify high-consumption applications with compact cycling filters & custom limits.
+            - **All-Time Rank**: Leaderboard ranking top data-consuming apps across Wi-Fi & Cellular.
             - **Quotas & Smart Alerts**: Custom data plan limits with visual progress and warning triggers at 80% & 95%.
             - **Dual SIM Support**: Cellular subscription tracking and carrier detection.
             
             #### 📦 Verification & Assets:
-            - **APK:** `${{ env.FINAL_APK_PATH }}`
+            - **APK:** `${{ env.APK_PREFIX }}.v${{ env.VERSION_NAME }}.apk`
             - SHA256 Checksum attached below.
           files: |
             ${{ env.FINAL_APK_PATH }}
@@ -150,6 +231,17 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit Version Bump
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet app/build.gradle.kts; then
+            git add app/build.gradle.kts
+            git commit -m "chore: bump version to v${{ env.VERSION_NAME }} [skip ci]"
+            git push origin HEAD:${{ github.ref_name }} || echo "::warning::Could not push version bump commit (protected branch or concurrent push)."
+          fi
 
       - name: Cleanup Old Releases & Actions (Keep Latest Only)
         if: success()
