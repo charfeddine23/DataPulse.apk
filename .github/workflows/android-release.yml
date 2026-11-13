@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   build-and-release:
@@ -149,3 +150,37 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup Old Releases & Actions (Keep Latest Only)
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          CURRENT_TAG: ${{ env.TAG_NAME }}
+          CURRENT_RUN_ID: ${{ github.run_id }}
+        run: |
+          echo "Cleaning up old Releases (keeping tag: $CURRENT_TAG)..."
+          gh api --paginate "repos/${REPO}/releases?per_page=100" \
+            | jq -rs --arg tag "$CURRENT_TAG" 'add // [] | .[] | select(.tag_name != $tag) | "\(.id)\t\(.tag_name)"' \
+            | while IFS=$'\t' read -r RELEASE_ID OLD_TAG; do
+                if [ -n "$RELEASE_ID" ]; then
+                  echo "Deleting old release ID=$RELEASE_ID (tag: $OLD_TAG)"
+                  gh api -X DELETE "repos/${REPO}/releases/${RELEASE_ID}" || true
+                fi
+                if [ -n "$OLD_TAG" ]; then
+                  echo "Deleting old release tag: $OLD_TAG"
+                  gh api -X DELETE "repos/${REPO}/git/refs/tags/${OLD_TAG}" || true
+                fi
+              done
+
+          echo "Cleaning up old GitHub Actions workflow runs (keeping run ID: $CURRENT_RUN_ID)..."
+          gh api --paginate "repos/${REPO}/actions/runs?per_page=100" \
+            | jq -rs --arg rid "$CURRENT_RUN_ID" '[.[].workflow_runs[]?] | .[] | select((.id | tostring) != $rid and .status == "completed") | .id' \
+            | while read -r RUN_ID; do
+                if [ -n "$RUN_ID" ]; then
+                  echo "Deleting old workflow run ID=$RUN_ID"
+                  gh api -X DELETE "repos/${REPO}/actions/runs/${RUN_ID}" || true
+                fi
+              done
+
+          echo "Cleanup complete. Only the latest release and latest workflow run are kept."
