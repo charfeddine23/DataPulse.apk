@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.PieChart
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.SimCard
 import androidx.compose.material.icons.filled.TrendingUp
@@ -196,30 +195,13 @@ fun DashboardScreen(
                             verticalArrangement = Arrangement.spacedBy(dimensions.gridSpacing)
                         ) {
                             val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = com.example.model.AppStrings.dataBreakdownTitle(appLanguage),
-                                    color = glassStyle.textSecondary,
-                                    fontSize = dimensions.textBodyLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.5.sp
-                                )
-                                IconButton(
-                                    onClick = { viewModel.refreshAll() },
-                                    modifier = Modifier.size(32.dp).testTag("refresh_dashboard_button")
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Refresh,
-                                        contentDescription = com.example.model.AppStrings.refresh(appLanguage),
-                                        tint = glassStyle.accentPrimary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
+                            Text(
+                                text = com.example.model.AppStrings.dataBreakdownTitle(appLanguage),
+                                color = glassStyle.textSecondary,
+                                fontSize = dimensions.textBodyLarge,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            )
                             DataBreakdownGrid(
                                 usageSummary = usageSummary,
                                 appLanguage = appLanguage
@@ -256,30 +238,13 @@ fun DashboardScreen(
 
                 item {
                     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = com.example.model.AppStrings.dataBreakdownTitle(appLanguage),
-                            color = glassStyle.textSecondary,
-                            fontSize = dimensions.textBodyLarge,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.5.sp
-                        )
-                        IconButton(
-                            onClick = { viewModel.refreshAll() },
-                            modifier = Modifier.size(28.dp).testTag("refresh_dashboard_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = com.example.model.AppStrings.refresh(appLanguage),
-                                tint = glassStyle.accentPrimary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
+                    Text(
+                        text = com.example.model.AppStrings.dataBreakdownTitle(appLanguage),
+                        color = glassStyle.textSecondary,
+                        fontSize = dimensions.textBodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     DataBreakdownGrid(
                         usageSummary = usageSummary,
