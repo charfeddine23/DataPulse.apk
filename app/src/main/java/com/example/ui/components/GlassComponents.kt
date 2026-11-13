@@ -23,7 +23,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -181,11 +183,98 @@ fun GlassContainer(
     }
 }
 
+/**
+ * Sticky, frosted Liquid Glass Top App Bar anchored at the top across all screens.
+ * Displays the app icon, "Data Pulse" branding, live connection status pill, and Settings button.
+ */
+@Composable
+fun PersistentTopAppBar(
+    speedSample: LiveSpeedSample,
+    appLanguage: AppLanguage,
+    isSettingsActive: Boolean,
+    onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val glassStyle = LocalLiquidGlass.current
+    val dimensions = LocalAppDimensions.current
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                brush = if (glassStyle.isDark) {
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            glassStyle.surfaceColor.copy(alpha = 0.96f),
+                            glassStyle.surfaceTranslucent.copy(alpha = 0.88f)
+                        )
+                    )
+                } else {
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xF8FFFFFF),
+                            Color(0xEEF4F6F9)
+                        )
+                    )
+                }
+            )
+            .statusBarsPadding()
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            DashboardHeader(
+                speedSample = speedSample,
+                appLanguage = appLanguage,
+                onOpenSettings = onOpenSettings,
+                isSettingsActive = isSettingsActive,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = dimensions.contentMaxWidth)
+                    .padding(
+                        horizontal = (dimensions.screenPaddingHorizontal - 4.dp).coerceAtLeast(0.dp),
+                        vertical = 2.dp
+                    )
+            )
+        }
+
+        // Subtle frosted rim divider separating the pinned top bar from scrolling screen content
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(
+                    brush = if (glassStyle.isDark) {
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                glassStyle.borderColor.copy(alpha = 0.45f),
+                                glassStyle.accentPrimary.copy(alpha = 0.28f),
+                                glassStyle.borderColor.copy(alpha = 0.45f),
+                                Color.Transparent
+                            )
+                        )
+                    } else {
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                glassStyle.borderColor.copy(alpha = 0.75f),
+                                Color.Transparent
+                            )
+                        )
+                    }
+                )
+        )
+    }
+}
+
 @Composable
 fun DashboardHeader(
     speedSample: LiveSpeedSample,
     appLanguage: AppLanguage,
     onOpenSettings: () -> Unit = {},
+    isSettingsActive: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = LocalLiquidGlass.current
@@ -238,6 +327,7 @@ fun DashboardHeader(
 
                 LiquidGlassHamburgerMenuButton(
                     onClick = onOpenSettings,
+                    isSelected = isSettingsActive,
                     contentDescription = AppStrings.openSettingsMenu(appLanguage)
                 )
             }
@@ -253,6 +343,7 @@ fun DashboardHeader(
 fun LiquidGlassHamburgerMenuButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
     contentDescription: String = "Open Settings"
 ) {
     val glassStyle = LocalLiquidGlass.current
@@ -261,16 +352,29 @@ fun LiquidGlassHamburgerMenuButton(
         modifier = modifier
             .size(40.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(glassStyle.cardSubtleBg)
+            .background(
+                if (isSelected) {
+                    glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.22f else 0.14f)
+                } else {
+                    glassStyle.cardSubtleBg
+                }
+            )
             .border(
-                1.dp,
-                Brush.linearGradient(
-                    colors = listOf(
-                        glassStyle.accentPrimary.copy(alpha = 0.55f),
-                        glassStyle.accentSecondary.copy(alpha = 0.25f)
-                    )
+                width = if (isSelected) 1.4.dp else 1.dp,
+                brush = Brush.linearGradient(
+                    colors = if (isSelected) {
+                        listOf(
+                            glassStyle.accentPrimary,
+                            glassStyle.accentSecondary.copy(alpha = 0.7f)
+                        )
+                    } else {
+                        listOf(
+                            glassStyle.accentPrimary.copy(alpha = 0.55f),
+                            glassStyle.accentSecondary.copy(alpha = 0.25f)
+                        )
+                    }
                 ),
-                RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(14.dp)
             )
             .clickable(onClick = onClick)
             .testTag("top_bar_settings_menu_button"),

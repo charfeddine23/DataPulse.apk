@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.MainViewModel
+import com.example.ui.components.PersistentTopAppBar
 import com.example.ui.screens.AnalyticsScreen
 import com.example.ui.screens.DashboardScreen
 import com.example.ui.screens.RankScreen
@@ -89,6 +90,7 @@ fun DataPulseApp(
     var currentDestination by remember { mutableStateOf(NavDestination.DASHBOARD) }
     var previousDestination by remember { mutableStateOf(NavDestination.DASHBOARD) }
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+    val speedSample by viewModel.speedSample.collectAsStateWithLifecycle()
     val targetNavDestination by viewModel.targetNavDestination.collectAsStateWithLifecycle()
 
     androidx.compose.runtime.LaunchedEffect(targetNavDestination) {
@@ -154,6 +156,20 @@ fun DataPulseApp(
             .fillMaxSize()
             .background(brush = glassStyle.backdropBrush),
         containerColor = Color.Transparent,
+        topBar = {
+            PersistentTopAppBar(
+                speedSample = speedSample,
+                appLanguage = appLanguage,
+                isSettingsActive = (currentDestination == NavDestination.SETTINGS),
+                onOpenSettings = {
+                    if (currentDestination == NavDestination.SETTINGS) {
+                        navigateBack()
+                    } else {
+                        navigateTo(NavDestination.SETTINGS)
+                    }
+                }
+            )
+        },
         bottomBar = {
             LiquidGlassBottomNav(
                 currentDestination = currentDestination,

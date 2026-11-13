@@ -51,9 +51,7 @@ import com.example.model.ForecastStatus
 import com.example.model.FormatUtils
 import com.example.model.SmartDataForecast
 import com.example.ui.MainViewModel
-import com.example.ui.components.ConnectionStatusPill
 import com.example.ui.components.GlassContainer
-import com.example.ui.components.LiquidGlassHamburgerMenuButton
 import com.example.ui.components.SmartDataForecastingCard
 import com.example.ui.theme.AmberAlert
 import com.example.ui.theme.CyanPulse
@@ -73,7 +71,6 @@ fun SmartForecastScreen(
     modifier: Modifier = Modifier
 ) {
     val dataForecast by viewModel.dataForecast.collectAsStateWithLifecycle()
-    val speedSample by viewModel.speedSample.collectAsStateWithLifecycle()
     val quota by viewModel.dataPlanQuota.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val glassStyle = LocalLiquidGlass.current
@@ -85,60 +82,42 @@ fun SmartForecastScreen(
             .padding(horizontal = dimensions.screenPaddingHorizontal),
         verticalArrangement = Arrangement.spacedBy(dimensions.sectionSpacing)
     ) {
-        // 1. Top Header with title and Hamburger Menu Icon on far right
+        // 1. Top Screen Title Header
         item {
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(dimensions.headerIconBoxSize)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(glassStyle.accentPrimary.copy(alpha = 0.16f))
-                                .border(1.dp, glassStyle.accentPrimary.copy(alpha = 0.45f), RoundedCornerShape(12.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Insights,
-                                contentDescription = null,
-                                tint = glassStyle.accentPrimary,
-                                modifier = Modifier.size(dimensions.headerIconSize * 0.55f)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = AppStrings.smartAnalyticsTitle(appLanguage),
-                            color = glassStyle.textPrimary,
-                            fontSize = dimensions.textTitleLarge,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.3.sp
+            Spacer(modifier = Modifier.height(6.dp))
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(dimensions.headerIconBoxSize)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(glassStyle.accentPrimary.copy(alpha = 0.16f))
+                            .border(1.dp, glassStyle.accentPrimary.copy(alpha = 0.45f), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Insights,
+                            contentDescription = null,
+                            tint = glassStyle.accentPrimary,
+                            modifier = Modifier.size(dimensions.headerIconSize * 0.55f)
                         )
                     }
-                    Spacer(modifier = Modifier.height(3.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = AppStrings.smartAnalyticsSubtitle(appLanguage),
-                        color = glassStyle.textSecondary,
-                        fontSize = dimensions.textCaption,
-                        lineHeight = 16.sp
+                        text = AppStrings.smartAnalyticsTitle(appLanguage),
+                        color = glassStyle.textPrimary,
+                        fontSize = dimensions.textTitleLarge,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.3.sp
                     )
                 }
-
-                // Top right actions: Status pill + Hamburger menu icon
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    ConnectionStatusPill(speedSample = speedSample, appLanguage = appLanguage)
-                    LiquidGlassHamburgerMenuButton(
-                        onClick = onNavigateToSettings,
-                        contentDescription = AppStrings.openSettingsMenu(appLanguage)
-                    )
-                }
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = AppStrings.smartAnalyticsSubtitle(appLanguage),
+                    color = glassStyle.textSecondary,
+                    fontSize = dimensions.textCaption,
+                    lineHeight = 16.sp
+                )
             }
         }
 

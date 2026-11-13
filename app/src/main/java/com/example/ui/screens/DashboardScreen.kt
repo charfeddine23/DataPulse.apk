@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -84,7 +85,6 @@ import com.example.model.FormatUtils
 import com.example.model.SimCardInfo
 import com.example.ui.MainViewModel
 import com.example.ui.components.CircularQuotaProgressGauge
-import com.example.ui.components.DashboardHeader
 import com.example.ui.components.ElasticFlamePullToRefreshBox
 import com.example.ui.components.GlassContainer
 import com.example.ui.components.LiveSpeedCard
@@ -141,17 +141,9 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = dimensions.screenPaddingHorizontal),
+            contentPadding = PaddingValues(top = 8.dp),
             verticalArrangement = Arrangement.spacedBy(dimensions.sectionSpacing)
         ) {
-            // App Branding Header with external app icon and clean title
-            item {
-                DashboardHeader(
-                    speedSample = speedSample,
-                    appLanguage = appLanguage,
-                    onOpenSettings = onNavigateToSettings
-                )
-            }
-
             // Usage Permission Warning if not granted
             if (!hasUsagePerm) {
                 item {

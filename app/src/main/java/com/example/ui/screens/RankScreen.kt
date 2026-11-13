@@ -10,6 +10,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -93,6 +94,7 @@ fun RankScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = dimensions.screenPaddingHorizontal),
+            contentPadding = PaddingValues(top = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Header: Screen Title & All-Time Competition Banner
