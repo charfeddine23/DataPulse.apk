@@ -6,8 +6,12 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,7 +48,6 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Speed
@@ -70,6 +73,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -169,29 +174,48 @@ fun SettingsScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                // Sleek, luxurious frosted segmented pill selector
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(glassStyle.cardSubtleBg)
+                        .border(0.8.dp, glassStyle.borderColor, RoundedCornerShape(14.dp))
+                        .padding(4.dp)
                 ) {
-                    ThemeOptionButton(
-                        title = "العربية",
-                        subtitle = "Arabic",
-                        icon = Icons.Default.Translate,
-                        isSelected = appLanguage == AppLanguage.ARABIC,
-                        onClick = { viewModel.setAppLanguage(AppLanguage.ARABIC) },
-                        modifier = Modifier.weight(1f)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        val arabicLabel = "العربية"
+                        val englishLabel = if (appLanguage == AppLanguage.ARABIC) "الإنغليزية" else "English"
 
-                    ThemeOptionButton(
-                        title = "English",
-                        subtitle = "الإنجليزية",
-                        icon = Icons.Default.Language,
-                        isSelected = appLanguage == AppLanguage.ENGLISH,
-                        onClick = { viewModel.setAppLanguage(AppLanguage.ENGLISH) },
-                        modifier = Modifier.weight(1f)
-                    )
+                        LanguagePillOption(
+                            label = arabicLabel,
+                            isSelected = appLanguage == AppLanguage.ARABIC,
+                            onClick = {
+                                appHaptics.performSegmentSwitch()
+                                viewModel.setAppLanguage(AppLanguage.ARABIC)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("language_option_arabic")
+                        )
+
+                        LanguagePillOption(
+                            label = englishLabel,
+                            isSelected = appLanguage == AppLanguage.ENGLISH,
+                            onClick = {
+                                appHaptics.performSegmentSwitch()
+                                viewModel.setAppLanguage(AppLanguage.ENGLISH)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("language_option_english")
+                        )
+                    }
                 }
             }
         }
@@ -1360,53 +1384,99 @@ fun SettingsScreen(
 }
 
 @Composable
-fun ThemeOptionButton(
-    title: String,
-    subtitle: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+fun LanguagePillOption(
+    label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val shape = RoundedCornerShape(11.dp)
+
+    val animatedBgTop by animateColorAsState(
+        targetValue = when {
+            isSelected && glassStyle.isDark -> glassStyle.accentPrimary.copy(alpha = 0.24f)
+            isSelected -> Color.White
+            else -> Color.Transparent
+        },
+        animationSpec = tween(durationMillis = 220),
+        label = "lang_bg_top"
+    )
+    val animatedBgBottom by animateColorAsState(
+        targetValue = when {
+            isSelected && glassStyle.isDark -> glassStyle.accentSecondary.copy(alpha = 0.14f)
+            isSelected -> glassStyle.accentPrimary.copy(alpha = 0.08f)
+            else -> Color.Transparent
+        },
+        animationSpec = tween(durationMillis = 220),
+        label = "lang_bg_bottom"
+    )
+    val animatedBorderStart by animateColorAsState(
+        targetValue = if (isSelected) glassStyle.accentPrimary else Color.Transparent,
+        animationSpec = tween(durationMillis = 220),
+        label = "lang_border_start"
+    )
+    val animatedBorderEnd by animateColorAsState(
+        targetValue = if (isSelected) glassStyle.accentSecondary.copy(alpha = 0.65f) else Color.Transparent,
+        animationSpec = tween(durationMillis = 220),
+        label = "lang_border_end"
+    )
+    val animatedTextColor by animateColorAsState(
+        targetValue = when {
+            isSelected && glassStyle.isDark -> Color.White
+            isSelected -> glassStyle.textPrimary
+            else -> glassStyle.textSecondary
+        },
+        animationSpec = tween(durationMillis = 200),
+        label = "lang_text"
+    )
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f) else glassStyle.cardBackground)
-            .border(
-                1.dp,
-                if (isSelected) glassStyle.accentPrimary else glassStyle.borderColor,
-                RoundedCornerShape(12.dp)
+            .height(44.dp)
+            .then(
+                if (isSelected && !glassStyle.isDark) {
+                    Modifier.shadow(
+                        elevation = 3.dp,
+                        shape = shape,
+                        spotColor = Color(0x140F172A),
+                        ambientColor = Color(0x0A0F172A)
+                    )
+                } else Modifier
             )
-            .clickable { onClick() }
-            .padding(vertical = 7.dp, horizontal = 6.dp),
+            .clip(shape)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(animatedBgTop, animatedBgBottom)
+                )
+            )
+            .border(
+                width = if (isSelected) 1.2.dp else 0.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(animatedBorderStart, animatedBorderEnd)
+                ),
+                shape = shape
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
-                modifier = Modifier.size(13.dp)
+        AnimatedContent(
+            targetState = label,
+            transitionSpec = {
+                fadeIn(tween(180)) togetherWith fadeOut(tween(140))
+            },
+            label = "language_pill_text"
+        ) { targetText ->
+            Text(
+                text = targetText,
+                color = animatedTextColor,
+                fontSize = 13.5.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                letterSpacing = 0.25.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            Spacer(modifier = Modifier.width(6.dp))
-            Column(horizontalAlignment = Alignment.Start) {
-                Text(
-                    text = title,
-                    color = if (isSelected) glassStyle.textPrimary else glassStyle.textSecondary,
-                    fontSize = 11.5.sp,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                )
-                Text(
-                    text = subtitle,
-                    color = if (isSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
-                    fontSize = 8.5.sp
-                )
-            }
         }
     }
 }
