@@ -1,6 +1,7 @@
 package com.example.ui.components
 
 import android.os.Build
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -193,6 +194,7 @@ fun PersistentTopAppBar(
     appLanguage: AppLanguage,
     isSettingsActive: Boolean,
     onOpenSettings: () -> Unit,
+    title: String = "Data Pulse",
     modifier: Modifier = Modifier
 ) {
     val glassStyle = LocalLiquidGlass.current
@@ -229,6 +231,7 @@ fun PersistentTopAppBar(
                 appLanguage = appLanguage,
                 onOpenSettings = onOpenSettings,
                 isSettingsActive = isSettingsActive,
+                title = title,
                 modifier = Modifier
                     .fillMaxWidth()
                     .widthIn(max = dimensions.contentMaxWidth)
@@ -275,6 +278,7 @@ fun DashboardHeader(
     appLanguage: AppLanguage,
     onOpenSettings: () -> Unit = {},
     isSettingsActive: Boolean = false,
+    title: String = "Data Pulse",
     modifier: Modifier = Modifier
 ) {
     val glassStyle = LocalLiquidGlass.current
@@ -309,13 +313,15 @@ fun DashboardHeader(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                Text(
-                    text = "Data Pulse",
-                    color = glassStyle.textPrimary,
-                    fontSize = dimensions.textTitleLarge,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.5.sp
-                )
+                Crossfade(targetState = title, label = "top_bar_title_crossfade") { displayTitle ->
+                    Text(
+                        text = displayTitle,
+                        color = glassStyle.textPrimary,
+                        fontSize = dimensions.textTitleLarge,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
+                }
             }
 
             // Connection Status Badge + adjacent 3-line Hamburger Menu Button on far right

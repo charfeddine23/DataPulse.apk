@@ -161,6 +161,7 @@ fun DataPulseApp(
                 speedSample = speedSample,
                 appLanguage = appLanguage,
                 isSettingsActive = (currentDestination == NavDestination.SETTINGS),
+                title = if (currentDestination == NavDestination.USAGE) "Analytics" else "Data Pulse",
                 onOpenSettings = {
                     if (currentDestination == NavDestination.SETTINGS) {
                         navigateBack()

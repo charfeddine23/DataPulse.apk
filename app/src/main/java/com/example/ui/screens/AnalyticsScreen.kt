@@ -4,6 +4,24 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,12 +45,19 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.Today
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +65,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,31 +73,43 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.AppCustomLimitConfig
+import com.example.model.AppLanguage
+import com.example.model.AppStrings
 import com.example.model.AppUsageItem
 import com.example.model.FormatUtils
 import com.example.model.InterfaceFilter
 import com.example.model.TimeRange
 import com.example.ui.MainViewModel
 import com.example.ui.components.GlassContainer
-import com.example.ui.components.NeumorphicSegmentedPill
 import com.example.ui.components.PerAppCustomLimitDialog
 import com.example.ui.components.UsagePermissionCard
-import com.example.ui.components.neumorphicDepth
+import com.example.ui.components.rememberAppHaptics
 import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.ElectricBlue
+import com.example.ui.theme.EmeraldSafe
 import com.example.ui.theme.NeonPurple
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.TextTertiary
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -93,7 +131,9 @@ fun AnalyticsScreen(
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
 
     var selectedAppForCustomization by remember { mutableStateOf<AppUsageItem?>(null) }
+    var showTipPopup by remember { mutableStateOf(false) }
     val dimensions = com.example.ui.theme.LocalAppDimensions.current
+    val haptics = rememberAppHaptics()
 
     Column(
         modifier = modifier
@@ -102,68 +142,66 @@ fun AnalyticsScreen(
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = com.example.model.AppStrings.analyticsTitle(appLanguage),
-            color = glassStyle.textPrimary,
-            fontSize = dimensions.textTitleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = com.example.model.AppStrings.analyticsSubtitle(appLanguage),
-            color = glassStyle.textSecondary,
-            fontSize = dimensions.textBodyMedium
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // Quick tip for user discoverability
-        Text(
-            text = if (appLanguage == com.example.model.AppLanguage.ARABIC)
-                "💡 اضغط مطولاً على أي تطبيق لتخصيص الحد اليومي وإشعاراته"
-            else
-                "💡 Long-press any app to customize its daily data limit & alerts",
-            color = glassStyle.accentPrimary,
-            fontSize = dimensions.textCaption,
-            fontWeight = FontWeight.Medium
-        )
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        if (dimensions.isTablet) {
-            // Adaptive Side-by-Side Filter Bar on Tablets
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(dimensions.gridSpacing),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TimeRangeSelector(
-                    currentRange = timeRange,
-                    appLanguage = appLanguage,
-                    onSelect = { viewModel.setTimeRange(it) },
-                    modifier = Modifier.weight(1.15f)
-                )
-
-                InterfaceSelector(
-                    currentFilter = interfaceFilter,
-                    appLanguage = appLanguage,
-                    onSelect = { viewModel.setInterfaceFilter(it) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        } else {
-            // Phone Stacked Filter Selectors
-            TimeRangeSelector(
-                currentRange = timeRange,
-                appLanguage = appLanguage,
-                onSelect = { viewModel.setTimeRange(it) }
+        // Subtitle on the left, Dynamic Glowing Lightbulb on the right opposite to it
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = AppStrings.analyticsSubtitle(appLanguage),
+                color = glassStyle.textSecondary,
+                fontSize = dimensions.textBodyMedium,
+                lineHeight = 17.sp,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 10.dp)
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            DynamicGlowingLightbulbButton(
+                onClick = {
+                    haptics.performConfirm()
+                    showTipPopup = true
+                }
+            )
+        }
 
-            InterfaceSelector(
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Side-by-Side Single Cycling Filter Buttons (Time Range + Interface Traffic Filter)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CyclingTimeRangeButton(
+                currentRange = timeRange,
+                appLanguage = appLanguage,
+                onCycle = {
+                    haptics.performSegmentSwitch()
+                    val nextRange = when (timeRange) {
+                        TimeRange.TODAY -> TimeRange.WEEK
+                        TimeRange.WEEK -> TimeRange.MONTH
+                        TimeRange.MONTH -> TimeRange.TODAY
+                    }
+                    viewModel.setTimeRange(nextRange)
+                },
+                modifier = Modifier.weight(1f)
+            )
+
+            CyclingInterfaceFilterButton(
                 currentFilter = interfaceFilter,
                 appLanguage = appLanguage,
-                onSelect = { viewModel.setInterfaceFilter(it) }
+                onCycle = {
+                    haptics.performSegmentSwitch()
+                    val nextFilter = when (interfaceFilter) {
+                        InterfaceFilter.ALL -> InterfaceFilter.MOBILE
+                        InterfaceFilter.MOBILE -> InterfaceFilter.WIFI
+                        InterfaceFilter.WIFI -> InterfaceFilter.ALL
+                    }
+                    viewModel.setInterfaceFilter(nextFilter)
+                },
+                modifier = Modifier.weight(1f)
             )
         }
 
@@ -330,103 +368,400 @@ fun AnalyticsScreen(
             }
         )
     }
+
+    // Luxurious Liquid Glass Tip Popup Dialog triggered by Lightbulb
+    if (showTipPopup) {
+        AnalyticsTipPopupDialog(
+            appLanguage = appLanguage,
+            onDismiss = { showTipPopup = false }
+        )
+    }
 }
 
+/**
+ * Larger, dynamically animated glowing Lightbulb button positioned opposite to the analytics subtitle.
+ */
 @Composable
-fun TimeRangeSelector(
-    currentRange: TimeRange,
-    appLanguage: com.example.model.AppLanguage,
-    onSelect: (TimeRange) -> Unit,
+fun DynamicGlowingLightbulbButton(
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
-    val trayShape = RoundedCornerShape(16.dp)
-    val haptics = com.example.ui.components.rememberAppHaptics()
+    val warmGold = if (glassStyle.isDark) Color(0xFFFFD54F) else Color(0xFFD97706)
+    val warmAmber = if (glassStyle.isDark) Color(0xFFFF9100) else Color(0xFFF59E0B)
 
-    // Indented Neumorphic Tray
+    val infiniteTransition = rememberInfiniteTransition(label = "lightbulb_dynamics")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.42f,
+        targetValue = 0.95f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bulb_glow_alpha"
+    )
+    val bulbScale by infiniteTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.12f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bulb_scale"
+    )
+    val rayRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 9000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "bulb_ray_rotation"
+    )
+
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .neumorphicDepth(
-                shape = trayShape,
-                lightColor = Color.Transparent,
-                darkColor = glassStyle.neumorphicShadow,
-                offsetDp = 3.dp,
-                isPressed = true
+            .size(48.dp)
+            .clip(CircleShape)
+            .clickable(onClick = onClick)
+            .testTag("analytics_tip_lightbulb"),
+        contentAlignment = Alignment.Center
+    ) {
+        // Animated outer aura + rotating shimmer rays behind bulb
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val center = Offset(size.width / 2f, size.height / 2f)
+            val auraRadius = size.minDimension * 0.48f
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        warmGold.copy(alpha = 0.34f * glowAlpha),
+                        warmAmber.copy(alpha = 0.14f * glowAlpha),
+                        Color.Transparent
+                    ),
+                    center = center,
+                    radius = auraRadius
+                ),
+                radius = auraRadius,
+                center = center
             )
-            .clip(trayShape)
+
+            // Delicate rotating energy rays
+            val rayCount = 6
+            val innerR = size.minDimension * 0.36f
+            val outerR = size.minDimension * 0.45f
+            for (i in 0 until rayCount) {
+                val angleDeg = rayRotation + i * (360f / rayCount)
+                val angleRad = (angleDeg * PI / 180.0).toFloat()
+                val start = Offset(
+                    center.x + cos(angleRad) * innerR,
+                    center.y + sin(angleRad) * innerR
+                )
+                val end = Offset(
+                    center.x + cos(angleRad) * outerR,
+                    center.y + sin(angleRad) * outerR
+                )
+                drawLine(
+                    color = warmGold.copy(alpha = 0.55f * glowAlpha),
+                    start = start,
+                    end = end,
+                    strokeWidth = 1.6.dp.toPx(),
+                    cap = StrokeCap.Round
+                )
+            }
+        }
+
+        // Elevated frosted glass pill enclosing the enlarged lightbulb
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(CircleShape)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            warmGold.copy(alpha = if (glassStyle.isDark) 0.24f else 0.16f),
+                            glassStyle.cardSubtleBg
+                        )
+                    )
+                )
+                .border(
+                    width = 1.2.dp,
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            warmGold.copy(alpha = 0.85f * glowAlpha),
+                            glassStyle.accentPrimary.copy(alpha = 0.45f)
+                        )
+                    ),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Lightbulb,
+                contentDescription = "Analytics Tip",
+                tint = warmGold,
+                modifier = Modifier
+                    .size(22.dp)
+                    .graphicsLayer {
+                        scaleX = bulbScale
+                        scaleY = bulbScale
+                    }
+            )
+        }
+    }
+}
+
+/**
+ * Luxurious Liquid Glass popup modal shown when the user taps the animated Lightbulb.
+ */
+@Composable
+fun AnalyticsTipPopupDialog(
+    appLanguage: AppLanguage,
+    onDismiss: () -> Unit
+) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val warmGold = if (glassStyle.isDark) Color(0xFFFFD54F) else Color(0xFFD97706)
+    val scaleAnim = remember { Animatable(0.86f) }
+
+    LaunchedEffect(Unit) {
+        scaleAnim.animateTo(
+            targetValue = 1f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
+        )
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = scaleAnim.value
+                    scaleY = scaleAnim.value
+                }
+        ) {
+            GlassContainer(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(26.dp),
+                borderColor = warmGold.copy(alpha = 0.6f)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp, horizontal = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Glowing Emblem Header
+                    Box(
+                        modifier = Modifier
+                            .size(58.dp)
+                            .clip(CircleShape)
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        warmGold.copy(alpha = 0.30f),
+                                        glassStyle.accentPrimary.copy(alpha = 0.12f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                            .border(
+                                1.5.dp,
+                                Brush.linearGradient(listOf(warmGold, glassStyle.accentPrimary)),
+                                CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lightbulb,
+                            contentDescription = null,
+                            tint = warmGold,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Badge Title
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(warmGold.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f))
+                            .border(0.8.dp, warmGold.copy(alpha = 0.45f), RoundedCornerShape(10.dp))
+                            .padding(horizontal = 10.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = if (appLanguage == AppLanguage.ARABIC) "تخصيص ذكي للتطبيقات" else "SMART APP CONTROLS",
+                            color = warmGold,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 0.8.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Exact requested message
+                    Text(
+                        text = if (appLanguage == AppLanguage.ARABIC) {
+                            "اضغط مطولاً على أي تطبيق لتخصيص الحد اليومي وإشعاراته"
+                        } else {
+                            "Long-press any app to customize its daily data limit & alerts"
+                        },
+                        color = glassStyle.textPrimary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        lineHeight = 22.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 6.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .testTag("analytics_tip_dismiss_button"),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = glassStyle.accentPrimary
+                        ),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text(
+                            text = if (appLanguage == AppLanguage.ARABIC) "حسناً، فهمت" else "Got it",
+                            color = if (glassStyle.isDark) Color.Black else Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Single merged cycling button for Time Range (Today -> This Week -> This Month).
+ */
+@Composable
+fun CyclingTimeRangeButton(
+    currentRange: TimeRange,
+    appLanguage: AppLanguage,
+    onCycle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val shape = RoundedCornerShape(15.dp)
+
+    val label = when (currentRange) {
+        TimeRange.TODAY -> AppStrings.timeToday(appLanguage)
+        TimeRange.WEEK -> AppStrings.timeWeek(appLanguage)
+        TimeRange.MONTH -> AppStrings.timeMonth(appLanguage)
+    }
+
+    val icon: ImageVector = when (currentRange) {
+        TimeRange.TODAY -> Icons.Default.Today
+        TimeRange.WEEK -> Icons.Default.DateRange
+        TimeRange.MONTH -> Icons.Default.CalendarMonth
+    }
+
+    val activeIndex = when (currentRange) {
+        TimeRange.TODAY -> 0
+        TimeRange.WEEK -> 1
+        TimeRange.MONTH -> 2
+    }
+
+    Box(
+        modifier = modifier
+            .height(48.dp)
+            .clip(shape)
             .background(
-                Brush.linearGradient(
-                    listOf(glassStyle.cardSubtleBg, glassStyle.neumorphicSurface)
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        glassStyle.cardBackground,
+                        glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.14f else 0.08f)
+                    )
                 )
             )
-            .border(1.dp, glassStyle.neumorphicBorderDark, trayShape)
-            .padding(5.dp)
+            .border(
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        glassStyle.accentPrimary.copy(alpha = 0.65f),
+                        glassStyle.borderColor
+                    )
+                ),
+                shape = shape
+            )
+            .clickable(onClick = onCycle)
+            .padding(horizontal = 10.dp)
+            .testTag("cycle_time_range_button"),
+        contentAlignment = Alignment.Center
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            TimeRange.values().forEach { range ->
-                val isSelected = (range == currentRange)
-                val itemShape = RoundedCornerShape(12.dp)
-                val label = when (range) {
-                    TimeRange.TODAY -> com.example.model.AppStrings.timeToday(appLanguage)
-                    TimeRange.WEEK -> com.example.model.AppStrings.timeWeek(appLanguage)
-                    TimeRange.MONTH -> com.example.model.AppStrings.timeMonth(appLanguage)
-                }
-
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
                 Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .neumorphicDepth(
-                            shape = itemShape,
-                            lightColor = if (isSelected) Color.Transparent else glassStyle.neumorphicHighlight.copy(alpha = 0.4f),
-                            darkColor = glassStyle.neumorphicShadow,
-                            offsetDp = 2.dp,
-                            isPressed = isSelected
-                        )
-                        .clip(itemShape)
-                        .background(
-                            if (isSelected) {
-                                Brush.linearGradient(
-                                    listOf(
-                                        glassStyle.cardSubtleBg,
-                                        glassStyle.accentPrimary.copy(alpha = 0.22f)
-                                    )
-                                )
-                            } else {
-                                Brush.linearGradient(
-                                    listOf(
-                                        glassStyle.neumorphicSurface.copy(alpha = 0.6f),
-                                        glassStyle.neumorphicBase.copy(alpha = 0.6f)
-                                    )
-                                )
-                            }
-                        )
-                        .border(
-                            1.dp,
-                            if (isSelected) {
-                                Brush.linearGradient(listOf(glassStyle.accentPrimary.copy(alpha = 0.75f), glassStyle.neumorphicBorderDark))
-                            } else {
-                                Brush.linearGradient(listOf(glassStyle.neumorphicBorderLight.copy(alpha = 0.15f), glassStyle.neumorphicBorderDark))
-                            },
-                            itemShape
-                        )
-                        .clickable {
-                            if (range != currentRange) {
-                                haptics.performSegmentSwitch()
-                                onSelect(range)
-                            }
-                        }
-                        .padding(vertical = 8.dp),
+                        .size(28.dp)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.20f else 0.14f)),
                     contentAlignment = Alignment.Center
                 ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = label,
+                        tint = glassStyle.accentPrimary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                AnimatedContent(
+                    targetState = label,
+                    transitionSpec = {
+                        (slideInVertically { it / 2 } + fadeIn(tween(180))) togetherWith
+                            (slideOutVertically { -it / 2 } + fadeOut(tween(140)))
+                    },
+                    label = "time_range_cycle_label"
+                ) { targetLabel ->
                     Text(
-                        text = label,
-                        color = if (isSelected) glassStyle.accentPrimary else glassStyle.textSecondary,
+                        text = targetLabel,
+                        color = glassStyle.textPrimary,
                         fontSize = 12.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            // 3-step pill indicator showing active filter index
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                for (i in 0..2) {
+                    val isStepActive = (i == activeIndex)
+                    Box(
+                        modifier = Modifier
+                            .width(if (isStepActive) 10.dp else 4.dp)
+                            .height(4.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isStepActive) glassStyle.accentPrimary else glassStyle.textTertiary.copy(alpha = 0.35f)
+                            )
                     )
                 }
             }
@@ -434,34 +769,139 @@ fun TimeRangeSelector(
     }
 }
 
+/**
+ * Single merged cycling button for Interface Filter (All Traffic -> Mobile Data -> Wi-Fi).
+ */
 @Composable
-fun InterfaceSelector(
+fun CyclingInterfaceFilterButton(
     currentFilter: InterfaceFilter,
-    appLanguage: com.example.model.AppLanguage,
-    onSelect: (InterfaceFilter) -> Unit,
+    appLanguage: AppLanguage,
+    onCycle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val shape = RoundedCornerShape(15.dp)
 
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    val label = when (currentFilter) {
+        InterfaceFilter.ALL -> AppStrings.filterAll(appLanguage)
+        InterfaceFilter.MOBILE -> AppStrings.filterCellular(appLanguage)
+        InterfaceFilter.WIFI -> AppStrings.filterWifi(appLanguage)
+    }
+
+    val icon: ImageVector = when (currentFilter) {
+        InterfaceFilter.ALL -> Icons.Default.SwapVert
+        InterfaceFilter.MOBILE -> Icons.Default.SignalCellularAlt
+        InterfaceFilter.WIFI -> Icons.Default.Wifi
+    }
+
+    val targetTint = when (currentFilter) {
+        InterfaceFilter.ALL -> glassStyle.accentSecondary
+        InterfaceFilter.MOBILE -> ElectricBlue
+        InterfaceFilter.WIFI -> EmeraldSafe
+    }
+
+    val animatedTint by animateColorAsState(
+        targetValue = targetTint,
+        animationSpec = tween(durationMillis = 220),
+        label = "interface_tint"
+    )
+
+    val activeIndex = when (currentFilter) {
+        InterfaceFilter.ALL -> 0
+        InterfaceFilter.MOBILE -> 1
+        InterfaceFilter.WIFI -> 2
+    }
+
+    Box(
+        modifier = modifier
+            .height(48.dp)
+            .clip(shape)
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        glassStyle.cardBackground,
+                        animatedTint.copy(alpha = if (glassStyle.isDark) 0.14f else 0.08f)
+                    )
+                )
+            )
+            .border(
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        animatedTint.copy(alpha = 0.65f),
+                        glassStyle.borderColor
+                    )
+                ),
+                shape = shape
+            )
+            .clickable(onClick = onCycle)
+            .padding(horizontal = 10.dp)
+            .testTag("cycle_interface_filter_button"),
+        contentAlignment = Alignment.Center
     ) {
-        InterfaceFilter.values().forEach { filter ->
-            val isSelected = (filter == currentFilter)
-            val label = when (filter) {
-                InterfaceFilter.ALL -> com.example.model.AppStrings.filterAll(appLanguage)
-                InterfaceFilter.MOBILE -> com.example.model.AppStrings.filterCellular(appLanguage)
-                InterfaceFilter.WIFI -> com.example.model.AppStrings.filterWifi(appLanguage)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(animatedTint.copy(alpha = if (glassStyle.isDark) 0.20f else 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = label,
+                        tint = animatedTint,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                AnimatedContent(
+                    targetState = label,
+                    transitionSpec = {
+                        (slideInVertically { it / 2 } + fadeIn(tween(180))) togetherWith
+                            (slideOutVertically { -it / 2 } + fadeOut(tween(140)))
+                    },
+                    label = "interface_filter_cycle_label"
+                ) { targetLabel ->
+                    Text(
+                        text = targetLabel,
+                        color = glassStyle.textPrimary,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
 
-            NeumorphicSegmentedPill(
-                label = label,
-                isSelected = isSelected,
-                onClick = { onSelect(filter) },
-                accentColor = glassStyle.accentSecondary,
-                modifier = Modifier.weight(1f)
-            )
+            // 3-step pill indicator showing active filter index
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                for (i in 0..2) {
+                    val isStepActive = (i == activeIndex)
+                    Box(
+                        modifier = Modifier
+                            .width(if (isStepActive) 10.dp else 4.dp)
+                            .height(4.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isStepActive) animatedTint else glassStyle.textTertiary.copy(alpha = 0.35f)
+                            )
+                    )
+                }
+            }
         }
     }
 }
