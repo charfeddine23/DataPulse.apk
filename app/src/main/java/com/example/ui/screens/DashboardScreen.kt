@@ -135,6 +135,7 @@ fun DashboardScreen(
     ElasticFlamePullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = { viewModel.refreshAll() },
+        useScreenTopOverlay = true,
         modifier = modifier.fillMaxSize()
     ) {
         LazyColumn(

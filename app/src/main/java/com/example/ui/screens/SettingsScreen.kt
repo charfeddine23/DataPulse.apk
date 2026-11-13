@@ -31,7 +31,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.CheckCircle
@@ -1315,48 +1314,6 @@ fun SettingsScreen(
             .padding(horizontal = dimensions.screenPaddingHorizontal)
     ) {
         Spacer(modifier = Modifier.height(dimensions.screenPaddingVertical))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (onNavigateBack != null) {
-                Box(
-                    modifier = Modifier
-                        .size(dimensions.headerIconBoxSize)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(glassStyle.cardSubtleBg)
-                        .border(1.dp, glassStyle.borderColor, RoundedCornerShape(12.dp))
-                        .clickable { onNavigateBack() }
-                        .testTag("settings_back_button"),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = AppStrings.backToPrevious(appLanguage),
-                        tint = glassStyle.accentPrimary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-            }
-
-            Column {
-                Text(
-                    text = AppStrings.settingsTitle(appLanguage),
-                    color = glassStyle.textPrimary,
-                    fontSize = dimensions.textTitleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = AppStrings.settingsSubtitle(appLanguage),
-                    color = glassStyle.textSecondary,
-                    fontSize = dimensions.textBodyMedium
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(dimensions.sectionSpacing))
 
         if (dimensions.isTablet) {
             Row(

@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -41,6 +42,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -48,7 +50,11 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.MainViewModel
+import com.example.ui.components.AnalyticsTipPopupDialog
+import com.example.ui.components.LocalRootFlameOverlay
 import com.example.ui.components.PersistentTopAppBar
+import com.example.ui.components.RootFlameOverlayCanvas
+import com.example.ui.components.RootFlameOverlayController
 import com.example.ui.screens.AnalyticsScreen
 import com.example.ui.screens.DashboardScreen
 import com.example.ui.screens.RankScreen
@@ -89,6 +95,7 @@ fun DataPulseApp(
 ) {
     var currentDestination by remember { mutableStateOf(NavDestination.DASHBOARD) }
     var previousDestination by remember { mutableStateOf(NavDestination.DASHBOARD) }
+    var showUsageTipPopup by remember { mutableStateOf(false) }
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val speedSample by viewModel.speedSample.collectAsStateWithLifecycle()
     val targetNavDestination by viewModel.targetNavDestination.collectAsStateWithLifecycle()
@@ -150,75 +157,111 @@ fun DataPulseApp(
 
     val dimensions = com.example.ui.theme.LocalAppDimensions.current
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val rootFlameController = remember { RootFlameOverlayController() }
+    var topBarHeightPx by remember { mutableFloatStateOf(0f) }
 
-    Scaffold(
-        modifier = modifier
-            .fillMaxSize()
-            .background(brush = glassStyle.backdropBrush),
-        containerColor = Color.Transparent,
-        topBar = {
-            PersistentTopAppBar(
-                speedSample = speedSample,
-                appLanguage = appLanguage,
-                isSettingsActive = (currentDestination == NavDestination.SETTINGS),
-                title = if (currentDestination == NavDestination.USAGE) "Analytics" else "Data Pulse",
-                onOpenSettings = {
-                    if (currentDestination == NavDestination.SETTINGS) {
-                        navigateBack()
-                    } else {
-                        navigateTo(NavDestination.SETTINGS)
+    CompositionLocalProvider(LocalRootFlameOverlay provides rootFlameController) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(brush = glassStyle.backdropBrush)
+        ) {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = Color.Transparent,
+                topBar = {
+                    PersistentTopAppBar(
+                        speedSample = speedSample,
+                        appLanguage = appLanguage,
+                        isSettingsActive = (currentDestination == NavDestination.SETTINGS),
+                        title = when (currentDestination) {
+                            NavDestination.USAGE -> "Usage"
+                            NavDestination.SETTINGS -> AppStrings.navSettings(appLanguage)
+                            else -> "Data Pulse"
+                        },
+                        onUsageTipClick = if (currentDestination == NavDestination.USAGE) {
+                            { showUsageTipPopup = true }
+                        } else {
+                            null
+                        },
+                        onOpenSettings = {
+                            if (currentDestination == NavDestination.SETTINGS) {
+                                navigateBack()
+                            } else {
+                                navigateTo(NavDestination.SETTINGS)
+                            }
+                        },
+                        modifier = Modifier.onSizeChanged { size ->
+                            topBarHeightPx = size.height.toFloat()
+                        }
+                    )
+                },
+                bottomBar = {
+                    LiquidGlassBottomNav(
+                        currentDestination = currentDestination,
+                        appLanguage = appLanguage,
+                        onSelectDestination = { navigateTo(it) }
+                    )
+                }
+            ) { innerPadding ->
+                com.example.ui.theme.AdaptiveScreenContainer(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) { appDimensions ->
+                    Crossfade(targetState = currentDestination, label = "screen_crossfade") { dest ->
+                        when (dest) {
+                            NavDestination.DASHBOARD -> DashboardScreen(
+                                viewModel = viewModel,
+                                onRequestUsagePermission = onRequestUsagePermission,
+                                onOpenAppInfo = onOpenAppInfo,
+                                onNavigateToSettings = { navigateTo(NavDestination.SETTINGS) },
+                                onNavigateToAnalytics = { navigateTo(NavDestination.USAGE) }
+                            )
+                            NavDestination.USAGE -> AnalyticsScreen(
+                                viewModel = viewModel,
+                                onRequestUsagePermission = onRequestUsagePermission,
+                                onOpenAppInfo = onOpenAppInfo
+                            )
+                            NavDestination.SPEED -> SpeedMeterScreen(
+                                viewModel = viewModel
+                            )
+                            NavDestination.FORECAST -> SmartForecastScreen(
+                                viewModel = viewModel,
+                                onNavigateToSettings = { navigateTo(NavDestination.SETTINGS) }
+                            )
+                            NavDestination.SETTINGS -> SettingsScreen(
+                                viewModel = viewModel,
+                                onRequestUsagePermission = onRequestUsagePermission,
+                                onOpenAppInfo = onOpenAppInfo,
+                                onNavigateBack = { navigateBack() }
+                            )
+                            NavDestination.RANK -> RankScreen(
+                                viewModel = viewModel,
+                                onRequestUsagePermission = onRequestUsagePermission,
+                                onOpenAppInfo = onOpenAppInfo
+                            )
+                        }
                     }
                 }
-            )
-        },
-        bottomBar = {
-            LiquidGlassBottomNav(
-                currentDestination = currentDestination,
-                appLanguage = appLanguage,
-                onSelectDestination = { navigateTo(it) }
-            )
-        }
-    ) { innerPadding ->
-        com.example.ui.theme.AdaptiveScreenContainer(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) { appDimensions ->
-            Crossfade(targetState = currentDestination, label = "screen_crossfade") { dest ->
-                when (dest) {
-                    NavDestination.DASHBOARD -> DashboardScreen(
-                        viewModel = viewModel,
-                        onRequestUsagePermission = onRequestUsagePermission,
-                        onOpenAppInfo = onOpenAppInfo,
-                        onNavigateToSettings = { navigateTo(NavDestination.SETTINGS) },
-                        onNavigateToAnalytics = { navigateTo(NavDestination.USAGE) }
-                    )
-                    NavDestination.USAGE -> AnalyticsScreen(
-                        viewModel = viewModel,
-                        onRequestUsagePermission = onRequestUsagePermission,
-                        onOpenAppInfo = onOpenAppInfo
-                    )
-                    NavDestination.SPEED -> SpeedMeterScreen(
-                        viewModel = viewModel
-                    )
-                    NavDestination.FORECAST -> SmartForecastScreen(
-                        viewModel = viewModel,
-                        onNavigateToSettings = { navigateTo(NavDestination.SETTINGS) }
-                    )
-                    NavDestination.SETTINGS -> SettingsScreen(
-                        viewModel = viewModel,
-                        onRequestUsagePermission = onRequestUsagePermission,
-                        onOpenAppInfo = onOpenAppInfo,
-                        onNavigateBack = { navigateBack() }
-                    )
-                    NavDestination.RANK -> RankScreen(
-                        viewModel = viewModel,
-                        onRequestUsagePermission = onRequestUsagePermission,
-                        onOpenAppInfo = onOpenAppInfo
-                    )
-                }
+            }
+
+            // Screen-top flame overlay for Pulse pull-to-refresh (emerges from very top edge of screen)
+            if (currentDestination == NavDestination.DASHBOARD) {
+                RootFlameOverlayCanvas(
+                    controller = rootFlameController,
+                    topBarHeightPx = topBarHeightPx,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
             }
         }
+    }
+
+    if (showUsageTipPopup) {
+        AnalyticsTipPopupDialog(
+            appLanguage = appLanguage,
+            onDismiss = { showUsageTipPopup = false }
+        )
     }
 }
 

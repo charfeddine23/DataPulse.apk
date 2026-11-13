@@ -1,15 +1,25 @@
 package com.example.ui.components
 
 import android.os.Build
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,6 +45,7 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Security
@@ -50,6 +61,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,14 +80,17 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.window.Dialog
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 import com.example.R
 import com.example.model.AppLanguage
 import com.example.model.AppStrings
@@ -195,6 +210,7 @@ fun PersistentTopAppBar(
     isSettingsActive: Boolean,
     onOpenSettings: () -> Unit,
     title: String = "Data Pulse",
+    onUsageTipClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = LocalLiquidGlass.current
@@ -232,6 +248,7 @@ fun PersistentTopAppBar(
                 onOpenSettings = onOpenSettings,
                 isSettingsActive = isSettingsActive,
                 title = title,
+                onUsageTipClick = onUsageTipClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .widthIn(max = dimensions.contentMaxWidth)
@@ -279,10 +296,12 @@ fun DashboardHeader(
     onOpenSettings: () -> Unit = {},
     isSettingsActive: Boolean = false,
     title: String = "Data Pulse",
+    onUsageTipClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val glassStyle = LocalLiquidGlass.current
     val dimensions = LocalAppDimensions.current
+    val haptics = rememberAppHaptics()
 
     Column(
         modifier = modifier
@@ -324,18 +343,303 @@ fun DashboardHeader(
                 }
             }
 
-            // Connection Status Badge + adjacent 3-line Hamburger Menu Button on far right
+            // Right Slot: Connection Status Pill (or Glowing Lightbulb on Usage screen) + Hamburger Menu Button
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ConnectionStatusPill(speedSample = speedSample, appLanguage = appLanguage)
+                AnimatedContent(
+                    targetState = onUsageTipClick != null,
+                    transitionSpec = {
+                        (fadeIn(tween(200)) + scaleIn(initialScale = 0.85f, animationSpec = tween(200))) togetherWith
+                            (fadeOut(tween(150)) + scaleOut(targetScale = 0.85f, animationSpec = tween(150)))
+                    },
+                    contentAlignment = Alignment.CenterEnd,
+                    label = "top_bar_status_slot_transition"
+                ) { showLightbulb ->
+                    if (showLightbulb && onUsageTipClick != null) {
+                        DynamicGlowingLightbulbButton(
+                            onClick = {
+                                haptics.performConfirm()
+                                onUsageTipClick()
+                            }
+                        )
+                    } else {
+                        ConnectionStatusPill(speedSample = speedSample, appLanguage = appLanguage)
+                    }
+                }
 
                 LiquidGlassHamburgerMenuButton(
                     onClick = onOpenSettings,
                     isSelected = isSettingsActive,
                     contentDescription = AppStrings.openSettingsMenu(appLanguage)
                 )
+            }
+        }
+    }
+}
+
+/**
+ * Dynamic animated glowing Lightbulb button shown in the Top Bar on the Usage screen
+ * in place of the connection status pill.
+ */
+@Composable
+fun DynamicGlowingLightbulbButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val glassStyle = LocalLiquidGlass.current
+    val warmGold = if (glassStyle.isDark) Color(0xFFFFD54F) else Color(0xFFD97706)
+    val warmAmber = if (glassStyle.isDark) Color(0xFFFF9100) else Color(0xFFF59E0B)
+
+    val infiniteTransition = rememberInfiniteTransition(label = "lightbulb_dynamics")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.42f,
+        targetValue = 0.95f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bulb_glow_alpha"
+    )
+    val bulbScale by infiniteTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.12f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bulb_scale"
+    )
+    val rayRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 9000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "bulb_ray_rotation"
+    )
+
+    Box(
+        modifier = modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .clickable(onClick = onClick)
+            .testTag("analytics_tip_lightbulb"),
+        contentAlignment = Alignment.Center
+    ) {
+        // Animated outer aura + rotating shimmer rays behind bulb
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val center = Offset(size.width / 2f, size.height / 2f)
+            val auraRadius = size.minDimension * 0.48f
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        warmGold.copy(alpha = 0.34f * glowAlpha),
+                        warmAmber.copy(alpha = 0.14f * glowAlpha),
+                        Color.Transparent
+                    ),
+                    center = center,
+                    radius = auraRadius
+                ),
+                radius = auraRadius,
+                center = center
+            )
+
+            // Delicate rotating energy rays
+            val rayCount = 6
+            val innerR = size.minDimension * 0.36f
+            val outerR = size.minDimension * 0.45f
+            for (i in 0 until rayCount) {
+                val angleDeg = rayRotation + i * (360f / rayCount)
+                val angleRad = (angleDeg * PI / 180.0).toFloat()
+                val start = Offset(
+                    center.x + cos(angleRad) * innerR,
+                    center.y + sin(angleRad) * innerR
+                )
+                val end = Offset(
+                    center.x + cos(angleRad) * outerR,
+                    center.y + sin(angleRad) * outerR
+                )
+                drawLine(
+                    color = warmGold.copy(alpha = 0.55f * glowAlpha),
+                    start = start,
+                    end = end,
+                    strokeWidth = 1.6.dp.toPx(),
+                    cap = StrokeCap.Round
+                )
+            }
+        }
+
+        // Elevated frosted glass pill enclosing the lightbulb
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(CircleShape)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            warmGold.copy(alpha = if (glassStyle.isDark) 0.24f else 0.16f),
+                            glassStyle.cardSubtleBg
+                        )
+                    )
+                )
+                .border(
+                    width = 1.2.dp,
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            warmGold.copy(alpha = 0.85f * glowAlpha),
+                            glassStyle.accentPrimary.copy(alpha = 0.45f)
+                        )
+                    ),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Lightbulb,
+                contentDescription = "Usage Tip",
+                tint = warmGold,
+                modifier = Modifier
+                    .size(21.dp)
+                    .graphicsLayer {
+                        scaleX = bulbScale
+                        scaleY = bulbScale
+                    }
+            )
+        }
+    }
+}
+
+/**
+ * Luxurious Liquid Glass popup modal shown when the user taps the animated Lightbulb in the Usage Top Bar.
+ */
+@Composable
+fun AnalyticsTipPopupDialog(
+    appLanguage: AppLanguage,
+    onDismiss: () -> Unit
+) {
+    val glassStyle = LocalLiquidGlass.current
+    val warmGold = if (glassStyle.isDark) Color(0xFFFFD54F) else Color(0xFFD97706)
+    val scaleAnim = remember { Animatable(0.86f) }
+
+    LaunchedEffect(Unit) {
+        scaleAnim.animateTo(
+            targetValue = 1f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
+        )
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = scaleAnim.value
+                    scaleY = scaleAnim.value
+                }
+        ) {
+            GlassContainer(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(26.dp),
+                borderColor = warmGold.copy(alpha = 0.6f)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp, horizontal = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Glowing Emblem Header
+                    Box(
+                        modifier = Modifier
+                            .size(58.dp)
+                            .clip(CircleShape)
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        warmGold.copy(alpha = 0.30f),
+                                        glassStyle.accentPrimary.copy(alpha = 0.12f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                            .border(
+                                1.5.dp,
+                                Brush.linearGradient(listOf(warmGold, glassStyle.accentPrimary)),
+                                CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lightbulb,
+                            contentDescription = null,
+                            tint = warmGold,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Badge Title
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(warmGold.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f))
+                            .border(0.8.dp, warmGold.copy(alpha = 0.45f), RoundedCornerShape(10.dp))
+                            .padding(horizontal = 10.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = if (appLanguage == AppLanguage.ARABIC) "تخصيص ذكي للتطبيقات" else "SMART APP CONTROLS",
+                            color = warmGold,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 0.8.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = if (appLanguage == AppLanguage.ARABIC) {
+                            "اضغط مطولاً على أي تطبيق لتخصيص الحد اليومي وإشعاراته"
+                        } else {
+                            "Long-press any app to customize its daily data limit & alerts"
+                        },
+                        color = glassStyle.textPrimary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        lineHeight = 22.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 6.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .testTag("analytics_tip_dismiss_button"),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = glassStyle.accentPrimary
+                        ),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text(
+                            text = if (appLanguage == AppLanguage.ARABIC) "حسناً، فهمت" else "Got it",
+                            color = if (glassStyle.isDark) Color.Black else Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
     }

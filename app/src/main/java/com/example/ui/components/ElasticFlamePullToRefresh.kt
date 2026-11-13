@@ -24,7 +24,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -78,6 +82,37 @@ enum class ElasticFlameRefreshState {
 }
 
 /**
+ * Snapshot of the live Elastic Flame Pull-to-Refresh state shared with the screen-top root overlay.
+ */
+data class RootFlameOverlayData(
+    val isActive: Boolean = false,
+    val pullOffsetPx: Float = 0f,
+    val thresholdPx: Float = 1f,
+    val maxDragPx: Float = 1f,
+    val restingSyncOffsetPx: Float = 1f,
+    val stretchProgress: Float = 0f,
+    val refreshState: ElasticFlameRefreshState = ElasticFlameRefreshState.IDLE,
+    val primedAlpha: Float = 0f
+)
+
+class RootFlameOverlayController {
+    var data by mutableStateOf(RootFlameOverlayData())
+        internal set
+
+    fun update(newData: RootFlameOverlayData) {
+        data = newData
+    }
+
+    fun clear() {
+        if (data.isActive) {
+            data = RootFlameOverlayData()
+        }
+    }
+}
+
+val LocalRootFlameOverlay = compositionLocalOf<RootFlameOverlayController?> { null }
+
+/**
  * Custom, cinematic Elastic Flame Pull-to-Refresh container.
  * Features rubber-band tension physics, anchor-pinned teardrop stretching,
  * fluid bezier curve deformation, automatic spring retraction to 0f after sync,
@@ -91,6 +126,7 @@ fun ElasticFlamePullToRefreshBox(
     refreshThreshold: Dp = 80.dp,
     maxDragDistance: Dp = 145.dp,
     restingSyncOffset: Dp = 64.dp,
+    useScreenTopOverlay: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
@@ -337,6 +373,29 @@ fun ElasticFlamePullToRefreshBox(
         label = "primed_text_alpha"
     )
 
+    val rootOverlayController = if (useScreenTopOverlay) LocalRootFlameOverlay.current else null
+
+    if (useScreenTopOverlay && rootOverlayController != null) {
+        val snapshot = RootFlameOverlayData(
+            isActive = currentOffset > 1f,
+            pullOffsetPx = currentOffset,
+            thresholdPx = thresholdPx,
+            maxDragPx = maxDragPx,
+            restingSyncOffsetPx = restingSyncOffsetPx,
+            stretchProgress = stretchProgress,
+            refreshState = refreshState,
+            primedAlpha = primedAlpha
+        )
+        SideEffect {
+            if (rootOverlayController.data != snapshot) {
+                rootOverlayController.update(snapshot)
+            }
+        }
+        DisposableEffect(rootOverlayController) {
+            onDispose { rootOverlayController.clear() }
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -376,66 +435,159 @@ fun ElasticFlamePullToRefreshBox(
             content()
         }
 
-        // Custom Elastic Flame Canvas pinned strictly at top center
-        // Only drawn when currentOffset > 1f, completely hidden when returned to 0
-        if (currentOffset > 1f) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(maxDragDistance + 40.dp)
-                    .align(Alignment.TopCenter)
-            ) {
-                ElasticFlameCanvas(
-                    currentOffsetPx = currentOffset,
-                    stretchProgress = stretchProgress,
-                    state = refreshState,
-                    phase = flamePhase,
-                    corePulse = corePulse,
-                    modifier = Modifier.fillMaxSize()
-                )
+        // Draw inline flame only if NOT delegated to screen-top root overlay
+        if (!(useScreenTopOverlay && rootOverlayController != null)) {
+            if (currentOffset > 1f) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(maxDragDistance + 40.dp)
+                        .align(Alignment.TopCenter)
+                ) {
+                    ElasticFlameCanvas(
+                        currentOffsetPx = currentOffset,
+                        stretchProgress = stretchProgress,
+                        state = refreshState,
+                        phase = flamePhase,
+                        corePulse = corePulse,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
-        }
 
-        // Sleek Arabic Text Hint: ONLY "أفلت للمزامنة" when primed past the threshold
-        if (primedAlpha > 0.01f) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .graphicsLayer {
-                        val tipPos = currentOffset + with(density) { 14.dp.toPx() }
-                        translationY = tipPos
-                        alpha = primedAlpha
-                    }
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xD9080D1A))
-                    .border(
-                        1.dp,
-                        Brush.horizontalGradient(
-                            colors = listOf(
-                                CyanPulse.copy(alpha = 0.5f * primedAlpha),
-                                Color(0xFFFF9100).copy(alpha = 0.7f * primedAlpha),
-                                CyanPulse.copy(alpha = 0.5f * primedAlpha)
-                            )
-                        ),
-                        RoundedCornerShape(12.dp)
-                    )
-                    .padding(horizontal = 14.dp, vertical = 5.dp)
-            ) {
-                Text(
-                    text = "أفلت للمزامنة",
-                    color = Color(0xFFF1F8FF),
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    style = TextStyle(
-                        shadow = Shadow(
-                            color = CyanPulse.copy(alpha = 0.85f * primedAlpha),
-                            offset = Offset(0f, 0f),
-                            blurRadius = 12f
-                        )
-                    )
+            if (primedAlpha > 0.01f) {
+                FlameReleaseHintPill(
+                    tipPositionPx = currentOffset + with(density) { 14.dp.toPx() },
+                    primedAlpha = primedAlpha,
+                    modifier = Modifier.align(Alignment.TopCenter)
                 )
             }
         }
+    }
+}
+
+/**
+ * Renders the Elastic Flame anchored strictly to the top edge of the device screen (y = 0f),
+ * stretching cleanly down from the screen's top edge across/below the pinned top app bar.
+ */
+@Composable
+fun RootFlameOverlayCanvas(
+    controller: RootFlameOverlayController,
+    topBarHeightPx: Float,
+    modifier: Modifier = Modifier
+) {
+    val data = controller.data
+    if (!data.isActive) return
+
+    val density = LocalDensity.current
+    val bannerBottomPx = topBarHeightPx.coerceAtLeast(with(density) { 72.dp.toPx() })
+
+    val infiniteTransition = rememberInfiniteTransition(label = "root_flame_turbulence")
+    val flamePhase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 2f * PI.toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1100, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "root_phase"
+    )
+    val corePulse by infiniteTransition.animateFloat(
+        initialValue = 0.85f,
+        targetValue = 1.15f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 700, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "root_core_pulse"
+    )
+
+    // Map pull distance to screen-top coordinates:
+    // - Always tethered to top edge of screen (y = 0f).
+    // - At threshold (stretchProgress = 1.0f), flame tip reaches below the pinned top bar banner.
+    // - During SYNCING, upright burning flame hovers cleanly below the banner while retracting cleanly to 0f.
+    val belowBannerClearancePx = with(density) { 46.dp.toPx() }
+    val targetThresholdTipPx = bannerBottomPx + belowBannerClearancePx
+    val visualOffsetPx = when (data.refreshState) {
+        ElasticFlameRefreshState.SYNCING,
+        ElasticFlameRefreshState.SNAP_RELEASED,
+        ElasticFlameRefreshState.COMPLETED -> {
+            val syncRatio = (data.pullOffsetPx / data.restingSyncOffsetPx.coerceAtLeast(1f)).coerceIn(0f, 1.35f)
+            (bannerBottomPx + with(density) { 50.dp.toPx() }) * syncRatio
+        }
+        else -> {
+            data.pullOffsetPx * (targetThresholdTipPx / data.thresholdPx.coerceAtLeast(1f))
+        }
+    }
+
+    val canvasHeightDp = with(density) {
+        (bannerBottomPx + data.maxDragPx * 2f + 80.dp.toPx()).toDp()
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(canvasHeightDp)
+    ) {
+        ElasticFlameCanvas(
+            currentOffsetPx = visualOffsetPx,
+            stretchProgress = data.stretchProgress,
+            state = data.refreshState,
+            phase = flamePhase,
+            corePulse = corePulse,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        if (data.primedAlpha > 0.01f) {
+            FlameReleaseHintPill(
+                tipPositionPx = visualOffsetPx + with(density) { 12.dp.toPx() },
+                primedAlpha = data.primedAlpha,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
+        }
+    }
+}
+
+@Composable
+private fun FlameReleaseHintPill(
+    tipPositionPx: Float,
+    primedAlpha: Float,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .graphicsLayer {
+                translationY = tipPositionPx
+                alpha = primedAlpha
+            }
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xD9080D1A))
+            .border(
+                1.dp,
+                Brush.horizontalGradient(
+                    colors = listOf(
+                        CyanPulse.copy(alpha = 0.5f * primedAlpha),
+                        Color(0xFFFF9100).copy(alpha = 0.7f * primedAlpha),
+                        CyanPulse.copy(alpha = 0.5f * primedAlpha)
+                    )
+                ),
+                RoundedCornerShape(12.dp)
+            )
+            .padding(horizontal = 14.dp, vertical = 5.dp)
+    ) {
+        Text(
+            text = "أفلت للمزامنة",
+            color = Color(0xFFF1F8FF),
+            fontSize = 11.5.sp,
+            fontWeight = FontWeight.Bold,
+            style = TextStyle(
+                shadow = Shadow(
+                    color = CyanPulse.copy(alpha = 0.85f * primedAlpha),
+                    offset = Offset(0f, 0f),
+                    blurRadius = 12f
+                )
+            )
+        )
     }
 }
 
@@ -467,8 +619,9 @@ private fun ElasticFlameCanvas(
             // =========================================================================
             // ACTIVE SYNCING STATE: Upright Hovering Plasma Flame & Energy Vortex
             // =========================================================================
-            val restingY = currentOffsetPx.coerceAtLeast(40.dp.toPx())
-            val flameHeight = 46.dp.toPx() + 6.dp.toPx() * sin(phase * 2f)
+            val syncScale = (currentOffsetPx / 40.dp.toPx()).coerceIn(0.05f, 1f)
+            val restingY = currentOffsetPx.coerceAtLeast(16.dp.toPx() * syncScale)
+            val flameHeight = (46.dp.toPx() + 6.dp.toPx() * sin(phase * 2f)) * syncScale
             val flameBaseY = restingY
             val flameTipY = flameBaseY - flameHeight
 
