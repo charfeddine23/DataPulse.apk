@@ -23,6 +23,8 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
+    private val pendingTileVpnConsent = kotlinx.coroutines.flow.MutableStateFlow(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -30,13 +32,22 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val appThemeMode by viewModel.appThemeMode.collectAsStateWithLifecycle()
-            val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+            val shouldPromptVpnConsent by pendingTileVpnConsent.collectAsStateWithLifecycle()
+
             com.example.ui.theme.DataPulseTheme(appThemeMode = appThemeMode) {
                 // Request Phone State (for Dual SIM carrier resolution) & Notification permissions
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestMultiplePermissions()
                 ) {
                     viewModel.loadSimCards()
+                }
+
+                val tileVpnConsentLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.StartActivityForResult()
+                ) { result ->
+                    if (result.resultCode == RESULT_OK) {
+                        viewModel.startLocalDnsVpn()
+                    }
                 }
 
                 LaunchedEffect(Unit) {
@@ -46,6 +57,18 @@ class MainActivity : ComponentActivity() {
                         permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
                     }
                     permissionLauncher.launch(permissionsToRequest.toTypedArray())
+                }
+
+                LaunchedEffect(shouldPromptVpnConsent) {
+                    if (shouldPromptVpnConsent) {
+                        pendingTileVpnConsent.value = false
+                        val prepareIntent = android.net.VpnService.prepare(this@MainActivity)
+                        if (prepareIntent == null) {
+                            viewModel.startLocalDnsVpn()
+                        } else {
+                            tileVpnConsentLauncher.launch(prepareIntent)
+                        }
+                    }
                 }
 
                 DataPulseApp(
@@ -63,14 +86,6 @@ class MainActivity : ComponentActivity() {
         handleNotificationIntent(intent)
     }
 
-    private val vpnConsentLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) {
-            viewModel.startLocalDnsVpn()
-        }
-    }
-
     private fun handleNotificationIntent(intent: Intent?) {
         val dest = intent?.getStringExtra(com.example.util.SmartAlertNotifier.EXTRA_NAV_DESTINATION)
         if (!dest.isNullOrBlank()) {
@@ -82,7 +97,7 @@ class MainActivity : ComponentActivity() {
             if (prepareIntent == null) {
                 viewModel.startLocalDnsVpn()
             } else {
-                vpnConsentLauncher.launch(prepareIntent)
+                pendingTileVpnConsent.value = true
             }
         }
     }
