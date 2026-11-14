@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
@@ -76,11 +77,13 @@ import com.example.model.AppStrings
 import com.example.model.PrivateDnsPreset
 import com.example.ui.MainViewModel
 import com.example.ui.components.GlassContainer
+import com.example.ui.components.neumorphicDepth
 import com.example.ui.components.rememberAppHaptics
 import com.example.ui.components.tactileSpringPress
 import com.example.update.AppUpdateUiState
 import com.example.ui.theme.AmberAlert
 import com.example.ui.theme.LocalAppDimensions
+import com.example.ui.theme.NeumorphicColors
 import com.example.ui.theme.RedAlert
 
 /**
@@ -254,10 +257,10 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Row 1: System Auto-Switch & Light Mode
+                // Row 1: System Auto-Switch, Light Mode & Neumorphism
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     SmallThemeButton(
                         themeMode = com.example.model.AppThemeMode.SYSTEM,
@@ -283,6 +286,21 @@ fun SettingsScreen(
                             viewModel.setAppThemeMode(com.example.model.AppThemeMode.LIGHT_MODE)
                         },
                         modifier = Modifier.weight(1f)
+                    )
+
+                    SmallThemeButton(
+                        themeMode = com.example.model.AppThemeMode.NEUMORPHISM,
+                        icon = Icons.Default.Layers,
+                        accentColor = NeumorphicColors.AccentBlue,
+                        isSelected = appThemeMode == com.example.model.AppThemeMode.NEUMORPHISM,
+                        appLanguage = appLanguage,
+                        onClick = {
+                            appHaptics.performSegmentSwitch()
+                            viewModel.setAppThemeMode(com.example.model.AppThemeMode.NEUMORPHISM)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("theme_option_neumorphism")
                     )
                 }
 
@@ -971,6 +989,7 @@ fun LanguagePillOption(
     val animatedBgTop by animateColorAsState(
         targetValue = when {
             isSelected && glassStyle.isDark -> glassStyle.accentPrimary.copy(alpha = 0.24f)
+            isSelected && glassStyle.isNeumorphic -> glassStyle.surfaceColor
             isSelected -> Color.White
             else -> Color.Transparent
         },
@@ -980,6 +999,7 @@ fun LanguagePillOption(
     val animatedBgBottom by animateColorAsState(
         targetValue = when {
             isSelected && glassStyle.isDark -> glassStyle.accentSecondary.copy(alpha = 0.14f)
+            isSelected && glassStyle.isNeumorphic -> glassStyle.neumorphicBase
             isSelected -> glassStyle.accentPrimary.copy(alpha = 0.08f)
             else -> Color.Transparent
         },
@@ -999,6 +1019,7 @@ fun LanguagePillOption(
     val animatedTextColor by animateColorAsState(
         targetValue = when {
             isSelected && glassStyle.isDark -> Color.White
+            isSelected && glassStyle.isNeumorphic -> glassStyle.accentPrimary
             isSelected -> glassStyle.textPrimary
             else -> glassStyle.textSecondary
         },
@@ -1008,17 +1029,26 @@ fun LanguagePillOption(
 
     Box(
         modifier = modifier
-            .height(44.dp)
+            .height(48.dp)
             .tactileSpringPress(pressedScale = 0.95f, onClick = onClick)
             .then(
-                if (isSelected && !glassStyle.isDark) {
-                    Modifier.shadow(
+                when {
+                    isSelected && glassStyle.isNeumorphic -> Modifier.neumorphicDepth(
+                        shape = shape,
+                        lightColor = glassStyle.neumorphicHighlight,
+                        darkColor = glassStyle.neumorphicShadow,
+                        offsetDp = 3.dp,
+                        surfaceColor = glassStyle.surfaceColor,
+                        blurDp = 6.dp
+                    )
+                    isSelected && !glassStyle.isDark -> Modifier.shadow(
                         elevation = 3.dp,
                         shape = shape,
                         spotColor = Color(0x140F172A),
                         ambientColor = Color(0x0A0F172A)
                     )
-                } else Modifier
+                    else -> Modifier
+                }
             )
             .clip(shape)
             .background(
@@ -1067,19 +1097,25 @@ fun SmallThemeButton(
     modifier: Modifier = Modifier
 ) {
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
+    val shape = RoundedCornerShape(12.dp)
 
     val animatedBg by animateColorAsState(
-        targetValue = if (isSelected) {
-            accentColor.copy(alpha = if (glassStyle.isDark) 0.22f else 0.14f)
-        } else {
-            glassStyle.cardSubtleBg
+        targetValue = when {
+            isSelected && glassStyle.isNeumorphic -> glassStyle.cardSubtleBg
+            isSelected -> accentColor.copy(alpha = if (glassStyle.isDark) 0.22f else 0.14f)
+            glassStyle.isNeumorphic -> glassStyle.neumorphicSurface
+            else -> glassStyle.cardSubtleBg
         },
         animationSpec = tween(durationMillis = 200),
         label = "small_theme_bg"
     )
 
     val animatedBorderColor by animateColorAsState(
-        targetValue = if (isSelected) accentColor else glassStyle.borderColor,
+        targetValue = when {
+            isSelected -> accentColor
+            glassStyle.isNeumorphic -> glassStyle.neumorphicBorderLight
+            else -> glassStyle.borderColor
+        },
         animationSpec = tween(durationMillis = 200),
         label = "small_theme_border"
     )
@@ -1096,15 +1132,28 @@ fun SmallThemeButton(
 
     Box(
         modifier = modifier
-            .height(36.dp)
-            .clip(RoundedCornerShape(10.dp))
+            .height(48.dp)
+            .tactileSpringPress(pressedScale = 0.95f, onClick = onClick)
+            .then(
+                if (glassStyle.isNeumorphic) {
+                    Modifier.neumorphicDepth(
+                        shape = shape,
+                        lightColor = glassStyle.neumorphicHighlight,
+                        darkColor = glassStyle.neumorphicShadow,
+                        offsetDp = 3.dp,
+                        isPressed = isSelected,
+                        surfaceColor = if (isSelected) Color.Unspecified else glassStyle.neumorphicSurface,
+                        blurDp = 6.dp
+                    )
+                } else Modifier
+            )
+            .clip(shape)
             .background(animatedBg)
             .border(
                 width = if (isSelected) 1.2.dp else 0.8.dp,
                 color = animatedBorderColor,
-                shape = RoundedCornerShape(10.dp)
+                shape = shape
             )
-            .clickable { onClick() }
             .padding(horizontal = 8.dp),
         contentAlignment = Alignment.Center
     ) {

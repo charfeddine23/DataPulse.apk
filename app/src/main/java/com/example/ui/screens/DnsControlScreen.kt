@@ -100,11 +100,13 @@ import com.example.model.PrivateDnsPreset
 import com.example.ui.MainViewModel
 import com.example.ui.components.GlassContainer
 import com.example.ui.components.NeumorphicSwitch
+import com.example.ui.components.neumorphicDepth
 import com.example.ui.components.rememberAppHaptics
 import com.example.ui.components.tactileSpringPress
 import com.example.ui.theme.AmberAlert
 import com.example.ui.theme.LocalAppDimensions
 import com.example.ui.theme.LocalLiquidGlass
+import com.example.ui.theme.NeumorphicColors
 
 /**
  * Dedicated standalone DNS Control & Local VPN Shield screen crafted in the
@@ -160,11 +162,11 @@ fun DnsControlScreen(
         }
     }
 
-    val emeraldAdGuard = Color(0xFF00E676)
-    val electricCyan = Color(0xFF00E5FF)
-    val googleBlue = Color(0xFF4285F4)
-    val quad9Violet = Color(0xFFB388FF)
-    val openDnsAmber = Color(0xFFFFB300)
+    val emeraldAdGuard = if (glassStyle.isNeumorphic) NeumorphicColors.AccentMint else Color(0xFF00E676)
+    val electricCyan = if (glassStyle.isNeumorphic) NeumorphicColors.AccentBlue else Color(0xFF00E5FF)
+    val googleBlue = if (glassStyle.isNeumorphic) NeumorphicColors.AccentBlue else Color(0xFF4285F4)
+    val quad9Violet = if (glassStyle.isNeumorphic) Color(0xFF7C3AED) else Color(0xFFB388FF)
+    val openDnsAmber = if (glassStyle.isNeumorphic) Color(0xFFD97706) else Color(0xFFFFB300)
 
     val presetAccent: (PrivateDnsPreset) -> Color = { preset ->
         when (preset) {
@@ -498,7 +500,7 @@ fun DnsControlScreen(
                             ) {
                                 Text(
                                     text = AppStrings.privateDnsApplyBtn(appLanguage),
-                                    color = Color(0xFF061018),
+                                    color = if (glassStyle.isNeumorphic) Color.White else Color(0xFF061018),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.ExtraBold
                                 )
@@ -602,16 +604,17 @@ fun DnsControlScreen(
                     ),
                     shape = RoundedCornerShape(14.dp)
                 ) {
+                    val btnFg = if (glassStyle.isNeumorphic) Color.White else Color(0xFF061018)
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                         contentDescription = null,
-                        tint = Color(0xFF061018),
+                        tint = btnFg,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = AppStrings.privateDnsOpenSettingsBtn(appLanguage),
-                        color = Color(0xFF061018),
+                        color = btnFg,
                         fontSize = 12.5.sp,
                         fontWeight = FontWeight.ExtraBold
                     )
@@ -862,7 +865,11 @@ private fun DnsShieldHeroCard(
 
                     // Subtle static core ring
                     drawCircle(
-                        color = if (glassStyle.isDark) Color(0xFF0B111C) else Color(0xFFF1F5F9),
+                        color = when {
+                            glassStyle.isNeumorphic -> NeumorphicColors.SurfaceSubtle
+                            glassStyle.isDark -> Color(0xFF0B111C)
+                            else -> Color(0xFFF1F5F9)
+                        },
                         radius = innerRadius,
                         center = Offset(cx, cy)
                     )
@@ -1112,16 +1119,28 @@ private fun DnsServerProviderCard(
         label = "dns_card_glow_alpha"
     )
 
-    val borderBrush = if (isSelected) {
-        Brush.linearGradient(
+    val borderBrush = when {
+        glassStyle.isNeumorphic && isSelected -> Brush.linearGradient(
+            colors = listOf(
+                accentColor.copy(alpha = 0.85f),
+                glassStyle.neumorphicBorderLight,
+                accentColor.copy(alpha = 0.50f)
+            )
+        )
+        glassStyle.isNeumorphic -> Brush.linearGradient(
+            colors = listOf(
+                glassStyle.neumorphicBorderLight,
+                glassStyle.neumorphicBorderDark
+            )
+        )
+        isSelected -> Brush.linearGradient(
             colors = listOf(
                 accentColor.copy(alpha = 0.95f),
                 Color(0xFF00E5FF).copy(alpha = 0.65f * glowPulse),
                 accentColor.copy(alpha = 0.80f)
             )
         )
-    } else {
-        Brush.linearGradient(
+        else -> Brush.linearGradient(
             colors = listOf(
                 if (glassStyle.isDark) Color(0xFF2B3442) else glassStyle.borderColor,
                 if (glassStyle.isDark) Color(0xFF1E2633) else glassStyle.borderColor
@@ -1135,17 +1154,38 @@ private fun DnsServerProviderCard(
         modifier = modifier
             .fillMaxWidth()
             .tactileSpringPress(pressedScale = 0.97f, onClick = onClick)
+            .then(
+                if (glassStyle.isNeumorphic) {
+                    Modifier.neumorphicDepth(
+                        shape = shape,
+                        lightColor = glassStyle.neumorphicHighlight,
+                        darkColor = glassStyle.neumorphicShadow,
+                        offsetDp = if (isSelected) 4.dp else 6.dp,
+                        isPressed = false,
+                        surfaceColor = cardBaseColor,
+                        blurDp = 12.dp
+                    )
+                } else Modifier
+            )
             .clip(shape)
             .background(
-                brush = if (isSelected) {
-                    Brush.horizontalGradient(
+                brush = when {
+                    glassStyle.isNeumorphic && isSelected -> Brush.horizontalGradient(
+                        colors = listOf(
+                            accentColor.copy(alpha = 0.08f),
+                            cardBaseColor
+                        )
+                    )
+                    glassStyle.isNeumorphic -> Brush.verticalGradient(
+                        colors = listOf(cardBaseColor, glassStyle.neumorphicBase)
+                    )
+                    isSelected -> Brush.horizontalGradient(
                         colors = listOf(
                             accentColor.copy(alpha = if (glassStyle.isDark) 0.16f else 0.10f),
                             cardBaseColor
                         )
                     )
-                } else {
-                    Brush.verticalGradient(
+                    else -> Brush.verticalGradient(
                         colors = listOf(
                             cardBaseColor,
                             if (glassStyle.isDark) Color(0xFF12171E) else cardBaseColor

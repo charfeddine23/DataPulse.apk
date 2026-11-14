@@ -91,11 +91,12 @@ class ExampleRobolectricTest {
 
   @Test
   fun `verify multi theme engine and light mode configuration`() {
-    // 1. Verify 5 theme modes (including SYSTEM)
+    // 1. Verify 6 theme modes (including SYSTEM and NEUMORPHISM)
     val modes = com.example.model.AppThemeMode.values()
-    assertEquals(5, modes.size)
+    assertEquals(6, modes.size)
     assertTrue(modes.contains(com.example.model.AppThemeMode.SYSTEM))
     assertTrue(modes.contains(com.example.model.AppThemeMode.LIGHT_MODE))
+    assertTrue(modes.contains(com.example.model.AppThemeMode.NEUMORPHISM))
     assertTrue(modes.contains(com.example.model.AppThemeMode.LIQUID_GLASS_DEFAULT))
     assertTrue(modes.contains(com.example.model.AppThemeMode.LIQUID_NEON_CYAN))
     assertTrue(modes.contains(com.example.model.AppThemeMode.AMOLED_PITCH_BLACK))
@@ -106,19 +107,38 @@ class ExampleRobolectricTest {
     assertEquals("الوضع النهاري الفاخر", light.getDisplayName(com.example.model.AppLanguage.ARABIC))
     assertEquals("Pearl & Platinum", light.getDisplayName(com.example.model.AppLanguage.ENGLISH))
 
-    // 3. Verify LiquidGlassStyle tokens for Pearl & Platinum Light Mode
+    // 3. Verify Neumorphism theme properties & color tokens
+    val neumorphism = com.example.model.AppThemeMode.NEUMORPHISM
+    assertEquals(false, neumorphism.isDark)
+    assertEquals("نيومورفيزم", neumorphism.getDisplayName(com.example.model.AppLanguage.ARABIC))
+    assertEquals("Neumorphism", neumorphism.getDisplayName(com.example.model.AppLanguage.ENGLISH))
+
+    val neuroStyle = com.example.ui.theme.createLiquidGlassStyle(com.example.model.AppThemeMode.NEUMORPHISM)
+    assertEquals(false, neuroStyle.isDark)
+    assertEquals(true, neuroStyle.isNeumorphic)
+    assertEquals(androidx.compose.ui.graphics.Color(0xFFEEF2F6), neuroStyle.surfaceColor)
+    assertEquals(androidx.compose.ui.graphics.Color(0xFFFFFFFF), neuroStyle.neumorphicHighlight)
+    assertEquals(androidx.compose.ui.graphics.Color(0xFFD1D9E6), neuroStyle.neumorphicShadow)
+    assertEquals(androidx.compose.ui.graphics.Color(0xFF1E293B), neuroStyle.textPrimary)
+    assertEquals(androidx.compose.ui.graphics.Color(0xFF64748B), neuroStyle.textSecondary)
+    assertEquals(androidx.compose.ui.graphics.Color(0xFF2563EB), neuroStyle.accentPrimary)
+    assertEquals(androidx.compose.ui.graphics.Color(0xFF10B981), neuroStyle.accentSecondary)
+    assertEquals(androidx.compose.ui.graphics.Color(0xFFEF4444), com.example.ui.theme.NeumorphicColors.AccentRed)
+
+    // 4. Verify LiquidGlassStyle tokens for Pearl & Platinum Light Mode
     val lightStyle = com.example.ui.theme.createLiquidGlassStyle(com.example.model.AppThemeMode.LIGHT_MODE)
     assertEquals(false, lightStyle.isDark)
+    assertEquals(false, lightStyle.isNeumorphic)
     assertEquals(com.example.ui.theme.PearlPlatinumLightBase, lightStyle.neumorphicBase)
     assertEquals(com.example.ui.theme.PearlPlatinumTextPrimary, lightStyle.textPrimary)
 
-    // 4. Verify SYSTEM theme mode dynamic resolution
+    // 5. Verify SYSTEM theme mode dynamic resolution
     val systemLightStyle = com.example.ui.theme.createLiquidGlassStyle(com.example.model.AppThemeMode.SYSTEM, isSystemDark = false)
     assertEquals(false, systemLightStyle.isDark)
     val systemDarkStyle = com.example.ui.theme.createLiquidGlassStyle(com.example.model.AppThemeMode.SYSTEM, isSystemDark = true)
     assertEquals(true, systemDarkStyle.isDark)
 
-    // 5. Verify Localized Strings
+    // 6. Verify Localized Strings
     assertEquals("Multi-Theme Engine", com.example.model.AppStrings.multiThemeEngineSection(com.example.model.AppLanguage.ENGLISH))
     assertTrue(com.example.model.AppStrings.multiThemeEngineSection(com.example.model.AppLanguage.ARABIC).contains("Multi-Theme Engine"))
   }

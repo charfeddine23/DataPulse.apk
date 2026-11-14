@@ -39,6 +39,7 @@ data class LiquidGlassStyle(
     val backdropBrush: Brush,
     val blurRadius: Dp = 16.dp,
     val isDark: Boolean = true,
+    val isNeumorphic: Boolean = false,
     val neumorphicBase: Color = Color(0xFF0F1423),
     val neumorphicSurface: Color = Color(0xFF141C2E),
     val neumorphicHighlight: Color = Color(0x384E699A),
@@ -81,6 +82,29 @@ fun createAppColorScheme(mode: AppThemeMode, isSystemDark: Boolean = false): Col
         outline = PearlPlatinumBorder,
         outlineVariant = PearlPlatinumBorderSubtle,
         error = RedAlert,
+        onError = Color.White
+    )
+
+    AppThemeMode.NEUMORPHISM -> lightColorScheme(
+        primary = NeumorphicColors.AccentBlue,
+        onPrimary = Color.White,
+        primaryContainer = Color(0xFFDBEAFE),
+        onPrimaryContainer = Color(0xFF1E3A8A),
+        secondary = NeumorphicColors.AccentMint,
+        onSecondary = Color.White,
+        secondaryContainer = Color(0xFFD1FAE5),
+        onSecondaryContainer = Color(0xFF065F46),
+        tertiary = NeumorphicColors.AccentBlue,
+        onTertiary = Color.White,
+        background = NeumorphicColors.Background,
+        onBackground = NeumorphicColors.TextPrimary,
+        surface = NeumorphicColors.Surface,
+        onSurface = NeumorphicColors.TextPrimary,
+        surfaceVariant = NeumorphicColors.SurfaceSubtle,
+        onSurfaceVariant = NeumorphicColors.TextSecondary,
+        outline = NeumorphicColors.DarkShadow,
+        outlineVariant = NeumorphicColors.BorderDark,
+        error = NeumorphicColors.AccentRed,
         onError = Color.White
     )
 
@@ -193,6 +217,40 @@ fun createLiquidGlassStyle(mode: AppThemeMode, isSystemDark: Boolean = false): L
         neumorphicShadow = Color(0x0F0F172A),
         neumorphicBorderLight = Color(0x80FFFFFF),
         neumorphicBorderDark = Color(0x0D0F172A)
+    )
+
+    AppThemeMode.NEUMORPHISM -> LiquidGlassStyle(
+        surfaceColor = NeumorphicColors.Surface,
+        surfaceTranslucent = NeumorphicColors.Surface,
+        borderColor = NeumorphicColors.DarkShadow,
+        textPrimary = NeumorphicColors.TextPrimary,
+        textSecondary = NeumorphicColors.TextSecondary,
+        textTertiary = NeumorphicColors.TextTertiary,
+        accentPrimary = NeumorphicColors.AccentBlue,
+        accentSecondary = NeumorphicColors.AccentMint,
+        cardBackground = NeumorphicColors.Surface,
+        cardSubtleBg = NeumorphicColors.SurfaceSubtle,
+        rimLightBrush = Brush.linearGradient(
+            listOf(
+                NeumorphicColors.Highlight,
+                NeumorphicColors.DarkShadow.copy(alpha = 0.75f)
+            )
+        ),
+        backdropBrush = Brush.verticalGradient(
+            listOf(
+                NeumorphicColors.Background,
+                NeumorphicColors.Background
+            )
+        ),
+        blurRadius = 0.dp,
+        isDark = false,
+        isNeumorphic = true,
+        neumorphicBase = NeumorphicColors.Background,
+        neumorphicSurface = NeumorphicColors.Surface,
+        neumorphicHighlight = NeumorphicColors.Highlight,
+        neumorphicShadow = NeumorphicColors.DarkShadow,
+        neumorphicBorderLight = NeumorphicColors.BorderLight,
+        neumorphicBorderDark = NeumorphicColors.BorderDark
     )
 
     AppThemeMode.LIQUID_GLASS_DEFAULT -> LiquidGlassStyle(

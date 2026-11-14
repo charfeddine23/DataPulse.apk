@@ -1,11 +1,13 @@
 package com.example.model
 
 /**
- * Four distinct themes supported by Data Pulse Multi-Theme Engine:
- * - LIGHT_MODE: Luminous daylight background (#F8FAFC), pure crystal white glass (#FFFFFF), vibrant electric blue (#0066FF), and vivid violet accent (#7C3AED).
- * - LIQUID_GLASS_DEFAULT: Deep dark glass background (#0F1423), translucent surface, vibrant blue primary (#0066FF), and violet accent (#7C4DFF).
- * - LIQUID_NEON_CYAN: Dark slate background (#080D1A), bright cyan primary (#00E5FF), and neon green/teal accent (#00FFA3).
- * - AMOLED_PITCH_BLACK: Pure pitch-black background (#000000) for OLED battery saving, dark surface (#111116), and electric blue primary (#3B82F6).
+ * Multi-Theme Engine modes supported across Data Pulse / DNS Pulse:
+ * - SYSTEM: Automatically tracks the device's system dark/light theme.
+ * - LIGHT_MODE: Pearl & Platinum crystalline light glass theme.
+ * - NEUMORPHISM: Soft ice-gray (#EEF2F6) tactile Neumorphism theme with #FFFFFF/#D1D9E6 dual shadows.
+ * - LIQUID_GLASS_DEFAULT: Deep obsidian Dark Liquid Glass theme (#090C10 -> #0D1117).
+ * - LIQUID_NEON_CYAN: Dark slate neon cyan & emerald cyber theme.
+ * - AMOLED_PITCH_BLACK: Pure pitch-black (#000000) theme for OLED displays.
  */
 enum class AppThemeMode(
     val titleEn: String,
@@ -26,6 +28,13 @@ enum class AppThemeMode(
         titleAr = "الوضع النهاري الفاخر",
         descEn = "Warm Pearl Glass & Obsidian",
         descAr = "زجاج لؤلؤي دافئ ونصوص فحمية",
+        isDark = false
+    ),
+    NEUMORPHISM(
+        titleEn = "Neumorphism",
+        titleAr = "نيومورفيزم",
+        descEn = "Soft Ice-Gray Tactile UI",
+        descAr = "تصميم ثلاثي الأبعاد ناعم",
         isDark = false
     ),
     LIQUID_GLASS_DEFAULT(
@@ -56,3 +65,5 @@ enum class AppThemeMode(
     fun getDescription(lang: AppLanguage): String =
         if (lang == AppLanguage.ARABIC) descAr else descEn
 }
+
+typealias AppTheme = AppThemeMode

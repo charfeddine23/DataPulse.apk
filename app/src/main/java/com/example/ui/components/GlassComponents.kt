@@ -156,8 +156,16 @@ fun GlassContainer(
     Box(
         modifier = interactiveModifier
             .then(
-                if (glassStyle.isDark) {
-                    Modifier.neumorphicDepth(
+                when {
+                    glassStyle.isNeumorphic -> Modifier.neumorphicDepth(
+                        shape = shape,
+                        lightColor = glassStyle.neumorphicHighlight,
+                        darkColor = glassStyle.neumorphicShadow,
+                        offsetDp = 6.dp,
+                        surfaceColor = effectiveBg,
+                        blurDp = 12.dp
+                    )
+                    glassStyle.isDark -> Modifier.neumorphicDepth(
                         shape = shape,
                         lightColor = if (enableBreathingGlow) {
                             effectiveGlow.copy(alpha = 0.16f)
@@ -167,8 +175,7 @@ fun GlassContainer(
                         darkColor = glassStyle.neumorphicShadow,
                         offsetDp = 3.dp
                     )
-                } else {
-                    Modifier.shadow(
+                    else -> Modifier.shadow(
                         elevation = 5.dp,
                         shape = shape,
                         spotColor = Color(0x140F172A),
@@ -178,8 +185,8 @@ fun GlassContainer(
             )
             .clip(shape)
     ) {
-        // Frosted Blur Layer (on Android 12+)
-        if (enableBlur && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        // Frosted Blur Layer (on Android 12+ for non-Neumorphic glass themes)
+        if (!glassStyle.isNeumorphic && enableBlur && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -193,15 +200,17 @@ fun GlassContainer(
             modifier = Modifier
                 .matchParentSize()
                 .background(
-                    brush = if (glassStyle.isDark) {
-                        Brush.verticalGradient(
+                    brush = when {
+                        glassStyle.isNeumorphic -> Brush.verticalGradient(
+                            colors = listOf(effectiveBg, glassStyle.neumorphicBase)
+                        )
+                        glassStyle.isDark -> Brush.verticalGradient(
                             colors = listOf(
                                 effectiveBg.copy(alpha = 0.95f),
                                 effectiveBg.copy(alpha = 0.84f)
                             )
                         )
-                    } else {
-                        Brush.verticalGradient(
+                        else -> Brush.verticalGradient(
                             colors = listOf(
                                 Color(0xFFFFFFFF),
                                 Color(0xFFFAFBFC)
@@ -211,16 +220,21 @@ fun GlassContainer(
                 )
                 .border(
                     width = 1.dp,
-                    brush = if (glassStyle.isDark) {
-                        Brush.linearGradient(
+                    brush = when {
+                        glassStyle.isNeumorphic -> Brush.linearGradient(
+                            colors = listOf(
+                                glassStyle.neumorphicBorderLight,
+                                if (borderColor != null) effectiveBorder.copy(alpha = 0.55f) else glassStyle.neumorphicBorderDark
+                            )
+                        )
+                        glassStyle.isDark -> Brush.linearGradient(
                             colors = listOf(
                                 effectiveBorder.copy(alpha = 0.72f),
                                 Color(0x22FFFFFF),
                                 effectiveBorder.copy(alpha = 0.40f)
                             )
                         )
-                    } else {
-                        Brush.linearGradient(
+                        else -> Brush.linearGradient(
                             colors = listOf(
                                 Color(0x80FFFFFF),
                                 effectiveBorder,
@@ -289,15 +303,20 @@ fun PersistentTopAppBar(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                brush = if (glassStyle.isDark) {
-                    Brush.verticalGradient(
+                brush = when {
+                    glassStyle.isNeumorphic -> Brush.verticalGradient(
+                        colors = listOf(
+                            glassStyle.surfaceColor,
+                            glassStyle.neumorphicBase
+                        )
+                    )
+                    glassStyle.isDark -> Brush.verticalGradient(
                         colors = listOf(
                             glassStyle.surfaceColor.copy(alpha = 0.96f),
                             glassStyle.surfaceTranslucent.copy(alpha = 0.88f)
                         )
                     )
-                } else {
-                    Brush.verticalGradient(
+                    else -> Brush.verticalGradient(
                         colors = listOf(
                             Color(0xF8FFFFFF),
                             Color(0xEEF4F6F9)

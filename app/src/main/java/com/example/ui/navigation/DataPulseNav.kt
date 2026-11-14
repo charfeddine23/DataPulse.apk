@@ -57,6 +57,7 @@ import com.example.ui.components.LocalRootFlameOverlay
 import com.example.ui.components.PersistentTopAppBar
 import com.example.ui.components.RootFlameOverlayCanvas
 import com.example.ui.components.RootFlameOverlayController
+import com.example.ui.components.neumorphicDepth
 import com.example.ui.components.tactileSpringPress
 import com.example.update.AppUpdateUiState
 import com.example.ui.screens.AnalyticsScreen
@@ -334,20 +335,41 @@ fun LiquidGlassBottomNav(
                 .fillMaxWidth()
                 .widthIn(max = dimensions.bottomNavMaxWidth)
                 .then(
-                    if (!glassStyle.isDark) {
-                        Modifier.shadow(
+                    when {
+                        glassStyle.isNeumorphic -> Modifier.neumorphicDepth(
+                            shape = RoundedCornerShape(24.dp),
+                            lightColor = glassStyle.neumorphicHighlight,
+                            darkColor = glassStyle.neumorphicShadow,
+                            offsetDp = 6.dp,
+                            surfaceColor = glassStyle.surfaceColor,
+                            blurDp = 12.dp
+                        )
+                        !glassStyle.isDark -> Modifier.shadow(
                             elevation = 8.dp,
                             shape = RoundedCornerShape(24.dp),
                             spotColor = Color(0x140F172A),
                             ambientColor = Color(0x0A0F172A)
                         )
-                    } else Modifier
+                        else -> Modifier
+                    }
                 )
                 .clip(RoundedCornerShape(24.dp))
-                .background(brush = glassStyle.backdropBrush)
+                .background(
+                    brush = if (glassStyle.isNeumorphic) {
+                        Brush.verticalGradient(listOf(glassStyle.surfaceColor, glassStyle.neumorphicBase))
+                    } else {
+                        glassStyle.backdropBrush
+                    }
+                )
                 .border(
                     1.dp,
-                    if (glassStyle.isDark) glassStyle.rimLightBrush else Brush.linearGradient(listOf(Color(0x80FFFFFF), glassStyle.borderColor, Color(0x40FFFFFF))),
+                    when {
+                        glassStyle.isNeumorphic -> Brush.linearGradient(
+                            listOf(glassStyle.neumorphicBorderLight, glassStyle.neumorphicBorderDark)
+                        )
+                        glassStyle.isDark -> glassStyle.rimLightBrush
+                        else -> Brush.linearGradient(listOf(Color(0x80FFFFFF), glassStyle.borderColor, Color(0x40FFFFFF)))
+                    },
                     RoundedCornerShape(24.dp)
                 )
                 .padding(horizontal = 10.dp, vertical = 6.dp)
@@ -381,6 +403,17 @@ fun LiquidGlassBottomNav(
                         .tactileSpringPress(
                             pressedScale = 0.91f,
                             onClick = { onSelectDestination(destination) }
+                        )
+                        .then(
+                            if (glassStyle.isNeumorphic && isSelected) {
+                                Modifier.neumorphicDepth(
+                                    shape = RoundedCornerShape(16.dp),
+                                    lightColor = glassStyle.neumorphicHighlight,
+                                    darkColor = glassStyle.neumorphicShadow,
+                                    offsetDp = 2.dp,
+                                    isPressed = true
+                                )
+                            } else Modifier
                         )
                         .clip(RoundedCornerShape(16.dp))
                         .background(
