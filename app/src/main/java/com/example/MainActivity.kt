@@ -63,10 +63,27 @@ class MainActivity : ComponentActivity() {
         handleNotificationIntent(intent)
     }
 
+    private val vpnConsentLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            viewModel.startLocalDnsVpn()
+        }
+    }
+
     private fun handleNotificationIntent(intent: Intent?) {
         val dest = intent?.getStringExtra(com.example.util.SmartAlertNotifier.EXTRA_NAV_DESTINATION)
         if (!dest.isNullOrBlank()) {
             viewModel.setTargetNavDestination(dest)
+        }
+        val requestVpn = intent?.getBooleanExtra(com.example.dns.DnsQuickSettingsTileService.EXTRA_REQUEST_VPN_CONSENT, false) == true
+        if (requestVpn) {
+            val prepareIntent = android.net.VpnService.prepare(this)
+            if (prepareIntent == null) {
+                viewModel.startLocalDnsVpn()
+            } else {
+                vpnConsentLauncher.launch(prepareIntent)
+            }
         }
     }
 
@@ -74,6 +91,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // Refresh stats automatically when returning from Settings or background
         viewModel.refreshAll()
+        viewModel.resumePendingInstallIfPermitted(this)
     }
 
     private fun openUsageAccessSettings() {

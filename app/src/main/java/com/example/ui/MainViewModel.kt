@@ -168,10 +168,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private val appUpdateManager = com.example.update.AppUpdateManager(application)
+    private val _appUpdateState = MutableStateFlow<com.example.update.AppUpdateUiState>(
+        com.example.update.AppUpdateUiState.Hidden
+    )
+    val appUpdateState: StateFlow<com.example.update.AppUpdateUiState> = _appUpdateState.asStateFlow()
+
     init {
         speedMonitor.setPowerSaving(preferences.powerSavingMode)
         loadSimCards()
         refreshAll()
+        checkForAppUpdate(manual = false)
     }
 
     fun loadSimCards() {
@@ -497,14 +504,127 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _appLanguage.value = lang
     }
 
+    val dnsVpnActive: StateFlow<Boolean> = com.example.dns.DnsVpnState.isActive
+    val dnsVpnHost: StateFlow<String> = com.example.dns.DnsVpnState.activeHostname
+    val dnsQueriesForwarded: StateFlow<Long> = com.example.dns.DnsVpnState.queriesForwarded
+
+    fun startLocalDnsVpn() {
+        if (_privateDnsPreset.value == PrivateDnsPreset.OFF) {
+            setPrivateDnsPreset(PrivateDnsPreset.ADGUARD)
+        }
+        com.example.dns.DnsVpnService.start(getApplication())
+    }
+
+    fun stopLocalDnsVpn() {
+        com.example.dns.DnsVpnService.stop(getApplication())
+    }
+
     fun setPrivateDnsPreset(preset: PrivateDnsPreset) {
         preferences.privateDnsPreset = preset.name
         _privateDnsPreset.value = preset
+        if (dnsVpnActive.value) {
+            if (preset == PrivateDnsPreset.OFF) {
+                stopLocalDnsVpn()
+            } else {
+                com.example.dns.DnsVpnService.start(getApplication())
+            }
+        }
     }
 
     fun setPrivateDnsCustomHostname(hostname: String) {
         val trimmed = hostname.trim()
         preferences.privateDnsCustomHostname = trimmed
         _privateDnsCustomHostname.value = trimmed
+        if (dnsVpnActive.value && _privateDnsPreset.value == PrivateDnsPreset.CUSTOM && trimmed.isNotBlank()) {
+            com.example.dns.DnsVpnService.start(getApplication())
+        }
+    }
+
+    fun checkForAppUpdate(manual: Boolean = true) {
+        viewModelScope.launch {
+            if (manual) {
+                _appUpdateState.value = com.example.update.AppUpdateUiState.Checking
+            }
+            val latest = try {
+                appUpdateManager.fetchLatestRelease()
+            } catch (_: Exception) {
+                null
+            }
+            if (latest != null) {
+                _appUpdateState.value = com.example.update.AppUpdateUiState.Available(latest)
+            } else if (manual) {
+                _appUpdateState.value = com.example.update.AppUpdateUiState.UpToDate
+            }
+        }
+    }
+
+    fun startInAppUpdateDownload(
+        callerContext: android.content.Context,
+        info: com.example.update.AppUpdateInfo
+    ) {
+        if (_appUpdateState.value is com.example.update.AppUpdateUiState.Downloading) return
+        viewModelScope.launch {
+            _appUpdateState.value = com.example.update.AppUpdateUiState.Downloading(
+                info = info,
+                progress = 0f,
+                downloadedBytes = 0L,
+                totalBytes = info.apkSizeBytes
+            )
+            try {
+                val apkFile = appUpdateManager.downloadApk(info) { progress, downloaded, total ->
+                    _appUpdateState.value = com.example.update.AppUpdateUiState.Downloading(
+                        info = info,
+                        progress = progress,
+                        downloadedBytes = downloaded,
+                        totalBytes = total
+                    )
+                }
+                if (appUpdateManager.canInstallPackages()) {
+                    _appUpdateState.value = com.example.update.AppUpdateUiState.ReadyToInstall(info, apkFile)
+                    appUpdateManager.triggerSystemApkInstaller(callerContext, apkFile)
+                } else {
+                    _appUpdateState.value = com.example.update.AppUpdateUiState.NeedsInstallPermission(info, apkFile)
+                }
+            } catch (_: Exception) {
+                _appUpdateState.value = com.example.update.AppUpdateUiState.Error(
+                    messageAr = "تعذر تنزيل التحديث. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.",
+                    messageEn = "Unable to download update. Check your connection and retry.",
+                    info = info
+                )
+            }
+        }
+    }
+
+    fun installDownloadedUpdate(
+        callerContext: android.content.Context,
+        readyState: com.example.update.AppUpdateUiState.ReadyToInstall
+    ) {
+        if (!appUpdateManager.canInstallPackages()) {
+            _appUpdateState.value = com.example.update.AppUpdateUiState.NeedsInstallPermission(
+                info = readyState.info,
+                apkFile = readyState.apkFile
+            )
+            return
+        }
+        appUpdateManager.triggerSystemApkInstaller(callerContext, readyState.apkFile)
+    }
+
+    fun requestInstallPermission(callerContext: android.content.Context) {
+        appUpdateManager.launchInstallPermissionSettings(callerContext)
+    }
+
+    fun resumePendingInstallIfPermitted(callerContext: android.content.Context) {
+        val current = _appUpdateState.value
+        if (current is com.example.update.AppUpdateUiState.NeedsInstallPermission &&
+            appUpdateManager.canInstallPackages()
+        ) {
+            val ready = com.example.update.AppUpdateUiState.ReadyToInstall(current.info, current.apkFile)
+            _appUpdateState.value = ready
+            appUpdateManager.triggerSystemApkInstaller(callerContext, current.apkFile)
+        }
+    }
+
+    fun dismissUpdateDialog() {
+        _appUpdateState.value = com.example.update.AppUpdateUiState.Hidden
     }
 }

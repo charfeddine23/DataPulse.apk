@@ -181,7 +181,7 @@ class SmartAlertNotifier(private val context: Context) {
         val dismissPendingIntent = createDismissPendingIntent(NOTIFICATION_ID_QUOTA)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_DATA_CAP_ALERTS)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification_pulse)
             .setColor(Color.parseColor("#00F5D4"))
             .setContentTitle(title)
             .setContentText(message)
@@ -231,7 +231,7 @@ class SmartAlertNotifier(private val context: Context) {
         val dismissPendingIntent = createDismissPendingIntent(NOTIFICATION_ID_FORECAST)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_FORECAST_ALERTS)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification_pulse)
             .setColor(Color.parseColor("#00F5D4"))
             .setContentTitle(title)
             .setContentText(message)
@@ -284,7 +284,7 @@ class SmartAlertNotifier(private val context: Context) {
         val dismissPendingIntent = createDismissPendingIntent(notificationId)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_DATA_CAP_ALERTS)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification_pulse)
             .setColor(Color.parseColor("#00F5D4"))
             .setContentTitle(title)
             .setContentText(message)
@@ -323,7 +323,7 @@ class SmartAlertNotifier(private val context: Context) {
         val dismissPendingIntent = createDismissPendingIntent(NOTIFICATION_ID_TEST)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_DATA_CAP_ALERTS)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification_pulse)
             .setColor(Color.parseColor("#00F5D4"))
             .setContentTitle(title)
             .setContentText(message)

@@ -77,5 +77,21 @@ class DataPulseUnitTest {
         org.junit.Assert.assertFalse(forecast.willDepleteBeforeCycleEnd)
         org.junit.Assert.assertTrue(forecast.isSurplus)
     }
+
+    @Test
+    fun testAppUpdateSemVerComparison() {
+        val current = com.example.update.AppUpdateManager.extractSemVer("1.2.4")
+        val newerPatch = com.example.update.AppUpdateManager.extractSemVer("v1.2.5")
+        val newerMinor = com.example.update.AppUpdateManager.extractSemVer("v1.3.0")
+        val sameVersion = com.example.update.AppUpdateManager.extractSemVer("release-v1.2.4")
+        val olderVersion = com.example.update.AppUpdateManager.extractSemVer("v1.1.9")
+
+        assertEquals(Triple(1, 2, 4), current)
+        org.junit.Assert.assertTrue(com.example.update.AppUpdateManager.isNewerVersion(newerPatch, current))
+        org.junit.Assert.assertTrue(com.example.update.AppUpdateManager.isNewerVersion(newerMinor, current))
+        org.junit.Assert.assertFalse(com.example.update.AppUpdateManager.isNewerVersion(sameVersion, current))
+        org.junit.Assert.assertFalse(com.example.update.AppUpdateManager.isNewerVersion(olderVersion, current))
+    }
 }
+
 

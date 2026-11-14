@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+
+    <!-- Upper Telemetry Arc (transparent canvas, balanced cyan-to-cobalt gradient) -->
+    <path
+        android:pathData="M 8.89,21.22 A 25.5,25.5 0 0,1 55.11,21.22"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="8"
+                android:startY="12"
+                android:endX="56"
+                android:endY="22"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF00C4EC" />
+                <item android:offset="1.0" android:color="#FF0070F3" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Lower Telemetry Arc (cobalt-to-violet gradient) -->
+    <path
+        android:pathData="M 55.11,42.78 A 25.5,25.5 0 0,1 8.89,42.78"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="56"
+                android:startY="42"
+                android:endX="8"
+                android:endY="52"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF1D6BFF" />
+                <item android:offset="1.0" android:color="#FF6D28D9" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Crisp Data Pulse Crest -->
+    <path
+        android:pathData="M 6,32 L 16.5,32 L 25,17.5 L 36,46.5 L 43,25.5 L 48.5,32 L 58,32"
+        android:strokeWidth="5.0"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="6"
+                android:startY="32"
+                android:endX="58"
+                android:endY="32"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF00BFA6" />
+                <item android:offset="0.52" android:color="#FF0080FF" />
+                <item android:offset="1.0" android:color="#FF6344F5" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

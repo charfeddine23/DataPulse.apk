@@ -207,12 +207,12 @@ fun createLiquidGlassStyle(mode: AppThemeMode, isSystemDark: Boolean = false): L
         cardBackground = LiquidGlassDefaultCardBg,
         cardSubtleBg = LiquidGlassDefaultCardSubtleBg,
         rimLightBrush = Brush.linearGradient(
-            listOf(Color(0x4D0066FF), Color(0x1AFFFFFF), Color(0x4D7C4DFF))
+            listOf(Color(0x5900E5FF), Color(0x22FFFFFF), Color(0x4D00E676))
         ),
         backdropBrush = Brush.verticalGradient(
-            listOf(Color(0xFF141C2E), Color(0xFF0F1423))
+            listOf(ObsidianVoidTop, ObsidianVoidBottom, Color(0xFF0A0E14))
         ),
-        blurRadius = 16.dp,
+        blurRadius = 18.dp,
         isDark = true,
         neumorphicBase = NeumorphicSlateBase,
         neumorphicSurface = NeumorphicSlateSurface,

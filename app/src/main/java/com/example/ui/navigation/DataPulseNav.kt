@@ -51,10 +51,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.MainViewModel
 import com.example.ui.components.AnalyticsTipPopupDialog
+import com.example.ui.components.AppUpdateDialog
 import com.example.ui.components.LocalRootFlameOverlay
 import com.example.ui.components.PersistentTopAppBar
 import com.example.ui.components.RootFlameOverlayCanvas
 import com.example.ui.components.RootFlameOverlayController
+import com.example.ui.components.tactileSpringPress
+import com.example.update.AppUpdateUiState
 import com.example.ui.screens.AnalyticsScreen
 import com.example.ui.screens.DashboardScreen
 import com.example.ui.screens.RankScreen
@@ -99,6 +102,8 @@ fun DataPulseApp(
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val speedSample by viewModel.speedSample.collectAsStateWithLifecycle()
     val targetNavDestination by viewModel.targetNavDestination.collectAsStateWithLifecycle()
+    val appUpdateState by viewModel.appUpdateState.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     androidx.compose.runtime.LaunchedEffect(targetNavDestination) {
         targetNavDestination?.let { destString ->
@@ -263,6 +268,22 @@ fun DataPulseApp(
             onDismiss = { showUsageTipPopup = false }
         )
     }
+
+    if (appUpdateState is AppUpdateUiState.Available ||
+        appUpdateState is AppUpdateUiState.Downloading ||
+        appUpdateState is AppUpdateUiState.ReadyToInstall ||
+        appUpdateState is AppUpdateUiState.NeedsInstallPermission ||
+        (appUpdateState is AppUpdateUiState.Error && (appUpdateState as AppUpdateUiState.Error).info != null)
+    ) {
+        AppUpdateDialog(
+            state = appUpdateState,
+            appLanguage = appLanguage,
+            onDismiss = { viewModel.dismissUpdateDialog() },
+            onStartUpdate = { info -> viewModel.startInAppUpdateDownload(context, info) },
+            onInstallNow = { ready -> viewModel.installDownloadedUpdate(context, ready) },
+            onRequestInstallPermission = { viewModel.requestInstallPermission(context) }
+        )
+    }
 }
 
 @Composable
@@ -334,18 +355,21 @@ fun LiquidGlassBottomNav(
 
                 Box(
                     modifier = Modifier
+                        .tactileSpringPress(
+                            pressedScale = 0.91f,
+                            onClick = { onSelectDestination(destination) }
+                        )
                         .clip(RoundedCornerShape(16.dp))
                         .background(
                             if (isSelected) {
-                                glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f)
+                                glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.20f else 0.12f)
                             } else Color.Transparent
                         )
                         .border(
-                            width = if (isSelected && !glassStyle.isDark) 0.8.dp else 0.dp,
-                            color = if (isSelected && !glassStyle.isDark) glassStyle.accentPrimary.copy(alpha = 0.35f) else Color.Transparent,
+                            width = if (isSelected) 0.9.dp else 0.dp,
+                            color = if (isSelected) glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.45f else 0.35f) else Color.Transparent,
                             shape = RoundedCornerShape(16.dp)
                         )
-                        .clickable { onSelectDestination(destination) }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                         .testTag(destination.tag),
                     contentAlignment = Alignment.Center
@@ -367,14 +391,15 @@ fun LiquidGlassBottomNav(
                             fontSize = 10.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
-                        }
                     }
                 }
             }
         }
+        }
+        }
     }
 }
-}
+
 
 
 

@@ -1,49 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="512"
-    android:viewportHeight="512">
+    android:viewportWidth="108"
+    android:viewportHeight="108">
 
+    <!-- Centered strictly inside the 66dp adaptive safe zone [21..87] -->
     <group
-        android:pivotX="256"
-        android:pivotY="256"
-        android:scaleX="0.75"
-        android:scaleY="0.75">
+        android:translateX="22"
+        android:translateY="22">
 
-        <!-- Pulse Gradient Path -->
+        <!-- Upper Telemetry Arc -->
         <path
-            android:pathData="M 64,256 H 152 L 200,128 L 264,384 L 328,200 L 368,256 H 448"
-            android:strokeWidth="32"
-            android:strokeLineCap="round"
-            android:strokeLineJoin="round">
+            android:pathData="M 8.89,21.22 A 25.5,25.5 0 0,1 55.11,21.22"
+            android:strokeWidth="4.5"
+            android:strokeLineCap="round">
             <aapt:attr name="android:strokeColor">
                 <gradient
-                    android:startX="0"
-                    android:startY="0"
-                    android:endX="512"
-                    android:endY="512"
+                    android:startX="8"
+                    android:startY="12"
+                    android:endX="56"
+                    android:endY="22"
                     android:type="linear">
-                    <item android:offset="0.0" android:color="#FF00E5FF"/>
-                    <item android:offset="0.5" android:color="#FF0066FF"/>
-                    <item android:offset="1.0" android:color="#FF7C4DFF"/>
+                    <item android:offset="0.0" android:color="#FF00C4EC" />
+                    <item android:offset="1.0" android:color="#FF0070F3" />
                 </gradient>
             </aapt:attr>
         </path>
 
-        <!-- Node 1 -->
+        <!-- Lower Telemetry Arc -->
         <path
-            android:pathData="M 200,128 m -18,0 a 18,18 0 1,0 36,0 a 18,18 0 1,0 -36,0"
-            android:fillColor="#FF00E5FF" />
+            android:pathData="M 55.11,42.78 A 25.5,25.5 0 0,1 8.89,42.78"
+            android:strokeWidth="4.5"
+            android:strokeLineCap="round">
+            <aapt:attr name="android:strokeColor">
+                <gradient
+                    android:startX="56"
+                    android:startY="42"
+                    android:endX="8"
+                    android:endY="52"
+                    android:type="linear">
+                    <item android:offset="0.0" android:color="#FF1D6BFF" />
+                    <item android:offset="1.0" android:color="#FF6D28D9" />
+                </gradient>
+            </aapt:attr>
+        </path>
 
-        <!-- Node 2 -->
+        <!-- Crisp Data Pulse Crest -->
         <path
-            android:pathData="M 264,384 m -18,0 a 18,18 0 1,0 36,0 a 18,18 0 1,0 -36,0"
-            android:fillColor="#FF7C4DFF" />
-
-        <!-- Node 3 -->
-        <path
-            android:pathData="M 328,200 m -18,0 a 18,18 0 1,0 36,0 a 18,18 0 1,0 -36,0"
-            android:fillColor="#FF0066FF" />
+            android:pathData="M 6,32 L 16.5,32 L 25,17.5 L 36,46.5 L 43,25.5 L 48.5,32 L 58,32"
+            android:strokeWidth="5.0"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round">
+            <aapt:attr name="android:strokeColor">
+                <gradient
+                    android:startX="6"
+                    android:startY="32"
+                    android:endX="58"
+                    android:endY="32"
+                    android:type="linear">
+                    <item android:offset="0.0" android:color="#FF00BFA6" />
+                    <item android:offset="0.52" android:color="#FF0080FF" />
+                    <item android:offset="1.0" android:color="#FF6344F5" />
+                </gradient>
+            </aapt:attr>
+        </path>
     </group>
 </vector>

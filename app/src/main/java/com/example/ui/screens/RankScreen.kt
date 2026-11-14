@@ -119,7 +119,9 @@ fun RankScreen(
                 item {
                     GlassContainer(
                         modifier = Modifier.fillMaxWidth(),
-                        borderColor = glassStyle.accentPrimary.copy(alpha = 0.35f)
+                        borderColor = glassStyle.accentPrimary.copy(alpha = 0.45f),
+                        enableBreathingGlow = true,
+                        glowColor = glassStyle.accentPrimary
                     ) {
                         Column(
                             modifier = Modifier

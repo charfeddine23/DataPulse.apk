@@ -46,4 +46,10 @@ enum class PrivateDnsPreset(
             CUSTOM -> AppStrings.privateDnsCustomDesc(appLanguage)
         }
     }
+
+    companion object {
+        fun fromName(name: String?): PrivateDnsPreset {
+            return entries.firstOrNull { it.name == name } ?: ADGUARD
+        }
+    }
 }

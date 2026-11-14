@@ -81,6 +81,7 @@ import com.example.ui.components.GlassContainer
 import com.example.ui.components.PerAppCustomLimitDialog
 import com.example.ui.components.UsagePermissionCard
 import com.example.ui.components.rememberAppHaptics
+import com.example.ui.components.tactileSpringPress
 import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.ElectricBlue
 import com.example.ui.theme.EmeraldSafe
@@ -355,6 +356,7 @@ fun CyclingTimeRangeButton(
     Box(
         modifier = modifier
             .height(48.dp)
+            .tactileSpringPress(pressedScale = 0.955f, onClick = onCycle)
             .clip(shape)
             .background(
                 brush = Brush.linearGradient(
@@ -374,7 +376,6 @@ fun CyclingTimeRangeButton(
                 ),
                 shape = shape
             )
-            .clickable(onClick = onCycle)
             .padding(horizontal = 10.dp)
             .testTag("cycle_time_range_button"),
         contentAlignment = Alignment.Center
@@ -492,6 +493,7 @@ fun CyclingInterfaceFilterButton(
     Box(
         modifier = modifier
             .height(48.dp)
+            .tactileSpringPress(pressedScale = 0.955f, onClick = onCycle)
             .clip(shape)
             .background(
                 brush = Brush.linearGradient(
@@ -511,7 +513,6 @@ fun CyclingInterfaceFilterButton(
                 ),
                 shape = shape
             )
-            .clickable(onClick = onCycle)
             .padding(horizontal = 10.dp)
             .testTag("cycle_interface_filter_button"),
         contentAlignment = Alignment.Center

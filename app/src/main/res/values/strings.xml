@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Data Pulse</string>
+    <string name="dns_tile_label">Data Pulse DNS</string>
 </resources>
 

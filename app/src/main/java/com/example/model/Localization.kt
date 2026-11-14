@@ -238,6 +238,13 @@ object AppStrings {
     fun privateDnsOpenSettingsBtn(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تطبيق في إعدادات أندرويد" else "Apply in Android Settings"
     fun privateDnsCustomPlaceholder(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "مثال: dns.quad9.net" else "e.g. dns.quad9.net"
     fun privateDnsApplyBtn(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "تطبيق" else "Apply"
+
+    // Local VPN DNS Shield & Quick Settings Tile
+    fun dnsVpnShieldTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "درع DNS المحلي (VPN محلي)" else "Local DNS Shield (VPN)"
+    fun dnsVpnActiveLabel(host: String, lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "نشط الآن • $host" else "Active Shield • $host"
+    fun dnsVpnInactiveLabel(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "متوقف — فعّل الحماية الفورية بضغطة واحدة" else "Inactive — Tap switch for instant DNS protection"
+    fun dnsVpnQueriesCount(count: Long, lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الاستعلامات المؤمّنة: $count" else "Queries secured: $count"
+    fun dnsQuickTileHint(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "متاح أيضاً في لوحة الإعدادات السريعة للهاتف (Quick Settings Tile)" else "Also accessible from your phone's Quick Settings Tile"
 }
 
 

@@ -1,11 +1,15 @@
 package com.example.ui.screens
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.net.VpnService
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -51,6 +55,7 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.OpenInNew
@@ -94,7 +99,10 @@ import com.example.model.AppStrings
 import com.example.model.ThemeMode
 import com.example.ui.MainViewModel
 import com.example.ui.components.GlassContainer
+import com.example.ui.components.NeumorphicSwitch
 import com.example.ui.components.rememberAppHaptics
+import com.example.ui.components.tactileSpringPress
+import com.example.update.AppUpdateUiState
 import com.example.ui.theme.AmberAlert
 import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.LocalAppDimensions
@@ -141,6 +149,10 @@ fun SettingsScreen(
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val privateDnsPreset by viewModel.privateDnsPreset.collectAsStateWithLifecycle()
     val privateDnsCustomHostname by viewModel.privateDnsCustomHostname.collectAsStateWithLifecycle()
+    val dnsVpnActive by viewModel.dnsVpnActive.collectAsStateWithLifecycle()
+    val dnsVpnHost by viewModel.dnsVpnHost.collectAsStateWithLifecycle()
+    val dnsQueriesForwarded by viewModel.dnsQueriesForwarded.collectAsStateWithLifecycle()
+    val appUpdateState by viewModel.appUpdateState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     val focusManager = LocalFocusManager.current
@@ -148,6 +160,27 @@ fun SettingsScreen(
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
     val dimensions = LocalAppDimensions.current
     val appHaptics = rememberAppHaptics()
+
+    val vpnConsentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            viewModel.startLocalDnsVpn()
+        }
+    }
+
+    val toggleLocalDnsVpn: (Boolean) -> Unit = { enable ->
+        if (enable) {
+            val prepareIntent = VpnService.prepare(context)
+            if (prepareIntent == null) {
+                viewModel.startLocalDnsVpn()
+            } else {
+                vpnConsentLauncher.launch(prepareIntent)
+            }
+        } else {
+            viewModel.stopLocalDnsVpn()
+        }
+    }
 
     var customDnsInput by remember(privateDnsCustomHostname) { mutableStateOf(privateDnsCustomHostname) }
     var showCopiedNotice by remember { mutableStateOf(false) }
@@ -356,18 +389,20 @@ fun SettingsScreen(
         }
     }
 
-    // 3. Private DNS Engine Card with 1-Click AdGuard Preset & System Intent
+    // 3. Private DNS Engine & Local VPN Shield Card with 1-Click AdGuard Preset & Quick Settings Tile Sync
     val privateDnsCard: @Composable () -> Unit = {
-        val emeraldAdGuard = Color(0xFF10B981)
-        val cloudflareBlue = Color(0xFF38BDF8)
+        val emeraldAdGuard = Color(0xFF00E676)
+        val cloudflareBlue = Color(0xFF00E5FF)
 
         GlassContainer(
             modifier = Modifier.fillMaxWidth(),
-            borderColor = if (privateDnsPreset == PrivateDnsPreset.ADGUARD) {
-                emeraldAdGuard.copy(alpha = if (glassStyle.isDark) 0.55f else 0.40f)
+            borderColor = if (dnsVpnActive || privateDnsPreset == PrivateDnsPreset.ADGUARD) {
+                emeraldAdGuard.copy(alpha = if (glassStyle.isDark) 0.65f else 0.45f)
             } else {
                 glassStyle.borderColor
-            }
+            },
+            enableBreathingGlow = (dnsVpnActive || privateDnsPreset == PrivateDnsPreset.ADGUARD),
+            glowColor = emeraldAdGuard
         ) {
             Column {
                 // Header with DNS icon and active status chip
@@ -458,12 +493,117 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // =========================================================================
+                // 0. ONE-TAP LOCAL VPN DNS SHIELD (IN-APP + QUICK SETTINGS TILE SYNC)
+                // =========================================================================
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(
+                            if (dnsVpnActive) {
+                                emeraldAdGuard.copy(alpha = if (glassStyle.isDark) 0.16f else 0.10f)
+                            } else {
+                                glassStyle.cardSubtleBg
+                            }
+                        )
+                        .border(
+                            width = if (dnsVpnActive) 1.3.dp else 0.9.dp,
+                            color = if (dnsVpnActive) emeraldAdGuard.copy(alpha = 0.7f) else glassStyle.borderColor,
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        .padding(12.dp)
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = AppStrings.dnsVpnShieldTitle(appLanguage),
+                                    color = glassStyle.textPrimary,
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = if (dnsVpnActive) {
+                                        AppStrings.dnsVpnActiveLabel(dnsVpnHost, appLanguage)
+                                    } else {
+                                        AppStrings.dnsVpnInactiveLabel(appLanguage)
+                                    },
+                                    color = if (dnsVpnActive) emeraldAdGuard else glassStyle.textSecondary,
+                                    fontSize = 10.sp,
+                                    fontWeight = if (dnsVpnActive) FontWeight.SemiBold else FontWeight.Normal
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            NeumorphicSwitch(
+                                checked = dnsVpnActive,
+                                onCheckedChange = { checked ->
+                                    appHaptics.performConfirm()
+                                    toggleLocalDnsVpn(checked)
+                                },
+                                accentColor = emeraldAdGuard,
+                                modifier = Modifier.testTag("local_dns_vpn_switch")
+                            )
+                        }
+
+                        if (dnsVpnActive || dnsQueriesForwarded > 0L) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = AppStrings.dnsVpnQueriesCount(dnsQueriesForwarded, appLanguage),
+                                    color = glassStyle.accentPrimary,
+                                    fontSize = 9.5.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = AppStrings.dnsQuickTileHint(appLanguage),
+                                    color = glassStyle.textTertiary,
+                                    fontSize = 9.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                        } else {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = AppStrings.dnsQuickTileHint(appLanguage),
+                                color = glassStyle.textTertiary,
+                                fontSize = 9.sp
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // =========================================================================
                 // 1. DEDICATED ONE-CLICK ADGUARD PRESET CARD (HIGHLIGHTED AS RECOMMENDED)
                 // =========================================================================
                 val isAdGuardSelected = (privateDnsPreset == PrivateDnsPreset.ADGUARD)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .tactileSpringPress(
+                            pressedScale = 0.97f,
+                            onClick = {
+                                appHaptics.performConfirm()
+                                viewModel.setPrivateDnsPreset(PrivateDnsPreset.ADGUARD)
+                                clipboardManager.setText(AnnotatedString("dns.adguard.com"))
+                                copiedHostnameText = "dns.adguard.com"
+                                showCopiedNotice = true
+                            }
+                        )
                         .clip(RoundedCornerShape(12.dp))
                         .background(
                             if (isAdGuardSelected) {
@@ -477,13 +617,6 @@ fun SettingsScreen(
                             color = if (isAdGuardSelected) emeraldAdGuard else emeraldAdGuard.copy(alpha = 0.35f),
                             shape = RoundedCornerShape(12.dp)
                         )
-                        .clickable {
-                            appHaptics.performConfirm()
-                            viewModel.setPrivateDnsPreset(PrivateDnsPreset.ADGUARD)
-                            clipboardManager.setText(AnnotatedString("dns.adguard.com"))
-                            copiedHostnameText = "dns.adguard.com"
-                            showCopiedNotice = true
-                        }
                         .padding(11.dp)
                 ) {
                     Column {
@@ -1281,17 +1414,13 @@ fun SettingsScreen(
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(glassStyle.cardSubtleBg)
-                            .border(1.dp, glassStyle.accentSecondary.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+                        modifier = Modifier.size(dimensions.headerIconBoxSize),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            painter = painterResource(id = R.drawable.ic_brand_logo),
                             contentDescription = "Data Pulse",
-                            modifier = Modifier.size(34.dp)
+                            modifier = Modifier.size(dimensions.headerIconSize)
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
@@ -1327,6 +1456,59 @@ fun SettingsScreen(
                     fontSize = 11.sp,
                     lineHeight = 16.sp
                 )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // In-Device Automatic Update Check Trigger
+                val isCheckingUpdate = (appUpdateState is AppUpdateUiState.Checking)
+                val isUpToDate = (appUpdateState is AppUpdateUiState.UpToDate)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .tactileSpringPress(
+                            pressedScale = 0.965f,
+                            enabled = !isCheckingUpdate,
+                            onClick = {
+                                appHaptics.performConfirm()
+                                viewModel.checkForAppUpdate(manual = true)
+                            }
+                        )
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.14f else 0.10f)
+                        )
+                        .border(
+                            1.dp,
+                            glassStyle.accentPrimary.copy(alpha = 0.45f),
+                            RoundedCornerShape(12.dp)
+                        )
+                        .padding(horizontal = 12.dp, vertical = 9.dp)
+                        .testTag("settings_check_update_button"),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = if (isUpToDate) Icons.Default.CheckCircle else Icons.Default.SystemUpdate,
+                            contentDescription = null,
+                            tint = glassStyle.accentPrimary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = when {
+                                isCheckingUpdate -> if (appLanguage == AppLanguage.ARABIC) "جاري التحقق من التحديثات..." else "Checking for updates..."
+                                isUpToDate -> if (appLanguage == AppLanguage.ARABIC) "أنت تستخدم أحدث إصدار ✓" else "You're on the latest version ✓"
+                                else -> if (appLanguage == AppLanguage.ARABIC) "التحقق من التحديثات التلقائية" else "Check for In-App Updates"
+                            },
+                            color = glassStyle.accentPrimary,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
     }
@@ -1434,6 +1616,7 @@ fun LanguagePillOption(
     Box(
         modifier = modifier
             .height(44.dp)
+            .tactileSpringPress(pressedScale = 0.95f, onClick = onClick)
             .then(
                 if (isSelected && !glassStyle.isDark) {
                     Modifier.shadow(
@@ -1457,7 +1640,6 @@ fun LanguagePillOption(
                 ),
                 shape = shape
             )
-            .clickable(onClick = onClick)
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center
     ) {

@@ -70,6 +70,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -108,8 +109,9 @@ import com.example.ui.theme.NeonPurple
 import com.example.ui.theme.RedAlert
 
 /**
- * Liquid Glass Container with multi-layered blur, frosted backdrops,
- * and adaptive colors for both Light & Dark modes.
+ * Liquid Glass & Neumorphic Depth Container with multi-layered obsidian shadows, frosted
+ * translucent backdrops, ultra-fine glowing specular borders, optional 60/120fps breathing glow,
+ * and optional GPU-accelerated tactile spring press physics.
  */
 @Composable
 fun GlassContainer(
@@ -118,23 +120,59 @@ fun GlassContainer(
     backgroundColor: Color? = null,
     borderColor: Color? = null,
     enableBlur: Boolean = true,
+    enableBreathingGlow: Boolean = false,
+    glowColor: Color? = null,
+    onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     val glassStyle = LocalLiquidGlass.current
     val effectiveBg = backgroundColor ?: glassStyle.surfaceColor
     val effectiveBorder = borderColor ?: glassStyle.borderColor
+    val effectiveGlow = glowColor ?: effectiveBorder
+
+    val breathingAlphaState = if (enableBreathingGlow) {
+        val infiniteTransition = rememberInfiniteTransition(label = "glass_breathing_glow")
+        infiniteTransition.animateFloat(
+            initialValue = 0.35f,
+            targetValue = 0.95f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 2600, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "glass_glow_alpha"
+        )
+    } else {
+        null
+    }
+
+    val interactiveModifier = if (onClick != null) {
+        modifier.tactileSpringPress(pressedScale = 0.97f, onClick = onClick)
+    } else {
+        modifier
+    }
 
     Box(
-        modifier = modifier
+        modifier = interactiveModifier
             .then(
-                if (!glassStyle.isDark) {
+                if (glassStyle.isDark) {
+                    Modifier.neumorphicDepth(
+                        shape = shape,
+                        lightColor = if (enableBreathingGlow) {
+                            effectiveGlow.copy(alpha = 0.16f)
+                        } else {
+                            glassStyle.neumorphicHighlight.copy(alpha = 0.22f)
+                        },
+                        darkColor = glassStyle.neumorphicShadow,
+                        offsetDp = 3.dp
+                    )
+                } else {
                     Modifier.shadow(
-                        elevation = 4.dp,
+                        elevation = 5.dp,
                         shape = shape,
                         spotColor = Color(0x140F172A),
                         ambientColor = Color(0x0A0F172A)
                     )
-                } else Modifier
+                }
             )
             .clip(shape)
     ) {
@@ -144,11 +182,11 @@ fun GlassContainer(
                 modifier = Modifier
                     .matchParentSize()
                     .blur(glassStyle.blurRadius)
-                    .background(if (glassStyle.isDark) Color(0x550B1222) else Color(0x1AFFFFFF))
+                    .background(if (glassStyle.isDark) Color(0x66090C10) else Color(0x1AFFFFFF))
             )
         }
 
-        // Semi-transparent Backdrop Gradient & Rim Highlight
+        // Semi-transparent Backdrop Gradient & Specular Rim Highlight
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -156,8 +194,8 @@ fun GlassContainer(
                     brush = if (glassStyle.isDark) {
                         Brush.verticalGradient(
                             colors = listOf(
-                                effectiveBg,
-                                effectiveBg.copy(alpha = 0.85f)
+                                effectiveBg.copy(alpha = 0.95f),
+                                effectiveBg.copy(alpha = 0.84f)
                             )
                         )
                     } else {
@@ -174,21 +212,28 @@ fun GlassContainer(
                     brush = if (glassStyle.isDark) {
                         Brush.linearGradient(
                             colors = listOf(
-                                effectiveBorder,
-                                effectiveBorder.copy(alpha = 0.2f),
-                                effectiveBorder.copy(alpha = 0.45f)
+                                effectiveBorder.copy(alpha = 0.72f),
+                                Color(0x22FFFFFF),
+                                effectiveBorder.copy(alpha = 0.40f)
                             )
                         )
                     } else {
                         Brush.linearGradient(
                             colors = listOf(
-                                Color(0x66FFFFFF),
+                                Color(0x80FFFFFF),
                                 effectiveBorder,
                                 Color(0x40FFFFFF)
                             )
                         )
                     },
                     shape = shape
+                )
+                .then(
+                    if (breathingAlphaState != null) {
+                        Modifier.drawBehindCompat(shape = shape, glowColor = effectiveGlow, alphaProvider = { breathingAlphaState.value })
+                    } else {
+                        Modifier
+                    }
                 )
         )
 
@@ -197,6 +242,26 @@ fun GlassContainer(
             content()
         }
     }
+}
+
+private fun Modifier.drawBehindCompat(
+    shape: RoundedCornerShape,
+    glowColor: Color,
+    alphaProvider: () -> Float
+): Modifier = this.drawBehind {
+    val a = alphaProvider()
+    val cornerPx = shape.topStart.toPx(size, this)
+    drawRoundRect(
+        brush = Brush.linearGradient(
+            colors = listOf(
+                glowColor.copy(alpha = 0.55f * a),
+                Color.White.copy(alpha = 0.16f * a),
+                glowColor.copy(alpha = 0.45f * a)
+            )
+        ),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerPx, cornerPx),
+        style = Stroke(width = 1.5.dp.toPx())
+    )
 }
 
 /**
@@ -316,17 +381,13 @@ fun DashboardHeader(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Outer App Icon converted and displayed inside the app
+                // Minimalist transparent-background Data Pulse brand logo
                 Box(
-                    modifier = Modifier
-                        .size(dimensions.headerIconBoxSize)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(glassStyle.cardSubtleBg)
-                        .border(1.dp, glassStyle.accentPrimary.copy(alpha = 0.45f), RoundedCornerShape(14.dp)),
+                    modifier = Modifier.size(dimensions.headerIconBoxSize),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        painter = painterResource(id = R.drawable.ic_brand_logo),
                         contentDescription = "Data Pulse",
                         modifier = Modifier.size(dimensions.headerIconSize)
                     )
@@ -664,6 +725,7 @@ fun LiquidGlassHamburgerMenuButton(
     Box(
         modifier = modifier
             .size(40.dp)
+            .tactileSpringPress(pressedScale = 0.90f, onClick = onClick)
             .clip(RoundedCornerShape(14.dp))
             .background(
                 if (isSelected) {
@@ -689,7 +751,6 @@ fun LiquidGlassHamburgerMenuButton(
                 ),
                 shape = RoundedCornerShape(14.dp)
             )
-            .clickable(onClick = onClick)
             .testTag("top_bar_settings_menu_button"),
         contentAlignment = Alignment.Center
     ) {
@@ -797,7 +858,9 @@ fun LiveSpeedCard(
 
     GlassContainer(
         modifier = modifier.fillMaxWidth(),
-        borderColor = glassStyle.accentPrimary.copy(alpha = 0.45f)
+        borderColor = glassStyle.accentPrimary.copy(alpha = 0.45f),
+        enableBreathingGlow = true,
+        glowColor = glassStyle.accentPrimary
     ) {
         Column {
             Row(
@@ -1069,7 +1132,9 @@ fun CircularQuotaProgressGauge(
 
     GlassContainer(
         modifier = modifier.fillMaxWidth(),
-        borderColor = animatedEngineColor.copy(alpha = 0.45f)
+        borderColor = animatedEngineColor.copy(alpha = 0.50f),
+        enableBreathingGlow = true,
+        glowColor = animatedEngineColor
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -1102,10 +1167,10 @@ fun CircularQuotaProgressGauge(
 
                 Box(
                     modifier = Modifier
+                        .tactileSpringPress(pressedScale = 0.93f, onClick = onConfigureClick)
                         .clip(RoundedCornerShape(12.dp))
                         .background(glassStyle.cardSubtleBg)
-                        .border(0.8.dp, animatedEngineColor.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
-                        .clickable { onConfigureClick() }
+                        .border(0.8.dp, animatedEngineColor.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
                         .padding(horizontal = 10.dp, vertical = 5.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
