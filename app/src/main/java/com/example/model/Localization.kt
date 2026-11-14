@@ -11,6 +11,7 @@ object AppStrings {
     fun navUsage(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الاستهلاك" else "Usage"
     fun navSpeed(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "عداد السرعة" else "Speed Meter"
     fun navForecast(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "التحليل الذكي" else "Smart Forecast"
+    fun navDns(lang: AppLanguage) = "DNS"
     fun navRank(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الرتبة" else "Rank"
     fun navSettings(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الإعدادات" else "Settings"
 
@@ -245,6 +246,26 @@ object AppStrings {
     fun dnsVpnInactiveLabel(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "متوقف — فعّل الحماية الفورية بضغطة واحدة" else "Inactive — Tap switch for instant DNS protection"
     fun dnsVpnQueriesCount(count: Long, lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الاستعلامات المؤمّنة: $count" else "Queries secured: $count"
     fun dnsQuickTileHint(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "متاح أيضاً في لوحة الإعدادات السريعة للهاتف (Quick Settings Tile)" else "Also accessible from your phone's Quick Settings Tile"
+
+    // Dedicated DNS Control Screen
+    fun dnsScreenTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "درع DNS الذكي" else "Smart DNS Shield"
+    fun dnsScreenSubtitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "حظر الإعلانات وتشفير الاستعلامات بنفق محلي فائق السرعة" else "Local split-DNS tunnel for ad-blocking & privacy protection"
+    fun dnsShieldActiveBadge(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "الحماية نشطة" else "SHIELD ACTIVE"
+    fun dnsShieldStandbyBadge(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "وضع الاستعداد" else "STANDBY"
+    fun dnsTapOrbHint(lang: AppLanguage, active: Boolean) = if (lang == AppLanguage.ARABIC) {
+        if (active) "اضغط على الدرع لإيقاف الحماية المحلية" else "اضغط على الدرع لتفعيل الحماية بضغطة واحدة"
+    } else {
+        if (active) "Tap shield core to pause local DNS tunnel" else "Tap shield core for instant 1-tap DNS protection"
+    }
+    fun dnsFilterEngineLabel(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "محرك التصفية" else "Filter Engine"
+    fun dnsTunnelModeLabel(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "بروتوكول النفق" else "Tunnel Mode"
+    fun dnsAdFilterMode(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "حظر الإعلانات والتعقب" else "Ads & Trackers Block"
+    fun dnsFastPrivacyMode(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "خصوصية فائقة السرعة" else "Ultra-Fast Privacy"
+    fun dnsCustomMode(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "مضيف مخصص" else "Custom Resolver"
+    fun dnsIspMode(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "افتراضي المزود" else "ISP Default"
+    fun dnsProvidersSection(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "خوادم DNS المتاحة" else "DNS PROVIDERS"
+    fun dnsSystemDotTitle(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "المزامنة مع DNS الخاص بالنظام (DoT)" else "System Private DNS (DoT) Sync"
+    fun dnsOpenDedicatedPage(lang: AppLanguage) = if (lang == AppLanguage.ARABIC) "فتح صفحة DNS" else "Open DNS Page"
 }
 
 

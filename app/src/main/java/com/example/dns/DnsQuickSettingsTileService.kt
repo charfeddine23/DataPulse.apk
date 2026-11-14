@@ -51,7 +51,7 @@ class DnsQuickSettingsTileService : TileService() {
                 // First-time VPN consent requires launching MainActivity so user can confirm the OS dialog
                 val activityIntent = Intent(applicationContext, MainActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                    putExtra(SmartAlertNotifier.EXTRA_NAV_DESTINATION, "SETTINGS")
+                    putExtra(SmartAlertNotifier.EXTRA_NAV_DESTINATION, "DNS")
                     putExtra(EXTRA_REQUEST_VPN_CONSENT, true)
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {

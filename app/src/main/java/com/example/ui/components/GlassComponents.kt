@@ -42,6 +42,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HelpOutline
@@ -82,6 +83,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.core.keyframes
@@ -274,6 +276,8 @@ fun PersistentTopAppBar(
     appLanguage: AppLanguage,
     isSettingsActive: Boolean,
     onOpenSettings: () -> Unit,
+    isForecastActive: Boolean = false,
+    onOpenForecast: () -> Unit = {},
     title: String = "Data Pulse",
     onUsageTipClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
@@ -312,6 +316,8 @@ fun PersistentTopAppBar(
                 appLanguage = appLanguage,
                 onOpenSettings = onOpenSettings,
                 isSettingsActive = isSettingsActive,
+                isForecastActive = isForecastActive,
+                onOpenForecast = onOpenForecast,
                 title = title,
                 onUsageTipClick = onUsageTipClick,
                 modifier = Modifier
@@ -360,6 +366,8 @@ fun DashboardHeader(
     appLanguage: AppLanguage,
     onOpenSettings: () -> Unit = {},
     isSettingsActive: Boolean = false,
+    isForecastActive: Boolean = false,
+    onOpenForecast: () -> Unit = {},
     title: String = "Data Pulse",
     onUsageTipClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
@@ -380,7 +388,10 @@ fun DashboardHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f, fill = false)
+            ) {
                 // Minimalist transparent-background Data Pulse brand logo
                 Box(
                     modifier = Modifier.size(dimensions.headerIconBoxSize),
@@ -393,7 +404,7 @@ fun DashboardHeader(
                     )
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Crossfade(targetState = title, label = "top_bar_title_crossfade") { displayTitle ->
                     Text(
@@ -401,16 +412,19 @@ fun DashboardHeader(
                         color = glassStyle.textPrimary,
                         fontSize = dimensions.textTitleLarge,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp,
-                        maxLines = 1
+                        letterSpacing = 0.4.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
 
-            // Right Slot: Connection Status Pill (or Glowing Lightbulb on Usage screen) + Hamburger Menu Button
+            Spacer(modifier = Modifier.width(6.dp))
+
+            // Right Slot: Connection Status Pill (or Lightbulb on Usage) + Smart Analytics Button + Settings Menu
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 AnimatedContent(
                     targetState = onUsageTipClick != null,
@@ -432,6 +446,15 @@ fun DashboardHeader(
                         ConnectionStatusPill(speedSample = speedSample, appLanguage = appLanguage)
                     }
                 }
+
+                TopBarSmartForecastButton(
+                    isSelected = isForecastActive,
+                    appLanguage = appLanguage,
+                    onClick = {
+                        haptics.performSegmentSwitch()
+                        onOpenForecast()
+                    }
+                )
 
                 LiquidGlassHamburgerMenuButton(
                     onClick = onOpenSettings,
@@ -799,6 +822,83 @@ fun LiquidGlassHamburgerMenuButton(
     }
 }
 
+/**
+ * Sleek Top Bar shortcut button for Smart Analytics positioned right next to the
+ * Network Type pill, featuring a 60/120fps breathing neon aura and tactile spring physics.
+ */
+@Composable
+fun TopBarSmartForecastButton(
+    isSelected: Boolean,
+    appLanguage: AppLanguage,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val glassStyle = LocalLiquidGlass.current
+    val dimensions = LocalAppDimensions.current
+    val infiniteTransition = rememberInfiniteTransition(label = "top_forecast_glow")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.45f,
+        targetValue = 0.95f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "top_forecast_alpha"
+    )
+
+    val label = AppStrings.navForecast(appLanguage)
+    val forecastShape = RoundedCornerShape(14.dp)
+
+    Box(
+        modifier = modifier
+            .height(38.dp)
+            .tactileSpringPress(pressedScale = 0.90f, onClick = onClick)
+            .clip(forecastShape)
+            .background(
+                if (isSelected) {
+                    glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.24f else 0.16f)
+                } else {
+                    glassStyle.cardSubtleBg
+                }
+            )
+            .border(
+                width = if (isSelected) 1.4.dp else 1.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        glassStyle.accentPrimary.copy(alpha = if (isSelected) 1f else 0.65f * glowAlpha),
+                        NeonPurple.copy(alpha = if (isSelected) 0.85f else 0.45f * glowAlpha)
+                    )
+                ),
+                shape = forecastShape
+            )
+            .padding(horizontal = if (dimensions.isTablet) 11.dp else 9.dp)
+            .testTag("top_bar_smart_forecast_button"),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.AutoAwesome,
+                contentDescription = label,
+                tint = if (isSelected) glassStyle.accentPrimary else CyanPulse,
+                modifier = Modifier.size(18.dp)
+            )
+            if (dimensions.isTablet) {
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = label,
+                    color = if (isSelected) glassStyle.textPrimary else glassStyle.textSecondary,
+                    fontSize = 11.5.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                    maxLines = 1
+                )
+            }
+        }
+    }
+}
+
 @Composable
 fun ConnectionStatusPill(
     speedSample: LiveSpeedSample,
@@ -820,28 +920,30 @@ fun ConnectionStatusPill(
             .clip(RoundedCornerShape(20.dp))
             .background(glassStyle.cardSubtleBg)
             .border(1.dp, tint.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
-            .padding(horizontal = 10.dp, vertical = 6.dp)
+            .padding(horizontal = 8.dp, vertical = 5.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(7.dp)
+                    .size(6.5.dp)
                     .clip(CircleShape)
                     .background(tint)
             )
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(5.dp))
             Icon(
                 imageVector = icon,
                 contentDescription = label,
                 tint = tint,
-                modifier = Modifier.size(14.dp)
+                modifier = Modifier.size(13.dp)
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = label,
                 color = glassStyle.textPrimary,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium
+                fontSize = 10.5.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

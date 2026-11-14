@@ -1,15 +1,9 @@
 package com.example.ui.screens
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
-import android.net.VpnService
-import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -35,38 +29,27 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.SystemUpdate
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -81,32 +64,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.model.PrivateDnsPreset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.R
 import com.example.model.AppLanguage
 import com.example.model.AppStrings
-import com.example.model.ThemeMode
+import com.example.model.PrivateDnsPreset
 import com.example.ui.MainViewModel
 import com.example.ui.components.GlassContainer
-import com.example.ui.components.NeumorphicSwitch
 import com.example.ui.components.rememberAppHaptics
 import com.example.ui.components.tactileSpringPress
 import com.example.update.AppUpdateUiState
 import com.example.ui.theme.AmberAlert
-import com.example.ui.theme.CyanPulse
 import com.example.ui.theme.LocalAppDimensions
-import com.example.ui.theme.NeonPurple
 import com.example.ui.theme.RedAlert
 
 /**
@@ -136,6 +110,7 @@ fun SettingsScreen(
     onRequestUsagePermission: () -> Unit,
     onOpenAppInfo: () -> Unit,
     onNavigateBack: (() -> Unit)? = null,
+    onNavigateToDns: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     if (onNavigateBack != null) {
@@ -153,38 +128,10 @@ fun SettingsScreen(
     val dnsVpnHost by viewModel.dnsVpnHost.collectAsStateWithLifecycle()
     val dnsQueriesForwarded by viewModel.dnsQueriesForwarded.collectAsStateWithLifecycle()
     val appUpdateState by viewModel.appUpdateState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
-    val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
     val glassStyle = com.example.ui.theme.LocalLiquidGlass.current
     val dimensions = LocalAppDimensions.current
     val appHaptics = rememberAppHaptics()
-
-    val vpnConsentLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            viewModel.startLocalDnsVpn()
-        }
-    }
-
-    val toggleLocalDnsVpn: (Boolean) -> Unit = { enable ->
-        if (enable) {
-            val prepareIntent = VpnService.prepare(context)
-            if (prepareIntent == null) {
-                viewModel.startLocalDnsVpn()
-            } else {
-                vpnConsentLauncher.launch(prepareIntent)
-            }
-        } else {
-            viewModel.stopLocalDnsVpn()
-        }
-    }
-
-    var customDnsInput by remember(privateDnsCustomHostname) { mutableStateOf(privateDnsCustomHostname) }
-    var showCopiedNotice by remember { mutableStateOf(false) }
-    var copiedHostnameText by remember { mutableStateOf("") }
 
     // 1. Language Selection Card
     val languageCard: @Composable () -> Unit = {
@@ -389,23 +336,29 @@ fun SettingsScreen(
         }
     }
 
-    // 3. Private DNS Engine & Local VPN Shield Card with 1-Click AdGuard Preset & Quick Settings Tile Sync
-    val privateDnsCard: @Composable () -> Unit = {
+    // 3. Dedicated DNS Shield Shortcut Card (Full engine lives in its own bottom-bar screen)
+    val dnsShortcutCard: @Composable () -> Unit = {
         val emeraldAdGuard = Color(0xFF00E676)
-        val cloudflareBlue = Color(0xFF00E5FF)
+        val isShieldHighlighted = dnsVpnActive || privateDnsPreset == PrivateDnsPreset.ADGUARD
+        val resolvedHost = when {
+            dnsVpnActive -> dnsVpnHost
+            privateDnsPreset == PrivateDnsPreset.ADGUARD -> "dns.adguard.com"
+            privateDnsPreset == PrivateDnsPreset.CLOUDFLARE -> "one.one.one.one"
+            privateDnsPreset == PrivateDnsPreset.CUSTOM && privateDnsCustomHostname.isNotBlank() -> privateDnsCustomHostname
+            else -> AppStrings.dnsIspMode(appLanguage)
+        }
 
         GlassContainer(
             modifier = Modifier.fillMaxWidth(),
-            borderColor = if (dnsVpnActive || privateDnsPreset == PrivateDnsPreset.ADGUARD) {
-                emeraldAdGuard.copy(alpha = if (glassStyle.isDark) 0.65f else 0.45f)
+            borderColor = if (isShieldHighlighted) {
+                emeraldAdGuard.copy(alpha = if (glassStyle.isDark) 0.55f else 0.40f)
             } else {
                 glassStyle.borderColor
             },
-            enableBreathingGlow = (dnsVpnActive || privateDnsPreset == PrivateDnsPreset.ADGUARD),
+            enableBreathingGlow = dnsVpnActive,
             glowColor = emeraldAdGuard
         ) {
             Column {
-                // Header with DNS icon and active status chip
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -417,11 +370,11 @@ fun SettingsScreen(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(26.dp)
-                                .clip(RoundedCornerShape(7.dp))
+                                .size(30.dp)
+                                .clip(RoundedCornerShape(9.dp))
                                 .background(
-                                    if (privateDnsPreset == PrivateDnsPreset.ADGUARD) {
-                                        emeraldAdGuard.copy(alpha = if (glassStyle.isDark) 0.22f else 0.15f)
+                                    if (isShieldHighlighted) {
+                                        emeraldAdGuard.copy(alpha = if (glassStyle.isDark) 0.20f else 0.14f)
                                     } else {
                                         glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f)
                                     }
@@ -429,625 +382,66 @@ fun SettingsScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = if (privateDnsPreset == PrivateDnsPreset.ADGUARD) Icons.Default.Shield else Icons.Default.Dns,
-                                contentDescription = "Private DNS",
-                                tint = if (privateDnsPreset == PrivateDnsPreset.ADGUARD) emeraldAdGuard else glassStyle.accentPrimary,
-                                modifier = Modifier.size(14.dp)
+                                imageVector = if (isShieldHighlighted) Icons.Default.Shield else Icons.Default.Dns,
+                                contentDescription = AppStrings.dnsScreenTitle(appLanguage),
+                                tint = if (isShieldHighlighted) emeraldAdGuard else glassStyle.accentPrimary,
+                                modifier = Modifier.size(16.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(7.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = AppStrings.privateDnsTitle(appLanguage),
+                                text = AppStrings.dnsScreenTitle(appLanguage),
                                 color = glassStyle.textPrimary,
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.5.sp
-                            )
-                            Text(
-                                text = AppStrings.privateDnsSubtitle(appLanguage),
-                                color = glassStyle.textSecondary,
-                                fontSize = 9.5.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    // Active badge
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(
-                                if (privateDnsPreset == PrivateDnsPreset.ADGUARD) {
-                                    emeraldAdGuard.copy(alpha = if (glassStyle.isDark) 0.22f else 0.14f)
-                                } else {
-                                    glassStyle.cardSubtleBg
-                                }
-                            )
-                            .border(
-                                0.8.dp,
-                                if (privateDnsPreset == PrivateDnsPreset.ADGUARD) emeraldAdGuard.copy(alpha = 0.6f) else glassStyle.borderColor,
-                                RoundedCornerShape(8.dp)
-                            )
-                            .padding(horizontal = 7.dp, vertical = 2.5.dp)
-                    ) {
-                        Text(
-                            text = when (privateDnsPreset) {
-                                PrivateDnsPreset.ADGUARD -> "AdGuard"
-                                PrivateDnsPreset.CLOUDFLARE -> "Cloudflare"
-                                PrivateDnsPreset.OFF -> if (appLanguage == AppLanguage.ARABIC) "معطل" else "Off"
-                                PrivateDnsPreset.CUSTOM -> if (privateDnsCustomHostname.isNotBlank()) privateDnsCustomHostname else (if (appLanguage == AppLanguage.ARABIC) "مخصص" else "Custom")
-                            },
-                            color = if (privateDnsPreset == PrivateDnsPreset.ADGUARD) emeraldAdGuard else glassStyle.accentPrimary,
-                            fontSize = 9.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // =========================================================================
-                // 0. ONE-TAP LOCAL VPN DNS SHIELD (IN-APP + QUICK SETTINGS TILE SYNC)
-                // =========================================================================
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(
-                            if (dnsVpnActive) {
-                                emeraldAdGuard.copy(alpha = if (glassStyle.isDark) 0.16f else 0.10f)
-                            } else {
-                                glassStyle.cardSubtleBg
-                            }
-                        )
-                        .border(
-                            width = if (dnsVpnActive) 1.3.dp else 0.9.dp,
-                            color = if (dnsVpnActive) emeraldAdGuard.copy(alpha = 0.7f) else glassStyle.borderColor,
-                            shape = RoundedCornerShape(14.dp)
-                        )
-                        .padding(12.dp)
-                ) {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = AppStrings.dnsVpnShieldTitle(appLanguage),
-                                    color = glassStyle.textPrimary,
-                                    fontSize = 12.5.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = if (dnsVpnActive) {
-                                        AppStrings.dnsVpnActiveLabel(dnsVpnHost, appLanguage)
-                                    } else {
-                                        AppStrings.dnsVpnInactiveLabel(appLanguage)
-                                    },
-                                    color = if (dnsVpnActive) emeraldAdGuard else glassStyle.textSecondary,
-                                    fontSize = 10.sp,
-                                    fontWeight = if (dnsVpnActive) FontWeight.SemiBold else FontWeight.Normal
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            NeumorphicSwitch(
-                                checked = dnsVpnActive,
-                                onCheckedChange = { checked ->
-                                    appHaptics.performConfirm()
-                                    toggleLocalDnsVpn(checked)
-                                },
-                                accentColor = emeraldAdGuard,
-                                modifier = Modifier.testTag("local_dns_vpn_switch")
-                            )
-                        }
-
-                        if (dnsVpnActive || dnsQueriesForwarded > 0L) {
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = AppStrings.dnsVpnQueriesCount(dnsQueriesForwarded, appLanguage),
-                                    color = glassStyle.accentPrimary,
-                                    fontSize = 9.5.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = AppStrings.dnsQuickTileHint(appLanguage),
-                                    color = glassStyle.textTertiary,
-                                    fontSize = 9.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.padding(start = 8.dp)
-                                )
-                            }
-                        } else {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = AppStrings.dnsQuickTileHint(appLanguage),
-                                color = glassStyle.textTertiary,
-                                fontSize = 9.sp
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // =========================================================================
-                // 1. DEDICATED ONE-CLICK ADGUARD PRESET CARD (HIGHLIGHTED AS RECOMMENDED)
-                // =========================================================================
-                val isAdGuardSelected = (privateDnsPreset == PrivateDnsPreset.ADGUARD)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .tactileSpringPress(
-                            pressedScale = 0.97f,
-                            onClick = {
-                                appHaptics.performConfirm()
-                                viewModel.setPrivateDnsPreset(PrivateDnsPreset.ADGUARD)
-                                clipboardManager.setText(AnnotatedString("dns.adguard.com"))
-                                copiedHostnameText = "dns.adguard.com"
-                                showCopiedNotice = true
-                            }
-                        )
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            if (isAdGuardSelected) {
-                                emeraldAdGuard.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f)
-                            } else {
-                                glassStyle.cardSubtleBg
-                            }
-                        )
-                        .border(
-                            width = if (isAdGuardSelected) 1.5.dp else 1.dp,
-                            color = if (isAdGuardSelected) emeraldAdGuard else emeraldAdGuard.copy(alpha = 0.35f),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(11.dp)
-                ) {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .clip(CircleShape)
-                                        .background(emeraldAdGuard.copy(alpha = 0.2f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Shield,
-                                        contentDescription = "AdGuard",
-                                        tint = emeraldAdGuard,
-                                        modifier = Modifier.size(13.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(7.dp))
-                                Text(
-                                    text = "AdGuard DNS",
-                                    color = if (isAdGuardSelected) {
-                                        if (glassStyle.isDark) Color.White else glassStyle.textPrimary
-                                    } else {
-                                        glassStyle.textPrimary
-                                    },
-                                    fontSize = 12.5.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                // Highlighted recommended badge
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(emeraldAdGuard)
-                                        .padding(horizontal = 5.dp, vertical = 1.5.dp)
-                                ) {
-                                    Text(
-                                        text = AppStrings.privateDnsAdGuardBadge(appLanguage),
-                                        color = Color.Black,
-                                        fontSize = 8.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        letterSpacing = 0.4.sp
-                                    )
-                                }
-                            }
-
-                            if (isAdGuardSelected) {
-                                Icon(
-                                    imageVector = Icons.Default.CheckCircle,
-                                    contentDescription = "Selected",
-                                    tint = emeraldAdGuard,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = AppStrings.privateDnsAdGuardDesc(appLanguage),
-                                color = glassStyle.textSecondary,
-                                fontSize = 10.sp,
-                                lineHeight = 13.5.sp,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            // Hostname Pill with copy hint
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(Color.Black.copy(alpha = 0.25f))
-                                    .border(0.6.dp, emeraldAdGuard.copy(alpha = 0.45f), RoundedCornerShape(6.dp))
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.ContentCopy,
-                                        contentDescription = "Copy",
-                                        tint = emeraldAdGuard,
-                                        modifier = Modifier.size(10.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(3.dp))
-                                    Text(
-                                        text = "dns.adguard.com",
-                                        color = emeraldAdGuard,
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // =========================================================================
-                // 2. OTHER PRESETS ROW: System Default (Off), Cloudflare, Custom Hostname
-                // =========================================================================
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    // Option 1: System Default (Off)
-                    val isOffSelected = (privateDnsPreset == PrivateDnsPreset.OFF)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(
-                                if (isOffSelected) glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f)
-                                else glassStyle.cardSubtleBg
-                            )
-                            .border(
-                                width = if (isOffSelected) 1.2.dp else 0.8.dp,
-                                color = if (isOffSelected) glassStyle.accentPrimary else glassStyle.borderColor,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                            .clickable {
-                                appHaptics.performSegmentSwitch()
-                                viewModel.setPrivateDnsPreset(PrivateDnsPreset.OFF)
-                                showCopiedNotice = false
-                            }
-                            .padding(horizontal = 6.dp, vertical = 4.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Dns,
-                                    contentDescription = "Off",
-                                    tint = if (isOffSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
-                                    modifier = Modifier.size(11.dp)
-                                )
-                                Spacer(modifier = Modifier.width(3.dp))
-                                Text(
-                                    text = AppStrings.privateDnsOff(appLanguage),
-                                    color = if (isOffSelected) glassStyle.textPrimary else glassStyle.textSecondary,
-                                    fontSize = 9.5.sp,
-                                    fontWeight = if (isOffSelected) FontWeight.Bold else FontWeight.Medium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                            Text(
-                                text = if (appLanguage == AppLanguage.ARABIC) "تلقائي من الشبكة" else "ISP Default",
-                                color = glassStyle.textTertiary,
-                                fontSize = 8.sp,
-                                maxLines = 1
-                            )
-                        }
-                    }
-
-                    // Option 2: Cloudflare (1.1.1.1)
-                    val isCloudflareSelected = (privateDnsPreset == PrivateDnsPreset.CLOUDFLARE)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(
-                                if (isCloudflareSelected) cloudflareBlue.copy(alpha = if (glassStyle.isDark) 0.20f else 0.12f)
-                                else glassStyle.cardSubtleBg
-                            )
-                            .border(
-                                width = if (isCloudflareSelected) 1.2.dp else 0.8.dp,
-                                color = if (isCloudflareSelected) cloudflareBlue else glassStyle.borderColor,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                            .clickable {
-                                appHaptics.performSegmentSwitch()
-                                viewModel.setPrivateDnsPreset(PrivateDnsPreset.CLOUDFLARE)
-                                clipboardManager.setText(AnnotatedString("one.one.one.one"))
-                                copiedHostnameText = "one.one.one.one"
-                                showCopiedNotice = true
-                            }
-                            .padding(horizontal = 6.dp, vertical = 4.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Speed,
-                                    contentDescription = "Cloudflare",
-                                    tint = if (isCloudflareSelected) cloudflareBlue else glassStyle.textTertiary,
-                                    modifier = Modifier.size(11.dp)
-                                )
-                                Spacer(modifier = Modifier.width(3.dp))
-                                Text(
-                                    text = "Cloudflare",
-                                    color = if (isCloudflareSelected) glassStyle.textPrimary else glassStyle.textSecondary,
-                                    fontSize = 9.5.sp,
-                                    fontWeight = if (isCloudflareSelected) FontWeight.Bold else FontWeight.Medium,
-                                    maxLines = 1
-                                )
-                            }
-                            Text(
-                                text = "one.one.one.one",
-                                color = if (isCloudflareSelected) cloudflareBlue else glassStyle.textTertiary,
-                                fontSize = 8.sp,
-                                maxLines = 1
-                            )
-                        }
-                    }
-
-                    // Option 3: Custom Hostname
-                    val isCustomSelected = (privateDnsPreset == PrivateDnsPreset.CUSTOM)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(
-                                if (isCustomSelected) glassStyle.accentPrimary.copy(alpha = if (glassStyle.isDark) 0.18f else 0.12f)
-                                else glassStyle.cardSubtleBg
-                            )
-                            .border(
-                                width = if (isCustomSelected) 1.2.dp else 0.8.dp,
-                                color = if (isCustomSelected) glassStyle.accentPrimary else glassStyle.borderColor,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                            .clickable {
-                                appHaptics.performSegmentSwitch()
-                                viewModel.setPrivateDnsPreset(PrivateDnsPreset.CUSTOM)
-                                if (customDnsInput.isNotBlank()) {
-                                    clipboardManager.setText(AnnotatedString(customDnsInput))
-                                    copiedHostnameText = customDnsInput
-                                    showCopiedNotice = true
-                                }
-                            }
-                            .padding(horizontal = 6.dp, vertical = 4.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Tune,
-                                    contentDescription = "Custom",
-                                    tint = if (isCustomSelected) glassStyle.accentPrimary else glassStyle.textTertiary,
-                                    modifier = Modifier.size(11.dp)
-                                )
-                                Spacer(modifier = Modifier.width(3.dp))
-                                Text(
-                                    text = AppStrings.privateDnsCustom(appLanguage),
-                                    color = if (isCustomSelected) glassStyle.textPrimary else glassStyle.textSecondary,
-                                    fontSize = 9.5.sp,
-                                    fontWeight = if (isCustomSelected) FontWeight.Bold else FontWeight.Medium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                            Text(
-                                text = if (customDnsInput.isNotBlank()) customDnsInput else (if (appLanguage == AppLanguage.ARABIC) "مخصص" else "Custom DoT"),
-                                color = glassStyle.textTertiary,
-                                fontSize = 8.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-                }
-
-                // Custom Hostname TextField input (when Custom is selected)
-                if (privateDnsPreset == PrivateDnsPreset.CUSTOM) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = customDnsInput,
-                            onValueChange = {
-                                customDnsInput = it
-                                viewModel.setPrivateDnsCustomHostname(it)
-                            },
-                            placeholder = {
-                                Text(
-                                    AppStrings.privateDnsCustomPlaceholder(appLanguage),
-                                    fontSize = 11.sp,
-                                    color = glassStyle.textTertiary
-                                )
-                            },
-                            singleLine = true,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(46.dp),
-                            textStyle = androidx.compose.ui.text.TextStyle(
-                                color = glassStyle.textPrimary,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = glassStyle.accentPrimary,
-                                unfocusedBorderColor = glassStyle.borderColor,
-                                focusedContainerColor = glassStyle.cardSubtleBg,
-                                unfocusedContainerColor = glassStyle.cardSubtleBg
-                            ),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-
-                        Button(
-                            onClick = {
-                                focusManager.clearFocus()
-                                appHaptics.performConfirm()
-                                viewModel.setPrivateDnsCustomHostname(customDnsInput)
-                                if (customDnsInput.isNotBlank()) {
-                                    clipboardManager.setText(AnnotatedString(customDnsInput))
-                                    copiedHostnameText = customDnsInput
-                                    showCopiedNotice = true
-                                }
-                            },
-                            modifier = Modifier.height(46.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = glassStyle.accentPrimary),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text(
-                                text = AppStrings.privateDnsApplyBtn(appLanguage),
-                                color = Color.Black,
-                                fontSize = 11.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold
                             )
+                            Text(
+                                text = if (dnsVpnActive) {
+                                    "${AppStrings.dnsVpnActiveLabel(resolvedHost, appLanguage)} • $dnsQueriesForwarded"
+                                } else {
+                                    resolvedHost
+                                },
+                                color = if (dnsVpnActive) emeraldAdGuard else glassStyle.textSecondary,
+                                fontSize = 10.5.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     }
-                }
 
-                // =========================================================================
-                // 3. INTENT APPLICATION / SYSTEM SETTINGS PROMPT BUTTON
-                // =========================================================================
-                Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
-                val activeHostname = when (privateDnsPreset) {
-                    PrivateDnsPreset.ADGUARD -> "dns.adguard.com"
-                    PrivateDnsPreset.CLOUDFLARE -> "one.one.one.one"
-                    PrivateDnsPreset.CUSTOM -> customDnsInput.ifBlank { privateDnsCustomHostname }
-                    PrivateDnsPreset.OFF -> null
-                }
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(
-                            if (privateDnsPreset == PrivateDnsPreset.ADGUARD) {
-                                emeraldAdGuard.copy(alpha = if (glassStyle.isDark) 0.12f else 0.08f)
-                            } else {
-                                glassStyle.cardSubtleBg
-                            }
-                        )
-                        .border(
-                            0.8.dp,
-                            if (privateDnsPreset == PrivateDnsPreset.ADGUARD) emeraldAdGuard.copy(alpha = 0.35f) else glassStyle.borderColor,
-                            RoundedCornerShape(10.dp)
-                        )
-                        .padding(9.dp)
-                ) {
-                    if (showCopiedNotice && copiedHostnameText.isNotBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .tactileSpringPress(
+                                pressedScale = 0.95f,
+                                onClick = {
+                                    appHaptics.performConfirm()
+                                    onNavigateToDns()
+                                }
+                            )
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (isShieldHighlighted) emeraldAdGuard else glassStyle.accentPrimary
+                            )
+                            .padding(horizontal = 10.dp, vertical = 7.dp)
+                            .testTag("settings_open_dns_button"),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = emeraldAdGuard,
-                                modifier = Modifier.size(12.dp)
+                            Text(
+                                text = AppStrings.dnsOpenDedicatedPage(appLanguage),
+                                color = Color.Black,
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = AppStrings.privateDnsCopiedNotice(copiedHostnameText, appLanguage),
-                                color = emeraldAdGuard,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
-
-                    Text(
-                        text = AppStrings.privateDnsGuide(appLanguage),
-                        color = glassStyle.textSecondary,
-                        fontSize = 9.5.sp,
-                        lineHeight = 13.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Clean 1-Click System Settings Trigger
-                    Button(
-                        onClick = {
-                            appHaptics.performConfirm()
-                            if (activeHostname != null) {
-                                clipboardManager.setText(AnnotatedString(activeHostname))
-                                copiedHostnameText = activeHostname
-                                showCopiedNotice = true
-                            }
-                            openPrivateDnsSettings(context)
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(38.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (privateDnsPreset == PrivateDnsPreset.ADGUARD) emeraldAdGuard else glassStyle.accentPrimary
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
                             Icon(
-                                imageVector = Icons.Default.OpenInNew,
-                                contentDescription = "Open Settings",
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
                                 tint = Color.Black,
-                                modifier = Modifier.size(13.dp)
-                            )
-                            Spacer(modifier = Modifier.width(5.dp))
-                            Text(
-                                text = AppStrings.privateDnsOpenSettingsBtn(appLanguage),
-                                color = Color.Black,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
+                                modifier = Modifier.size(12.dp)
                             )
                         }
                     }
@@ -1532,7 +926,7 @@ fun SettingsScreen(
                 ) {
                     languageCard()
                     multiThemeEngineCard()
-                    privateDnsCard()
+                    dnsShortcutCard()
                 }
                 Column(
                     modifier = Modifier.weight(1f),
@@ -1552,7 +946,7 @@ fun SettingsScreen(
             ) {
                 languageCard()
                 multiThemeEngineCard()
-                privateDnsCard()
+                dnsShortcutCard()
                 billingCycleCard()
                 smartAlertsCard()
                 powerSavingCard()

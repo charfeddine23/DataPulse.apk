@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -60,6 +61,7 @@ import com.example.ui.components.tactileSpringPress
 import com.example.update.AppUpdateUiState
 import com.example.ui.screens.AnalyticsScreen
 import com.example.ui.screens.DashboardScreen
+import com.example.ui.screens.DnsControlScreen
 import com.example.ui.screens.RankScreen
 import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.SmartForecastScreen
@@ -75,6 +77,7 @@ enum class NavDestination(val icon: ImageVector, val tag: String) {
     DASHBOARD(Icons.Default.GraphicEq, "nav_dashboard"),
     USAGE(Icons.Default.Equalizer, "nav_usage"),
     SPEED(Icons.Default.Speed, "nav_speed"),
+    DNS(Icons.Default.Shield, "nav_dns"),
     FORECAST(Icons.Default.AutoAwesome, "nav_forecast"),
     SETTINGS(Icons.Default.Settings, "nav_settings"),
     RANK(Icons.Default.EmojiEvents, "nav_rank")
@@ -84,6 +87,7 @@ fun NavDestination.getLabel(lang: AppLanguage): String = when (this) {
     NavDestination.DASHBOARD -> AppStrings.navPulse(lang)
     NavDestination.USAGE -> AppStrings.navUsage(lang)
     NavDestination.SPEED -> AppStrings.navSpeed(lang)
+    NavDestination.DNS -> AppStrings.navDns(lang)
     NavDestination.FORECAST -> AppStrings.navForecast(lang)
     NavDestination.SETTINGS -> AppStrings.navSettings(lang)
     NavDestination.RANK -> AppStrings.navRank(lang)
@@ -130,6 +134,12 @@ fun DataPulseApp(
                     if (currentDestination != NavDestination.SPEED) {
                         previousDestination = currentDestination
                         currentDestination = NavDestination.SPEED
+                    }
+                }
+                "DNS" -> {
+                    if (currentDestination != NavDestination.DNS) {
+                        previousDestination = currentDestination
+                        currentDestination = NavDestination.DNS
                     }
                 }
                 "SETTINGS" -> {
@@ -179,6 +189,7 @@ fun DataPulseApp(
                         speedSample = speedSample,
                         appLanguage = appLanguage,
                         isSettingsActive = (currentDestination == NavDestination.SETTINGS),
+                        isForecastActive = (currentDestination == NavDestination.FORECAST),
                         title = when (currentDestination) {
                             NavDestination.USAGE -> "Usage"
                             NavDestination.SETTINGS -> AppStrings.navSettings(appLanguage)
@@ -188,6 +199,13 @@ fun DataPulseApp(
                             { showUsageTipPopup = true }
                         } else {
                             null
+                        },
+                        onOpenForecast = {
+                            if (currentDestination == NavDestination.FORECAST) {
+                                navigateBack()
+                            } else {
+                                navigateTo(NavDestination.FORECAST)
+                            }
                         },
                         onOpenSettings = {
                             if (currentDestination == NavDestination.SETTINGS) {
@@ -231,15 +249,20 @@ fun DataPulseApp(
                             NavDestination.SPEED -> SpeedMeterScreen(
                                 viewModel = viewModel
                             )
+                            NavDestination.DNS -> DnsControlScreen(
+                                viewModel = viewModel
+                            )
                             NavDestination.FORECAST -> SmartForecastScreen(
                                 viewModel = viewModel,
-                                onNavigateToSettings = { navigateTo(NavDestination.SETTINGS) }
+                                onNavigateToSettings = { navigateTo(NavDestination.SETTINGS) },
+                                onNavigateBack = { navigateBack() }
                             )
                             NavDestination.SETTINGS -> SettingsScreen(
                                 viewModel = viewModel,
                                 onRequestUsagePermission = onRequestUsagePermission,
                                 onOpenAppInfo = onOpenAppInfo,
-                                onNavigateBack = { navigateBack() }
+                                onNavigateBack = { navigateBack() },
+                                onNavigateToDns = { navigateTo(NavDestination.DNS) }
                             )
                             NavDestination.RANK -> RankScreen(
                                 viewModel = viewModel,
@@ -339,13 +362,13 @@ fun LiquidGlassBottomNav(
                 // 1. DASHBOARD (النبض - أقصى اليسار / Far Left)
                 // 2. USAGE (الاستهلاك / Apps Usage)
                 // 3. SPEED (عداد السرعة)
-                // 4. FORECAST (التحليل الذكي / Smart Analytics)
+                // 4. DNS (درع DNS الذكي - صفحة منفردة)
                 // 5. RANK (الرتبة / Rank - أقصى اليمين / Far Right)
                 val navigationItems = listOf(
                     NavDestination.DASHBOARD,
                     NavDestination.USAGE,
                     NavDestination.SPEED,
-                    NavDestination.FORECAST,
+                    NavDestination.DNS,
                     NavDestination.RANK
                 )
 

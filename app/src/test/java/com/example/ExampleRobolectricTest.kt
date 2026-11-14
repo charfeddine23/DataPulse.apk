@@ -5,6 +5,8 @@ import androidx.test.core.app.ApplicationProvider
 import com.example.model.FormatUtils
 import com.example.ui.components.BiologicalHeartCalculator
 import com.example.ui.components.BiologicalHeartState
+import com.example.ui.navigation.NavDestination
+import com.example.ui.navigation.getLabel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -152,5 +154,15 @@ class ExampleRobolectricTest {
 
     assertTrue(com.example.model.AppStrings.privateDnsAdGuardBadge(com.example.model.AppLanguage.ARABIC).contains("موصى به"))
     assertTrue(com.example.model.AppStrings.privateDnsAdGuardBadge(com.example.model.AppLanguage.ENGLISH).contains("RECOMMENDED"))
+  }
+
+  @Test
+  fun `verify dns navigation destination and dedicated dns screen strings`() {
+    assertEquals("DNS", com.example.ui.navigation.NavDestination.DNS.getLabel(com.example.model.AppLanguage.ENGLISH))
+    assertEquals("DNS", com.example.ui.navigation.NavDestination.DNS.getLabel(com.example.model.AppLanguage.ARABIC))
+    assertEquals("التحليل الذكي", NavDestination.FORECAST.getLabel(com.example.model.AppLanguage.ARABIC))
+    assertEquals("Smart Forecast", NavDestination.FORECAST.getLabel(com.example.model.AppLanguage.ENGLISH))
+    assertEquals("درع DNS الذكي", com.example.model.AppStrings.dnsScreenTitle(com.example.model.AppLanguage.ARABIC))
+    assertEquals("Smart DNS Shield", com.example.model.AppStrings.dnsScreenTitle(com.example.model.AppLanguage.ENGLISH))
   }
 }

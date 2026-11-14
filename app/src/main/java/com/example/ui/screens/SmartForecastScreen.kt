@@ -68,8 +68,12 @@ import com.example.ui.theme.RedAlert
 fun SmartForecastScreen(
     viewModel: MainViewModel,
     onNavigateToSettings: () -> Unit,
+    onNavigateBack: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    if (onNavigateBack != null) {
+        androidx.activity.compose.BackHandler { onNavigateBack() }
+    }
     val dataForecast by viewModel.dataForecast.collectAsStateWithLifecycle()
     val quota by viewModel.dataPlanQuota.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()

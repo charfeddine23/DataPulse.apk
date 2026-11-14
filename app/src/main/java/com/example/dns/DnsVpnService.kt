@@ -98,7 +98,7 @@ class DnsVpnService : VpnService() {
 
             val launchIntent = Intent(applicationContext, MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                putExtra(SmartAlertNotifier.EXTRA_NAV_DESTINATION, "SETTINGS")
+                putExtra(SmartAlertNotifier.EXTRA_NAV_DESTINATION, "DNS")
             }
             val configurePending = PendingIntent.getActivity(
                 applicationContext,
