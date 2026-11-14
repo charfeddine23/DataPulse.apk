@@ -17,6 +17,9 @@ import com.example.model.TimeRange
 import com.example.util.LiveSpeedMonitor
 import com.example.util.SmartAlertNotifier
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +27,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.InetAddress
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -507,6 +514,73 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val dnsVpnActive: StateFlow<Boolean> = com.example.dns.DnsVpnState.isActive
     val dnsVpnHost: StateFlow<String> = com.example.dns.DnsVpnState.activeHostname
     val dnsQueriesForwarded: StateFlow<Long> = com.example.dns.DnsVpnState.queriesForwarded
+
+    private val _dnsLatencies = MutableStateFlow<Map<PrivateDnsPreset, Int?>>(emptyMap())
+    val dnsLatencies: StateFlow<Map<PrivateDnsPreset, Int?>> = _dnsLatencies.asStateFlow()
+
+    private val _isPingingDns = MutableStateFlow(false)
+    val isPingingDns: StateFlow<Boolean> = _isPingingDns.asStateFlow()
+
+    fun refreshDnsLatencies() {
+        if (_isPingingDns.value) return
+        viewModelScope.launch {
+            _isPingingDns.value = true
+            try {
+                val results = withContext(Dispatchers.IO) {
+                    coroutineScope {
+                        PrivateDnsPreset.integratedServers.map { preset ->
+                            async {
+                                preset to (preset.primaryIp?.let { measureDnsUdpLatencyMs(it) })
+                            }
+                        }.awaitAll().toMap()
+                    }
+                }
+                _dnsLatencies.value = results
+            } finally {
+                _isPingingDns.value = false
+            }
+        }
+    }
+
+    private fun measureDnsUdpLatencyMs(ipAddress: String): Int? {
+        var socket: DatagramSocket? = null
+        return try {
+            val dnsQueryPacket = byteArrayOf(
+                0x24, 0x71, // Transaction ID
+                0x01, 0x00, // Flags: standard query, recursion desired
+                0x00, 0x01, // Questions: 1
+                0x00, 0x00, // Answer RRs: 0
+                0x00, 0x00, // Authority RRs: 0
+                0x00, 0x00, // Additional RRs: 0
+                0x07, 'e'.code.toByte(), 'x'.code.toByte(), 'a'.code.toByte(), 'm'.code.toByte(),
+                'p'.code.toByte(), 'l'.code.toByte(), 'e'.code.toByte(),
+                0x03, 'c'.code.toByte(), 'o'.code.toByte(), 'm'.code.toByte(),
+                0x00,       // End of QNAME
+                0x00, 0x01, // QTYPE = A
+                0x00, 0x01  // QCLASS = IN
+            )
+            socket = DatagramSocket().apply {
+                soTimeout = 1500
+            }
+            val address = InetAddress.getByName(ipAddress)
+            val request = DatagramPacket(dnsQueryPacket, dnsQueryPacket.size, address, 53)
+            val responseBuffer = ByteArray(512)
+            val response = DatagramPacket(responseBuffer, responseBuffer.size)
+
+            val startNs = System.nanoTime()
+            socket.send(request)
+            socket.receive(response)
+            val elapsedMs = ((System.nanoTime() - startNs) / 1_000_000L).toInt()
+            elapsedMs.coerceAtLeast(1)
+        } catch (_: Exception) {
+            null
+        } finally {
+            try {
+                socket?.close()
+            } catch (_: Exception) {
+            }
+        }
+    }
 
     fun startLocalDnsVpn() {
         if (_privateDnsPreset.value == PrivateDnsPreset.OFF) {

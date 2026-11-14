@@ -157,6 +157,15 @@ class DnsVpnService : VpnService() {
             PrivateDnsPreset.CLOUDFLARE ->
                 Triple(CLOUDFLARE_PRIMARY_IPV4, CLOUDFLARE_SECONDARY_IPV4, "one.one.one.one")
 
+            PrivateDnsPreset.GOOGLE ->
+                Triple(GOOGLE_PRIMARY_IPV4, GOOGLE_SECONDARY_IPV4, "dns.google")
+
+            PrivateDnsPreset.QUAD9 ->
+                Triple(QUAD9_PRIMARY_IPV4, QUAD9_SECONDARY_IPV4, "dns.quad9.net")
+
+            PrivateDnsPreset.OPENDNS ->
+                Triple(OPENDNS_PRIMARY_IPV4, OPENDNS_SECONDARY_IPV4, "dns.opendns.com")
+
             PrivateDnsPreset.CUSTOM -> {
                 val host = customHostname.trim().ifBlank { "dns.adguard.com" }
                 val resolvedIp = try {
@@ -415,6 +424,12 @@ class DnsVpnService : VpnService() {
         private const val ADGUARD_SECONDARY_IPV4 = "94.140.15.15"
         private const val CLOUDFLARE_PRIMARY_IPV4 = "1.1.1.1"
         private const val CLOUDFLARE_SECONDARY_IPV4 = "1.0.0.1"
+        private const val GOOGLE_PRIMARY_IPV4 = "8.8.8.8"
+        private const val GOOGLE_SECONDARY_IPV4 = "8.8.4.4"
+        private const val QUAD9_PRIMARY_IPV4 = "9.9.9.9"
+        private const val QUAD9_SECONDARY_IPV4 = "149.112.112.112"
+        private const val OPENDNS_PRIMARY_IPV4 = "208.67.222.222"
+        private const val OPENDNS_SECONDARY_IPV4 = "208.67.220.220"
         private const val UDP_PROTOCOL = 17
         private const val DNS_PORT = 53
 

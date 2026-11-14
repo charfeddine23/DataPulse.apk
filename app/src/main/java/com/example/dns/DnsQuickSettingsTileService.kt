@@ -76,9 +76,9 @@ class DnsQuickSettingsTileService : TileService() {
         val prefs = DataPlanPreferences(applicationContext)
         val preset = PrivateDnsPreset.fromName(prefs.privateDnsPreset)
         val host = when (preset) {
-            PrivateDnsPreset.ADGUARD, PrivateDnsPreset.OFF -> "dns.adguard.com"
-            PrivateDnsPreset.CLOUDFLARE -> "one.one.one.one"
             PrivateDnsPreset.CUSTOM -> prefs.privateDnsCustomHostname.ifBlank { "dns.adguard.com" }
+            PrivateDnsPreset.OFF -> "dns.adguard.com"
+            else -> preset.hostname ?: "dns.adguard.com"
         }
 
         tile.state = if (isActive) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE

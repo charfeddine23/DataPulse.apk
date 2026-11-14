@@ -342,9 +342,8 @@ fun SettingsScreen(
         val isShieldHighlighted = dnsVpnActive || privateDnsPreset == PrivateDnsPreset.ADGUARD
         val resolvedHost = when {
             dnsVpnActive -> dnsVpnHost
-            privateDnsPreset == PrivateDnsPreset.ADGUARD -> "dns.adguard.com"
-            privateDnsPreset == PrivateDnsPreset.CLOUDFLARE -> "one.one.one.one"
             privateDnsPreset == PrivateDnsPreset.CUSTOM && privateDnsCustomHostname.isNotBlank() -> privateDnsCustomHostname
+            privateDnsPreset.hostname != null -> privateDnsPreset.hostname!!
             else -> AppStrings.dnsIspMode(appLanguage)
         }
 

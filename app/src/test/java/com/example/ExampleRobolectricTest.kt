@@ -134,17 +134,41 @@ class ExampleRobolectricTest {
   @Test
   fun `verify private dns presets including adguard recommendation`() {
     val presets = com.example.model.PrivateDnsPreset.values()
-    assertEquals(4, presets.size)
+    assertEquals(7, presets.size)
+    assertEquals(5, com.example.model.PrivateDnsPreset.integratedServers.size)
 
     val adguard = com.example.model.PrivateDnsPreset.ADGUARD
     assertEquals("dns.adguard.com", adguard.hostname)
+    assertEquals("94.140.14.14", adguard.primaryIp)
+    assertEquals("94.140.15.15", adguard.secondaryIp)
     assertTrue(adguard.isRecommended)
     assertEquals("AdGuard DNS", adguard.getDisplayName(com.example.model.AppLanguage.ENGLISH))
     assertEquals("AdGuard DNS", adguard.getDisplayName(com.example.model.AppLanguage.ARABIC))
 
     val cloudflare = com.example.model.PrivateDnsPreset.CLOUDFLARE
     assertEquals("one.one.one.one", cloudflare.hostname)
+    assertEquals("1.1.1.1", cloudflare.primaryIp)
+    assertEquals("1.0.0.1", cloudflare.secondaryIp)
+    assertEquals("Cloudflare (1.1.1.1)", cloudflare.getDisplayName(com.example.model.AppLanguage.ENGLISH))
     assertEquals(false, cloudflare.isRecommended)
+
+    val google = com.example.model.PrivateDnsPreset.GOOGLE
+    assertEquals("dns.google", google.hostname)
+    assertEquals("8.8.8.8", google.primaryIp)
+    assertEquals("8.8.4.4", google.secondaryIp)
+    assertEquals("Google Public DNS", google.getDisplayName(com.example.model.AppLanguage.ENGLISH))
+
+    val quad9 = com.example.model.PrivateDnsPreset.QUAD9
+    assertEquals("dns.quad9.net", quad9.hostname)
+    assertEquals("9.9.9.9", quad9.primaryIp)
+    assertEquals("149.112.112.112", quad9.secondaryIp)
+    assertEquals("Quad9 DNS", quad9.getDisplayName(com.example.model.AppLanguage.ENGLISH))
+
+    val openDns = com.example.model.PrivateDnsPreset.OPENDNS
+    assertEquals("dns.opendns.com", openDns.hostname)
+    assertEquals("208.67.222.222", openDns.primaryIp)
+    assertEquals("208.67.220.220", openDns.secondaryIp)
+    assertEquals("Cisco OpenDNS", openDns.getDisplayName(com.example.model.AppLanguage.ENGLISH))
 
     val off = com.example.model.PrivateDnsPreset.OFF
     assertEquals(null, off.hostname)
